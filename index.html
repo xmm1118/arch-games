@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑课程游戏化教学系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        /* 头部区域 */
+        .header { text-align: center; padding: 40px 20px; color: white; }
+        .header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        
+        /* 重要提示框 */
+        .notice-box { background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 15px 20px; margin: 20px auto; max-width: 800px; text-align: center; }
+        .notice-box .icon { font-size: 1.5rem; margin-right: 10px; }
+        .notice-box p { color: #856404; font-weight: 500; }
+        
+        /* 学习路径 */
+        .learning-path { background: rgba(255,255,255,0.95); border-radius: 16px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .learning-path h2 { font-size: 1.3rem; color: #333; margin-bottom: 20px; text-align: center; }
+        .path-steps { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .path-step { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 25px; font-size: 0.9rem; font-weight: 500; transition: all 0.3s; }
+        .path-step.completed { background: #28a745; color: white; }
+        .path-step.current { background: #007bff; color: white; box-shadow: 0 0 15px rgba(0,123,255,0.4); }
+        .path-step.pending { background: #e9ecef; color: #6c757d; }
+        .path-step .step-num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+        .path-arrow { color: #adb5bd; font-size: 1.2rem; }
+        
+        /* 分类标题 */
+        .category-title { color: white; font-size: 1.4rem; font-weight: 600; margin: 30px 0 15px 0; padding-left: 15px; border-left: 4px solid; display: flex; align-items: center; gap: 10px; }
+        .category-title.required { border-color: #007bff; }
+        .category-title.recommended { border-color: #28a745; }
+        .category-title.optional { border-color: #fd7e14; }
+        .category-title.structural { border-color: #9333ea; }
+        
+        /* 游戏卡片网格 */
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 10px; }
+        
+        /* 游戏卡片 */
+        .game-card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; text-decoration: none; display: block; }
+        .game-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 12px 30px rgba(0,0,0,0.2); }
+        
+        .game-card .card-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 15px; }
+        .game-card.required .card-icon { background: linear-gradient(135deg, #007bff, #0056b3); }
+        .game-card.recommended .card-icon { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .game-card.optional .card-icon { background: linear-gradient(135deg, #fd7e14, #e65100); }
+        .game-card.structural .card-icon { background: linear-gradient(135deg, #9333ea, #6f42c1); }
+        
+        .game-card .card-tag { position: absolute; top: 15px; right: 15px; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .game-card.required .card-tag { background: #e7f3ff; color: #007bff; }
+        .game-card.recommended .card-tag { background: #e8f5e9; color: #28a745; }
+        .game-card.optional .card-tag { background: #fff3e0; color: #e65100; }
+        .game-card.structural .card-tag { background: #f3e5f5; color: #9333ea; }
+        
+        .game-card h3 { font-size: 1.15rem; color: #333; margin-bottom: 8px; }
+        .game-card p { font-size: 0.9rem; color: #666; line-height: 1.5; }
+        .game-card .arrow { position: absolute; bottom: 15px; right: 15px; width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+        .game-card:hover .arrow { background: #667eea; color: white; }
+        
+        /* 页脚 */
+        .footer { text-align: center; padding: 30px 20px; color: rgba(255,255,255,0.8); margin-top: 30px; }
+        .footer p { margin-bottom: 5px; }
+        .footer .project-name { font-size: 1.1rem; font-weight: 600; }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .header p { font-size: 1rem; }
+            .path-steps { flex-direction: column; }
+            .path-arrow { transform: rotate(90deg); }
+            .games-grid { grid-template-columns: 1fr; }
+            .category-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🏛️ 建筑课程游戏化教学系统</h1>
+            <p>智能建造专业 PBL 教学平台</p>
+        </div>
+        
+        <!-- 重要提示 -->
+        <div class="notice-box">
+            <p><span class="icon">⚠️</span>请从本首页点击进入游戏，不要直接打开游戏文件，否则可能显示404</p>
+        </div>
+        
+        <!-- 学习路径 -->
+        <div class="learning-path">
+            <h2>📚 学习路径指引</h2>
+            <div class="path-steps">
+                <div class="path-step completed">
+                    <span class="step-num">1</span>
+                    <span>场地分析</span>
+                </div>
+                <span class="path-arrow">→</span>
+                <div class="path-step completed">
+                    <span class="step-num">2</span>
+                    <span>体块设计</span>
+                </div>
+                <span class="path-arrow">→</span>
+                <div class="path-step current">
+                    <span class="step-num">3</span>
+                    <span>平面布局</span>
+                </div>
+                <span class="path-arrow">→</span>
+                <div class="path-step pending">
+                    <span class="step-num">4</span>
+                    <span>立面设计</span>
+                </div>
+                <span class="path-arrow">→</span>
+                <div class="path-step pending">
+                    <span class="step-num">5</span>
+                    <span>构造设计</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 必做游戏 -->
+        <h2 class="category-title required">⭐ 必做游戏（8个）</h2>
+        <div class="games-grid">
+            <a href="场地分析系统/index.html" class="game-card required">
+                <span class="card-tag">游戏1</span>
+                <div class="card-icon">🗺️</div>
+                <h3>场地分析系统</h3>
+                <p>分析地形地貌、周边环境与交通条件，确定建筑最佳位置与朝向</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏2平面布局系统/index.html" class="game-card required">
+                <span class="card-tag">游戏2</span>
+                <div class="card-icon">📐</div>
+                <h3>平面布局系统</h3>
+                <p>设计建筑各层平面，确定功能分区、房间尺寸与动线组织</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏3体块设计系统v2.0/index.html" class="game-card required">
+                <span class="card-tag">游戏3</span>
+                <div class="card-icon">🧱</div>
+                <h3>体块设计系统</h3>
+                <p>通过体块组合与切削，理解建筑三维形态的生成逻辑</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏4立面造型系统/index.html" class="game-card required">
+                <span class="card-tag">游戏4</span>
+                <div class="card-icon">🏢</div>
+                <h3>立面造型系统</h3>
+                <p>设计建筑外观造型，学习立面构图、虚实关系与材质搭配</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏8构造设计系统/index.html" class="game-card required">
+                <span class="card-tag">游戏8</span>
+                <div class="card-icon">🔧</div>
+                <h3>构造设计系统</h3>
+                <p>学习建筑各部位的构造做法，理解节点连接与防水保温</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏9碳排放计算系统/index.html" class="game-card required">
+                <span class="card-tag">游戏9</span>
+                <div class="card-icon">🌱</div>
+                <h3>碳排放计算系统</h3>
+                <p>计算建筑设计全生命周期的碳排放，评估绿色建筑指标</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏11效果图生成系统/index.html" class="game-card required">
+                <span class="card-tag">游戏11</span>
+                <div class="card-icon">🎨</div>
+                <h3>效果图生成系统</h3>
+                <p>生成建筑效果图，直观展示设计方案的整体效果</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏12方案汇报系统/index.html" class="game-card required">
+                <span class="card-tag">游戏12</span>
+                <div class="card-icon">📊</div>
+                <h3>方案汇报系统</h3>
+                <p>整理设计思路与成果，练习专业汇报表达与答辩技巧</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+        
+        <!-- 推荐游戏 -->
+        <h2 class="category-title recommended">👍 推荐游戏（2个）</h2>
+        <div class="games-grid">
+            <a href="游戏6建筑性能模拟/index.html" class="game-card recommended">
+                <span class="card-tag">游戏6</span>
+                <div class="card-icon">📊</div>
+                <h3>建筑性能模拟</h3>
+                <p>模拟日照、通风、采光等建筑性能，优化设计方案</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏7方案优化迭代/index.html" class="game-card recommended">
+                <span class="card-tag">游戏7</span>
+                <div class="card-icon">🔄</div>
+                <h3>方案优化迭代</h3>
+                <p>通过参数调整与方案比选，找到最优设计解</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+        
+        <!-- 选做游戏 -->
+        <h2 class="category-title optional">📖 选做游戏（3个）</h2>
+        <div class="games-grid">
+            <a href="游戏5空间体验系统/index.html" class="game-card optional">
+                <span class="card-tag">游戏5</span>
+                <div class="card-icon">🚶</div>
+                <h3>空间体验系统</h3>
+                <p>体验建筑空间尺度感，理解人体工程学与空间感受</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏10室内设计系统/index.html" class="game-card optional">
+                <span class="card-tag">游戏10</span>
+                <div class="card-icon">🛋️</div>
+                <h3>室内设计系统</h3>
+                <p>设计室内空间布局与装修效果，提升人居环境品质</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+        
+        <!-- 构造深化系列 -->
+        <h2 class="category-title structural">🔩 构造深化系列（6个）</h2>
+        <div class="games-grid">
+            <a href="游戏13外墙构造深化/index.html" class="game-card structural">
+                <span class="card-tag">游戏13</span>
+                <div class="card-icon">🧱</div>
+                <h3>外墙构造深化</h3>
+                <p>学习外墙保温、饰面做法与节点构造详图</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏14隔墙与内装修/index.html" class="game-card structural">
+                <span class="card-tag">游戏14</span>
+                <div class="card-icon">🚪</div>
+                <h3>隔墙与内装修</h3>
+                <p>掌握室内隔墙体系与装修构造做法</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏15楼板与地面/index.html" class="game-card structural">
+                <span class="card-tag">游戏15</span>
+                <div class="card-icon">🏠</div>
+                <h3>楼板与地面</h3>
+                <p>学习楼板结构、地面做法与隔声构造</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏16屋顶构造深化/index.html" class="game-card structural">
+                <span class="card-tag">游戏16</span>
+                <div class="card-icon">🏠</div>
+                <h3>屋顶构造深化</h3>
+                <p>掌握平屋顶与坡屋顶的防水、保温、排水构造</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏17门窗构造深化/index.html" class="game-card structural">
+                <span class="card-tag">游戏17</span>
+                <div class="card-icon">🚪</div>
+                <h3>门窗构造深化</h3>
+                <p>学习门窗安装、防水节点与节能构造</p>
+                <span class="arrow">→</span>
+            </a>
+            <a href="游戏18节点构造深化/index.html" class="game-card structural">
+                <span class="card-tag">游戏18</span>
+                <div class="card-icon">🔗</div>
+                <h3>节点构造深化</h3>
+                <p>深入学习建筑关键节点的构造设计与表达</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+        
+        <!-- 页脚 -->
+        <div class="footer">
+            <p class="project-name">🏛️ 建筑课程游戏化教学系统</p>
+            <p>智能建造专业 PBL 教学平台 | 基于游戏化学习的建筑工程教育创新</p>
+            <p style="margin-top: 10px; font-size: 0.85rem;">© 2024 建筑课程游戏化教学系统</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,3476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏场9：碳排放计算系统 - 建筑师成长之路</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1e293b;
+            --bg-card: rgba(30, 41, 59, 0.8);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #10b981;
+            --accent-secondary: #34d399;
+            --accent-tertiary: #06b6d4;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border-color: rgba(148, 163, 184, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #0f172a 50%, #1e1b4b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 顶部导航 */
+        .header {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1920px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .game-badge {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .level-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .level-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .level-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .level-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            border-color: transparent;
+            color: white;
+        }
+
+        .level-btn.completed {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .level-btn.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+        }
+
+        .stat-icon {
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        /* 成就系统 */
+        .achievement-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-btn:hover {
+            background: var(--accent-primary);
+        }
+
+        .achievement-badge {
+            background: var(--warning);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* 主内容区 */
+        .main-container {
+            display: grid;
+            grid-template-columns: 380px 1fr 380px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1920px;
+            margin: 0 auto;
+            min-height: calc(100vh - 80px);
+        }
+
+        @media (max-width: 1400px) {
+            .main-container {
+                grid-template-columns: 320px 1fr 320px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 面板通用样式 */
+        .panel {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .panel-header-icon {
+            font-size: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+        }
+
+        /* 左侧面板 */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* 数据导入卡片 */
+        .import-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+
+        .import-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .import-icon {
+            font-size: 2rem;
+        }
+
+        .import-title {
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .import-source-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .import-source {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .import-source:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .import-source.active {
+            border-color: var(--accent-primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .import-source-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .import-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .import-status.has-data {
+            background: var(--accent-primary);
+        }
+
+        .import-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.75rem;
+            border-radius: 0.3rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .import-btn:hover {
+            background: var(--accent-secondary);
+        }
+
+        .import-btn:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* 表单样式 */
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* 材料选择 */
+        .material-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .material-item {
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .material-item:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .material-item.selected {
+            border-color: var(--accent-primary);
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .material-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .material-cf {
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            margin-top: 0.25rem;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* 中间画布区域 */
+        .canvas-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-tab {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .chart-tab:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .chart-tab.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* 右侧面板 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* 碳排放结果卡片 */
+        .carbon-result-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .carbon-total {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .carbon-total-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .carbon-total-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .carbon-total-unit {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        .carbon-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .carbon-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+        }
+
+        .carbon-item-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .carbon-item-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .carbon-item-value {
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        /* 减排建议卡片 */
+        .suggestion-card {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .suggestion-content {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .suggestion-impact {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+        }
+
+        /* 方案对比 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table td {
+            font-size: 0.9rem;
+        }
+
+        .comparison-table .highlight {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* 关卡内容 */
+        .level-content {
+            display: none;
+        }
+
+        .level-content.active {
+            display: block;
+        }
+
+        /* 教学提示 */
+        .teaching-tip {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .teaching-tip-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .teaching-tip-content {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* 成就弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .modal-content {
+            margin-bottom: 1.5rem;
+        }
+
+        .achievement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+        }
+
+        .achievement-icon {
+            font-size: 2rem;
+        }
+
+        .achievement-info h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .achievement-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* 关卡切换动画 */
+        .level-transition {
+            animation: levelFade 0.5s ease;
+        }
+
+        @keyframes levelFade {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 数值动画 */
+        .number-animate {
+            transition: all 0.3s ease;
+        }
+
+        /* 紧凑表格 */
+        .compact-table {
+            font-size: 0.85rem;
+        }
+
+        .compact-table th,
+        .compact-table td {
+            padding: 0.5rem 0.75rem;
+        }
+
+        /* 标签页内容 */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .level-nav {
+                order: 1;
+            }
+
+            .stats-bar {
+                order: 2;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <span class="game-badge">Phase 1 - Level 9</span>
+                <h1 class="game-title">🌿 碳排放计算系统</h1>
+            </div>
+            
+            <div class="progress-section">
+                <div class="level-nav">
+                    <button class="level-btn active tooltip" data-level="1" data-tooltip="数据导入与基础计算">1</button>
+                    <button class="level-btn locked tooltip" data-level="2" data-tooltip="隐含碳计算">2</button>
+                    <button class="level-btn locked tooltip" data-level="3" data-tooltip="运营碳计算">3</button>
+                    <button class="level-btn locked tooltip" data-level="4" data-tooltip="减排优化设计">4</button>
+                    <button class="level-btn locked tooltip" data-level="5" data-tooltip="综合碳排放评估">5</button>
+                </div>
+                
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span class="stat-icon">🏆</span>
+                        <span class="stat-value" id="score">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value" id="stars">0</span>/5
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-value" id="progress">0%</span>
+                    </div>
+                </div>
+                
+                <button class="achievement-btn" onclick="showAchievements()">
+                    🏅 成就 <span class="achievement-badge" id="achievementCount">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="main-container">
+        <!-- 左侧面板：数据输入 -->
+        <div class="left-panel">
+            <!-- 数据导入卡片 -->
+            <div class="import-card">
+                <div class="import-header">
+                    <span class="import-icon">📥</span>
+                    <span class="import-title">从前置游戏导入数据</span>
+                </div>
+                <div class="import-source-list">
+                    <div class="import-source" id="source-game2">
+                        <div class="import-source-name">
+                            <span class="import-status" id="status-game2"></span>
+                            <span>🎮 游戏2：平面布局</span>
+                        </div>
+                        <button class="import-btn" onclick="importData('game2')">导入</button>
+                    </div>
+                    <div class="import-source" id="source-game3">
+                        <div class="import-source-name">
+                            <span class="import-status" id="status-game3"></span>
+                            <span>🎮 游戏3：体块设计</span>
+                        </div>
+                        <button class="import-btn" onclick="importData('game3')">导入</button>
+                    </div>
+                    <div class="import-source" id="source-game4">
+                        <div class="import-source-name">
+                            <span class="import-status" id="status-game4"></span>
+                            <span>🎮 游戏4：立面造型</span>
+                        </div>
+                        <button class="import-btn" onclick="importData('game4')">导入</button>
+                    </div>
+                    <div class="import-source" id="source-game8">
+                        <div class="import-source-name">
+                            <span class="import-status" id="status-game8"></span>
+                            <span>🎮 游戏8：构造设计</span>
+                        </div>
+                        <button class="import-btn" onclick="importData('game8')">导入</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 项目基本信息 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">📋</span>
+                    <span class="panel-title">项目信息</span>
+                </div>
+                <div class="panel-content">
+                    <div class="form-group">
+                        <label class="form-label">项目名称</label>
+                        <input type="text" class="form-input" id="projectName" placeholder="请输入项目名称" value="绿色低碳办公楼">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">建设地点</label>
+                            <select class="form-select" id="location" onchange="updateClimateZone()">
+                                <option value="北京">北京</option>
+                                <option value="上海">上海</option>
+                                <option value="广州">广州</option>
+                                <option value="哈尔滨">哈尔滨</option>
+                                <option value="成都">成都</option>
+                                <option value="西安">西安</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">气候区</label>
+                            <select class="form-select" id="climateZone">
+                                <option value="寒冷地区">寒冷地区</option>
+                                <option value="夏热冬冷地区">夏热冬冷地区</option>
+                                <option value="夏热冬暖地区">夏热冬暖地区</option>
+                                <option value="温和地区">温和地区</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">建筑功能</label>
+                            <select class="form-select" id="buildingType">
+                                <option value="办公">办公建筑</option>
+                                <option value="住宅">住宅建筑</option>
+                                <option value="商业">商业建筑</option>
+                                <option value="学校">学校建筑</option>
+                                <option value="医院">医院建筑</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">设计使用寿命</label>
+                            <select class="form-select" id="designLife">
+                                <option value="50">50年</option>
+                                <option value="70">70年</option>
+                                <option value="100">100年</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 建筑参数 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">🏢</span>
+                    <span class="panel-title">建筑参数</span>
+                </div>
+                <div class="panel-content">
+                    <div class="form-section-title">📐 体量参数</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">建筑面积 (m²)</label>
+                            <input type="number" class="form-input" id="buildingArea" value="5000" onchange="calculateCarbon()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">建筑层数</label>
+                            <input type="number" class="form-input" id="floors" value="6" onchange="calculateCarbon()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">建筑高度 (m)</label>
+                            <input type="number" class="form-input" id="buildingHeight" value="21" onchange="calculateCarbon()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">层高 (m)</label>
+                            <input type="number" class="form-input" id="floorHeight" value="3.5" onchange="calculateCarbon()">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">🧱 结构参数</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">结构类型</label>
+                            <select class="form-select" id="structureType" onchange="calculateCarbon()">
+                                <option value="框架结构">框架结构</option>
+                                <option value="框架剪力墙">框架剪力墙</option>
+                                <option value="钢结构">钢结构</option>
+                                <option value="木结构">木结构</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">基础类型</label>
+                            <select class="form-select" id="foundationType" onchange="calculateCarbon()">
+                                <option value="独立基础">独立基础</option>
+                                <option value="筏板基础">筏板基础</option>
+                                <option value="桩基础">桩基础</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">🪟 立面参数</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">窗墙比</label>
+                            <input type="number" class="form-input" id="windowRatio" value="0.35" step="0.01" min="0" max="1" onchange="calculateCarbon()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">立面面积 (m²)</label>
+                            <input type="number" class="form-input" id="facadeArea" value="4200" onchange="calculateCarbon()">
+                        </div>
+                    </div>
+
+                    <div class="form-section-title">🌳 场地参数</div>
+                    <div class="form-group">
+                        <label class="form-label">绿化面积 (m²)</label>
+                        <input type="number" class="form-input" id="greenArea" value="800" onchange="calculateCarbon()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 中间画布：数据可视化 -->
+        <div class="canvas-area">
+            <!-- 关卡1：数据导入与基础计算 -->
+            <div class="level-content active" id="level-1">
+                <div class="teaching-tip">
+                    <div class="teaching-tip-header">
+                        <span>📚</span> 教学目标
+                    </div>
+                    <div class="teaching-tip-content">
+                        <strong>本关目标：</strong>学习从前置游戏中导入设计数据，认识建筑全生命周期碳排放的构成，包括隐含碳和运营碳。完成数据导入后，系统将自动计算建筑的初步碳排放量。
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">📊 碳排放构成分析</div>
+                        <div class="chart-tabs">
+                            <button class="chart-tab active" onclick="switchChart('pie')">饼图</button>
+                            <button class="chart-tab" onclick="switchChart('bar')">柱状图</button>
+                            <button class="chart-tab" onclick="switchChart('radar')">雷达图</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="carbonPieChart" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="chart-legend" id="pieLegend"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">📈 全生命周期碳排放趋势</div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="carbonLineChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="completeLevel(1)" style="margin-top: 1rem;">
+                    完成关卡1 - 进入下一步
+                </button>
+            </div>
+
+            <!-- 关卡2：隐含碳计算 -->
+            <div class="level-content" id="level-2">
+                <div class="teaching-tip">
+                    <div class="teaching-tip-header">
+                        <span>📚</span> 教学目标
+                    </div>
+                    <div class="teaching-tip-content">
+                        <strong>本关目标：</strong>深入学习建筑隐含碳的计算方法。隐含碳包括建筑材料生产、运输、施工和拆除阶段的碳排放。通过调整材料方案，观察碳排放的变化。
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">🧱</span>
+                        <span class="panel-title">主要材料用量</span>
+                    </div>
+                    <div class="panel-content">
+                        <table class="comparison-table compact-table">
+                            <thead>
+                                <tr>
+                                    <th>材料名称</th>
+                                    <th>用量 (t)</th>
+                                    <th>碳排放因子</th>
+                                    <th>隐含碳 (tCO₂)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialTable">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 1rem;">
+                    <div class="chart-header">
+                        <div class="chart-title">🏗️ 材料碳排放对比</div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="materialChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 1rem;">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">🔄</span>
+                        <span class="panel-title">低碳材料替代方案</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label class="form-label">选择替代方案</label>
+                            <select class="form-select" id="lowCarbonOption" onchange="applyLowCarbonOption()">
+                                <option value="0">不采用低碳方案</option>
+                                <option value="1">采用部分低碳材料（减少10%）</option>
+                                <option value="2">采用低碳材料（减少20%）</option>
+                                <option value="3">全面低碳改造（减少30%）</option>
+                            </select>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 1rem;">
+                            <div class="progress-fill" id="lowCarbonProgress" style="width: 0%"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+                            <span>常规方案</span>
+                            <span>低碳方案</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="completeLevel(2)" style="margin-top: 1rem;">
+                    完成关卡2 - 进入下一步
+                </button>
+            </div>
+
+            <!-- 关卡3：运营碳计算 -->
+            <div class="level-content" id="level-3">
+                <div class="teaching-tip">
+                    <div class="teaching-tip-header">
+                        <span>📚</span> 教学目标
+                    </div>
+                    <div class="teaching-tip-content">
+                        <strong>本关目标：</strong>学习建筑运营阶段碳排放的计算方法，包括采暖、制冷、照明和设备系统的能耗。了解不同气候区和建筑类型对运营碳的影响。
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">⚡</span>
+                        <span class="panel-title">运营能耗参数</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-section-title">🌡️ 暖通空调系统</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">采暖方式</label>
+                                <select class="form-select" id="heatingType" onchange="calculateCarbon()">
+                                    <option value="市政供热">市政供热</option>
+                                    <option value="燃气锅炉">燃气锅炉</option>
+                                    <option value="空气源热泵">空气源热泵</option>
+                                    <option value="地源热泵">地源热泵</option>
+                                    <option value="电采暖">电采暖</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">制冷方式</label>
+                                <select class="form-select" id="coolingType" onchange="calculateCarbon()">
+                                    <option value="多联机">多联机</option>
+                                    <option value="冷水机组">冷水机组</option>
+                                    <option value="空气源热泵">空气源热泵</option>
+                                    <option value="地源热泵">地源热泵</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">建筑保温等级</label>
+                                <select class="form-select" id="insulationLevel" onchange="calculateCarbon()">
+                                    <option value="低">低标准</option>
+                                    <option value="中" selected>一般标准</option>
+                                    <option value="高">高标准</option>
+                                    <option value="超">超低能耗</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">暖通系统能效比</label>
+                                <input type="number" class="form-input" id="hvacEfficiency" value="3.2" step="0.1" min="1" max="6" onchange="calculateCarbon()">
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">💡 照明与设备</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">照明功率密度 (W/m²)</label>
+                                <input type="number" class="form-input" id="lightingDensity" value="9" onchange="calculateCarbon()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">照明控制方式</label>
+                                <select class="form-select" id="lightingControl" onchange="calculateCarbon()">
+                                    <option value="手动">手动控制</option>
+                                    <option value="定时">定时控制</option>
+                                    <option value="智能" selected>智能控制</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">设备系统类型</label>
+                                <select class="form-select" id="equipmentType" onchange="calculateCarbon()">
+                                    <option value="常规">常规设备</option>
+                                    <option value="节能" selected>节能设备</option>
+                                    <option value="智能">智能节能设备</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">可再生能源比例 (%)</label>
+                                <input type="number" class="form-input" id="renewableRatio" value="15" min="0" max="100" onchange="calculateCarbon()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 1rem;">
+                    <div class="chart-header">
+                        <div class="chart-title">🔌 年度运营能耗构成</div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="operationChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="completeLevel(3)" style="margin-top: 1rem;">
+                    完成关卡3 - 进入下一步
+                </button>
+            </div>
+
+            <!-- 关卡4：减排优化设计 -->
+            <div class="level-content" id="level-4">
+                <div class="teaching-tip">
+                    <div class="teaching-tip-header">
+                        <span>📚</span> 教学目标
+                    </div>
+                    <div class="teaching-tip-content">
+                        <strong>本关目标：</strong>基于前面的分析结果，制定综合减排方案。通过材料优化、被动式设计、设备升级等措施，实现碳减排目标。对比不同方案的减排效果和经济效益。
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">🎯</span>
+                        <span class="panel-title">减排目标设定</span>
+                    </div>
+                    <div class="panel-content">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <span>减排目标：</span>
+                            <input type="range" id="reductionTarget" min="10" max="60" value="30" style="flex: 1;" onchange="updateReductionTarget()">
+                            <span id="targetValue" style="color: var(--accent-primary); font-weight: 600;">30%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="targetProgress" style="width: 50%"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.85rem;">
+                            <span>当前碳排放</span>
+                            <span id="currentEmission">0 tCO₂</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 1rem;">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">⚙️</span>
+                        <span class="panel-title">优化措施选择</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt1" onchange="calculateOptimization()">
+                                    <span>🔧 高强度钢筋</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt2" onchange="calculateOptimization()">
+                                    <span>🏗️ 高性能混凝土</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt3" onchange="calculateOptimization()">
+                                    <span>🌲 绿色木材</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt4" onchange="calculateOptimization()">
+                                    <span>🏠 被动式门窗</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt5" onchange="calculateOptimization()">
+                                    <span>☀️ 光伏发电</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt6" onchange="calculateOptimization()">
+                                    <span>🌿 屋顶绿化</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt7" onchange="calculateOptimization()">
+                                    <span>💡 智能照明</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem; cursor: pointer;">
+                                    <input type="checkbox" id="opt8" onchange="calculateOptimization()">
+                                    <span>🔄 热回收系统</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 1rem;">
+                    <div class="chart-header">
+                        <div class="chart-title">📊 方案对比分析</div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="comparisonChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="completeLevel(4)" style="margin-top: 1rem;">
+                    完成关卡4 - 进入下一步
+                </button>
+            </div>
+
+            <!-- 关卡5：综合碳排放评估 -->
+            <div class="level-content" id="level-5">
+                <div class="teaching-tip">
+                    <div class="teaching-tip-header">
+                        <span>📚</span> 教学目标
+                    </div>
+                    <div class="teaching-tip-content">
+                        <strong>本关目标：</strong>生成完整的建筑全生命周期碳排放评估报告。对比分析本项目与绿色建筑标准的差距，提出改进建议，总结本关学习成果。
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-header-icon">📑</span>
+                        <span class="panel-title">碳排放评估报告</span>
+                    </div>
+                    <div class="panel-content">
+                        <div id="reportContent">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 1rem;">
+                    <div class="chart-header">
+                        <div class="chart-title">🏆 与绿色建筑标准对比</div>
+                        <div class="chart-tabs">
+                            <button class="chart-tab active" onclick="switchGreenStandard('china')">国标GB</button>
+                            <button class="chart-tab" onclick="switchGreenStandard('us')">LEED</button>
+                            <button class="chart-tab" onclick="switchGreenStandard('europe')">欧洲</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="greenStandardChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full" onclick="finishGame()" style="margin-top: 1rem;">
+                    🎉 完成全部关卡 - 查看成就
+                </button>
+            </div>
+        </div>
+
+        <!-- 右侧面板：计算结果与建议 -->
+        <div class="right-panel">
+            <!-- 碳排放汇总 -->
+            <div class="carbon-result-card">
+                <div class="carbon-total">
+                    <div class="carbon-total-label">全生命周期碳排放总量</div>
+                    <div class="carbon-total-value" id="totalCarbon">0</div>
+                    <div class="carbon-total-unit">tCO₂ 当量</div>
+                </div>
+                <div class="carbon-breakdown">
+                    <div class="carbon-item">
+                        <div class="carbon-item-label">
+                            <span class="carbon-item-dot" style="background: #ef4444;"></span>
+                            <span>材料碳</span>
+                        </div>
+                        <span class="carbon-item-value" id="materialCarbon">0 tCO₂</span>
+                    </div>
+                    <div class="carbon-item">
+                        <div class="carbon-item-label">
+                            <span class="carbon-item-dot" style="background: #f97316;"></span>
+                            <span>施工碳</span>
+                        </div>
+                        <span class="carbon-item-value" id="constructionCarbon">0 tCO₂</span>
+                    </div>
+                    <div class="carbon-item">
+                        <div class="carbon-item-label">
+                            <span class="carbon-item-dot" style="background: #eab308;"></span>
+                            <span>运营碳</span>
+                        </div>
+                        <span class="carbon-item-value" id="operationCarbon">0 tCO₂</span>
+                    </div>
+                    <div class="carbon-item">
+                        <div class="carbon-item-label">
+                            <span class="carbon-item-dot" style="background: #22c55e;"></span>
+                            <span>碳汇</span>
+                        </div>
+                        <span class="carbon-item-value" id="carbonSink">-0 tCO₂</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 减排建议 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">💡</span>
+                    <span class="panel-title">节能减排建议</span>
+                </div>
+                <div class="panel-content" id="suggestionsContainer">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 实时碳计算器 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">🧮</span>
+                    <span class="panel-title">快速碳排放计算</span>
+                </div>
+                <div class="panel-content">
+                    <div class="form-group">
+                        <label class="form-label">建筑规模 (m²)</label>
+                        <input type="number" class="form-input" id="quickArea" value="5000" onchange="quickCalculate()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">建筑类型</label>
+                        <select class="form-select" id="quickType" onchange="quickCalculate()">
+                            <option value="0.05">办公建筑 (50 kgCO₂/m²·年)</option>
+                            <option value="0.04">住宅建筑 (40 kgCO₂/m²·年)</option>
+                            <option value="0.06">商业建筑 (60 kgCO₂/m²·年)</option>
+                            <option value="0.03">学校建筑 (30 kgCO₂/m²·年)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">设计寿命 (年)</label>
+                        <input type="number" class="form-input" id="quickLife" value="50" onchange="quickCalculate()">
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; text-align: center; margin-top: 1rem;">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">预估总碳排放</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary);" id="quickResult">0 tCO₂</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 知识卡片 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-header-icon">📖</span>
+                    <span class="panel-title">碳排放知识</span>
+                </div>
+                <div class="panel-content">
+                    <div class="suggestion-card" style="margin-bottom: 0;">
+                        <div class="suggestion-title">🌍 什么是隐含碳？</div>
+                        <div class="suggestion-content">
+                            隐含碳是指建筑材料生产、运输、施工和拆除过程中产生的碳排放，通常占建筑全生命周期的20-40%。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 成就弹窗 -->
+    <div class="modal-overlay" id="achievementModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">🏆</div>
+                <div class="modal-title">恭喜获得成就！</div>
+                <div class="modal-subtitle" id="achievementSubtitle">你已经完成了本关卡的所有任务</div>
+            </div>
+            <div class="modal-content">
+                <div class="achievement-list" id="achievementList">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeAchievementModal()">继续挑战</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // 全局状态
+        // ============================================
+        const state = {
+            currentLevel: 1,
+            completedLevels: [],
+            achievements: [],
+            score: 0,
+            stars: 0,
+            importedData: {
+                game2: null,
+                game3: null,
+                game4: null,
+                game8: null
+            },
+            carbonResults: {
+                material: 0,
+                construction: 0,
+                operation: 0,
+                demolition: 0,
+                carbonSink: 0,
+                total: 0
+            },
+            optimizationOptions: []
+        };
+
+        // ============================================
+        // 碳排放因子数据库 (符合 GB/T 51366-2019)
+        // ============================================
+        const carbonFactors = {
+            // 建筑材料碳排放因子 (kgCO₂/unit)
+            materials: {
+                '混凝土 C30': { factor: 295, unit: 'm³', category: '结构材料' },
+                '混凝土 C40': { factor: 340, unit: 'm³', category: '结构材料' },
+                '钢筋': { factor: 2320, unit: 't', category: '结构材料' },
+                '钢结构': { factor: 2560, unit: 't', category: '结构材料' },
+                '砌体': { factor: 230, unit: 'm³', category: '围护材料' },
+                '加气混凝土': { factor: 180, unit: 'm³', category: '围护材料' },
+                '挤塑聚苯板': { factor: 3100, unit: 't', category: '保温材料' },
+                '岩棉板': { factor: 1450, unit: 't', category: '保温材料' },
+                '玻璃': { factor: 2500, unit: 't', category: '门窗材料' },
+                '铝合金': { factor: 6800, unit: 't', category: '门窗材料' },
+                '木材（本地）': { factor: -400, unit: 't', category: '可再生材料', isSink: true },
+                '木材（进口）': { factor: -300, unit: 't', category: '可再生材料', isSink: true },
+                '绿色混凝土': { factor: 200, unit: 'm³', category: '低碳材料' },
+                '高强度钢筋': { factor: 2100, unit: 't', category: '低碳材料' }
+            },
+            
+            // 能源碳排放因子
+            energy: {
+                '电力（华北）': { factor: 0.884, unit: 'kgCO₂/kWh' },
+                '电力（华东）': { factor: 0.808, unit: 'kgCO₂/kWh' },
+                '电力（华南）': { factor: 0.751, unit: 'kgCO₂/kWh' },
+                '电力（东北）': { factor: 0.938, unit: 'kgCO₂/kWh' },
+                '天然气': { factor: 2.162, unit: 'kgCO₂/m³' },
+                '市政供热': { factor: 0.278, unit: 'kgCO₂/MJ' },
+                '液化气': { factor: 3.108, unit: 'kgCO₂/kg' }
+            },
+            
+            // 运输碳排放因子
+            transport: {
+                '重型货车': { factor: 0.16, unit: 'kgCO₂/t·km' },
+                '轻型货车': { factor: 0.28, unit: 'kgCO₂/t·km' },
+                '铁路': { factor: 0.028, unit: 'kgCO₂/t·km' },
+                '船舶': { factor: 0.016, unit: 'kgCO₂/t·km' }
+            },
+            
+            // 施工机械碳排放因子
+            construction: {
+                '塔吊': { factor: 230, unit: 'kgCO₂/h' },
+                '施工电梯': { factor: 85, unit: 'kgCO₂/h' },
+                '混凝土泵': { factor: 180, unit: 'kgCO₂/h' },
+                '挖掘机': { factor: 150, unit: 'kgCO₂/h' }
+            },
+            
+            // 设备系统效率
+            equipmentEfficiency: {
+                '常规设备': 0.85,
+                '节能设备': 0.90,
+                '智能节能设备': 0.95
+            },
+            
+            // 绿化碳汇 (kgCO₂/m²·年)
+            greenSink: {
+                '草地': 4,
+                '灌木': 8,
+                '乔木': 12,
+                '混合绿化': 10
+            },
+            
+            // 各气候区采暖度日数
+            heatingDegreeDays: {
+                '北京': 2557,
+                '上海': 1965,
+                '广州': 556,
+                '哈尔滨': 4241,
+                '成都': 1560,
+                '西安': 2150
+            },
+            
+            // 各气候区制冷度日数
+            coolingDegreeDays: {
+                '北京': 1203,
+                '上海': 1482,
+                '广州': 2520,
+                '哈尔滨': 592,
+                '成都': 1380,
+                '西安': 1465
+            }
+        };
+
+        // ============================================
+        // 碳排放计算函数
+        // ============================================
+        function calculateMaterialCarbon() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const floors = parseInt(document.getElementById('floors').value) || 6;
+            const height = parseFloat(document.getElementById('buildingHeight').value) || 21;
+            const windowRatio = parseFloat(document.getElementById('windowRatio').value) || 0.35;
+            const facadeArea = parseFloat(document.getElementById('facadeArea').value) || 4200;
+            const structureType = document.getElementById('structureType').value;
+            
+            // 根据面积估算材料用量
+            const totalArea = area * floors;
+            
+            // 混凝土用量 (m³) - 根据结构类型和建筑面积估算
+            let concreteRatio = 0.4; // 基础系数
+            if (structureType === '框架结构') concreteRatio = 0.4;
+            if (structureType === '框架剪力墙') concreteRatio = 0.5;
+            if (structureType === '钢结构') concreteRatio = 0.25;
+            if (structureType === '木结构') concreteRatio = 0.2;
+            
+            const concreteAmount = totalArea * concreteRatio;
+            
+            // 钢筋用量 (t) - 约为混凝土量的3-5%
+            const steelRatio = structureType === '钢结构' ? 0.08 : 0.04;
+            const steelAmount = totalArea * steelRatio / 100 * 1000; // 转换为吨
+            
+            // 砌体/围护材料 (m³)
+            const masonryAmount = totalArea * 0.15;
+            
+            // 保温材料 (t)
+            const insulationAmount = facadeArea * 0.05 / 1000;
+            
+            // 门窗面积 (m²)
+            const windowArea = facadeArea * windowRatio;
+            const doorWindowAmount = windowArea / 1000;
+            
+            // 木材 (可选，用于低碳方案)
+            const woodAmount = structureType === '木结构' ? totalArea * 0.05 : 0;
+            
+            // 计算各类材料碳排放
+            const materialCarbon = {
+                '混凝土 C30': concreteAmount * carbonFactors.materials['混凝土 C30'].factor / 1000,
+                '钢筋': steelAmount * carbonFactors.materials['钢筋'].factor / 1000,
+                '砌体': masonryAmount * carbonFactors.materials['砌体'].factor / 1000,
+                '保温材料': insulationAmount * carbonFactors.materials['挤塑聚苯板'].factor / 1000,
+                '门窗': doorWindowAmount * carbonFactors.materials['玻璃'].factor / 1000,
+                '木材（本地）': woodAmount * Math.abs(carbonFactors.materials['木材（本地）'].factor) / 1000
+            };
+            
+            // 应用低碳材料折扣
+            const lowCarbonOption = parseInt(document.getElementById('lowCarbonOption')?.value || 0);
+            const discount = 1 - (lowCarbonOption * 0.1);
+            
+            let totalMaterial = 0;
+            for (let key in materialCarbon) {
+                if (key !== '木材（本地）') {
+                    materialCarbon[key] *= discount;
+                }
+                totalMaterial += materialCarbon[key];
+            }
+            
+            return {
+                details: materialCarbon,
+                total: totalMaterial
+            };
+        }
+
+        function calculateConstructionCarbon() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const floors = parseInt(document.getElementById('floors').value) || 6;
+            const totalArea = area * floors;
+            
+            // 施工碳排放约为材料碳的5-10%
+            const materialResult = calculateMaterialCarbon();
+            const constructionRatio = 0.08;
+            
+            return materialResult.total * constructionRatio;
+        }
+
+        function calculateOperationCarbon() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const floors = parseInt(document.getElementById('floors').value) || 6;
+            const totalArea = area * floors;
+            const location = document.getElementById('location').value;
+            const insulationLevel = document.getElementById('insulationLevel').value;
+            const heatingType = document.getElementById('heatingType').value;
+            const coolingType = document.getElementById('coolingType').value;
+            const hvacEfficiency = parseFloat(document.getElementById('hvacEfficiency').value) || 3.2;
+            const lightingDensity = parseFloat(document.getElementById('lightingDensity').value) || 9;
+            const lightingControl = document.getElementById('lightingControl').value;
+            const equipmentType = document.getElementById('equipmentType').value;
+            const renewableRatio = parseFloat(document.getElementById('renewableRatio').value) || 0;
+            const designLife = parseInt(document.getElementById('designLife').value) || 50;
+            
+            const hdd = carbonFactors.heatingDegreeDays[location] || 2000;
+            const cdd = carbonFactors.coolingDegreeDays[location] || 1500;
+            
+            // 保温性能修正系数
+            let insulationFactor = 1.0;
+            if (insulationLevel === '低') insulationFactor = 1.3;
+            if (insulationLevel === '中') insulationFactor = 1.0;
+            if (insulationLevel === '高') insulationFactor = 0.75;
+            if (insulationLevel === '超') insulationFactor = 0.5;
+            
+            // 采暖能耗计算 (kWh/m²·年)
+            const heatingIntensity = 0.024 * hdd * insulationFactor / hvacEfficiency;
+            
+            // 制冷能耗计算 (kWh/m²·年)
+            const coolingIntensity = 0.024 * cdd * insulationFactor / hvacEfficiency;
+            
+            // 照明能耗 (kWh/m²·年)
+            let lightingFactor = 1.0;
+            if (lightingControl === '手动') lightingFactor = 1.0;
+            if (lightingControl === '定时') lightingFactor = 0.85;
+            if (lightingControl === '智能') lightingFactor = 0.7;
+            const lightingIntensity = lightingDensity * 8 * 365 / 1000 * lightingFactor;
+            
+            // 设备能耗 (kWh/m²·年)
+            const equipmentEff = carbonFactors.equipmentEfficiency[equipmentType] || 0.85;
+            const equipmentIntensity = 15 / equipmentEff;
+            
+            // 能源碳排放因子
+            let energyFactor = 0.85; // 默认电力因子
+            if (location === '北京') energyFactor = 0.884;
+            if (location === '上海') energyFactor = 0.808;
+            if (location === '广州') energyFactor = 0.751;
+            if (location === '哈尔滨') energyFactor = 0.938;
+            
+            // 考虑可再生能源
+            const renewableCredit = renewableRatio / 100;
+            
+            // 年总能耗碳排放
+            const annualCarbon = (heatingIntensity + coolingIntensity + lightingIntensity + equipmentIntensity) * energyFactor * totalArea / 1000;
+            
+            // 扣除可再生能源
+            const finalAnnualCarbon = annualCarbon * (1 - renewableCredit);
+            
+            // 全生命周期碳排放
+            const lifeCycleCarbon = finalAnnualCarbon * designLife;
+            
+            return {
+                heating: heatingIntensity * totalArea * energyFactor * designLife / 1000,
+                cooling: coolingIntensity * totalArea * energyFactor * designLife / 1000,
+                lighting: lightingIntensity * totalArea * energyFactor * designLife / 1000,
+                equipment: equipmentIntensity * totalArea * energyFactor * designLife / 1000,
+                renewableCredit: annualCarbon * renewableCredit * designLife,
+                total: lifeCycleCarbon
+            };
+        }
+
+        function calculateCarbonSink() {
+            const greenArea = parseFloat(document.getElementById('greenArea').value) || 800;
+            const designLife = parseInt(document.getElementById('designLife').value) || 50;
+            
+            // 绿化碳汇 (混合绿化取10 kgCO₂/m²·年)
+            const annualSink = greenArea * carbonFactors.greenSink['混合绿化'];
+            
+            return annualSink * designLife / 1000; // 转换为吨
+        }
+
+        function calculateDemolitionCarbon() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const floors = parseInt(document.getElementById('floors').value) || 6;
+            const totalArea = area * floors;
+            
+            // 拆除碳排放约为材料碳的2-5%
+            const materialResult = calculateMaterialCarbon();
+            return materialResult.total * 0.03;
+        }
+
+        function calculateCarbon() {
+            const materialResult = calculateMaterialCarbon();
+            const constructionResult = calculateConstructionCarbon();
+            const operationResult = calculateOperationCarbon();
+            const carbonSinkResult = calculateCarbonSink();
+            const demolitionResult = calculateDemolitionCarbon();
+            
+            state.carbonResults = {
+                material: materialResult.total,
+                construction: constructionResult,
+                operation: operationResult.total,
+                demolition: demolitionResult,
+                carbonSink: carbonSinkResult,
+                total: materialResult.total + constructionResult + operationResult.total + demolitionResult - carbonSinkResult
+            };
+            
+            // 更新UI
+            updateCarbonDisplay(materialResult, operationResult);
+            updateMaterialTable(materialResult.details);
+            updateSuggestions();
+            updateCharts();
+            
+            // 更新快速计算
+            quickCalculate();
+            
+            // 保存到localStorage
+            saveGameData();
+        }
+
+        function updateCarbonDisplay(materialResult, operationResult) {
+            document.getElementById('totalCarbon').textContent = Math.round(state.carbonResults.total);
+            document.getElementById('materialCarbon').textContent = Math.round(state.carbonResults.material) + ' tCO₂';
+            document.getElementById('constructionCarbon').textContent = Math.round(state.carbonResults.construction) + ' tCO₂';
+            document.getElementById('operationCarbon').textContent = Math.round(state.carbonResults.operation) + ' tCO₂';
+            document.getElementById('carbonSink').textContent = '-' + Math.round(state.carbonResults.carbonSink) + ' tCO₂';
+            
+            // 更新当前排放显示
+            document.getElementById('currentEmission').textContent = Math.round(state.carbonResults.total) + ' tCO₂';
+        }
+
+        function updateMaterialTable(details) {
+            const tableBody = document.getElementById('materialTable');
+            if (!tableBody) return;
+            
+            let html = '';
+            let totalAmount = 0;
+            
+            // 计算总量
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const floors = parseInt(document.getElementById('floors').value) || 6;
+            const totalArea = area * floors;
+            
+            const materials = [
+                { name: '混凝土 C30', amount: totalArea * 0.4, unit: 'm³', factor: 295 },
+                { name: '钢筋', amount: totalArea * 0.04 / 100 * 1000, unit: 't', factor: 2320 },
+                { name: '砌体', amount: totalArea * 0.15, unit: 'm³', factor: 230 },
+                { name: '保温材料', amount: 2.1, unit: 't', factor: 3100 },
+                { name: '门窗', amount: 4.2, unit: 't', factor: 2500 }
+            ];
+            
+            materials.forEach(mat => {
+                const carbon = (mat.amount * mat.factor / 1000).toFixed(1);
+                html += `<tr>
+                    <td>${mat.name}</td>
+                    <td>${mat.amount.toFixed(1)} ${mat.unit}</td>
+                    <td>${mat.factor}</td>
+                    <td style="color: var(--accent-primary); font-weight: 600;">${carbon}</td>
+                </tr>`;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        // ============================================
+        // 数据导入系统
+        // ============================================
+        function checkAvailableData() {
+            const sources = ['game2', 'game3', 'game4', 'game8'];
+            
+            sources.forEach(source => {
+                const data = localStorage.getItem(`architect_game_${source.replace('game', '')}`);
+                const statusEl = document.getElementById(`status-${source}`);
+                const sourceEl = document.getElementById(`source-${source}`);
+                const btnEl = sourceEl?.querySelector('.import-btn');
+                
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (parsed && Object.keys(parsed).length > 0) {
+                            statusEl?.classList.add('has-data');
+                            state.importedData[source] = parsed;
+                            if (btnEl) btnEl.disabled = false;
+                        }
+                    } catch (e) {
+                        if (btnEl) btnEl.disabled = true;
+                    }
+                } else {
+                    if (btnEl) btnEl.disabled = true;
+                }
+            });
+        }
+
+        function importData(source) {
+            const sourceNum = source.replace('game', '');
+            const data = localStorage.getItem(`architect_game_${sourceNum}`);
+            
+            if (!data) {
+                alert('未找到该游戏的数据，请先完成相应游戏！');
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(data);
+                state.importedData[source] = parsed;
+                
+                // 根据不同游戏类型导入数据
+                switch(source) {
+                    case 'game2':
+                        importGame2Data(parsed);
+                        break;
+                    case 'game3':
+                        importGame3Data(parsed);
+                        break;
+                    case 'game4':
+                        importGame4Data(parsed);
+                        break;
+                    case 'game8':
+                        importGame8Data(parsed);
+                        break;
+                }
+                
+                // 高亮显示已导入
+                const sourceEl = document.getElementById(`source-${source}`);
+                sourceEl?.classList.add('active');
+                
+                // 重新计算碳排放
+                calculateCarbon();
+                
+                // 显示导入成功提示
+                showNotification(`✅ 已成功导入游戏${sourceNum}的数据！`);
+                
+            } catch (e) {
+                console.error('数据导入失败:', e);
+                showNotification('❌ 数据导入失败，请检查数据格式！');
+            }
+        }
+
+        function importGame2Data(data) {
+            // 游戏2：平面布局数据
+            if (data.totalArea) {
+                document.getElementById('buildingArea').value = data.totalArea;
+            }
+            if (data.floorCount) {
+                document.getElementById('floors').value = data.floorCount;
+            }
+            if (data.roomAreas) {
+                // 计算总立面面积（估算）
+                const totalArea = data.totalArea || 5000;
+                const floors = data.floorCount || 6;
+                const estimatedFacade = Math.sqrt(totalArea * floors) * 15;
+                document.getElementById('facadeArea').value = Math.round(estimatedFacade);
+            }
+        }
+
+        function importGame3Data(data) {
+            // 游戏3：体块设计数据
+            if (data.buildingHeight) {
+                document.getElementById('buildingHeight').value = data.buildingHeight;
+            }
+            if (data.floors) {
+                document.getElementById('floors').value = data.floors;
+            }
+            if (data.floorHeight) {
+                document.getElementById('floorHeight').value = data.floorHeight;
+            }
+            if (data.volume) {
+                // 根据体量估算面积
+                const volume = data.volume || 50000;
+                const height = data.buildingHeight || 21;
+                const estimatedArea = volume / height;
+                document.getElementById('buildingArea').value = Math.round(estimatedArea);
+            }
+        }
+
+        function importGame4Data(data) {
+            // 游戏4：立面造型数据
+            if (data.windowRatio) {
+                document.getElementById('windowRatio').value = data.windowRatio;
+            }
+            if (data.facadeArea) {
+                document.getElementById('facadeArea').value = data.facadeArea;
+            }
+            if (data.facadeMaterial) {
+                // 根据立面材料更新碳排放计算
+                const lowCarbonOption = document.getElementById('lowCarbonOption');
+                if (data.facadeMaterial.includes('玻璃') || data.facadeMaterial.includes('幕墙')) {
+                    lowCarbonOption.value = '1';
+                }
+            }
+        }
+
+        function importGame8Data(data) {
+            // 游戏8：构造设计数据
+            if (data.wallConstruction) {
+                const insulationLevel = document.getElementById('insulationLevel');
+                if (data.wallConstruction.insulation) {
+                    if (data.wallConstruction.insulation >= 60) {
+                        insulationLevel.value = '超';
+                    } else if (data.wallConstruction.insulation >= 40) {
+                        insulationLevel.value = '高';
+                    } else if (data.wallConstruction.insulation >= 25) {
+                        insulationLevel.value = '中';
+                    } else {
+                        insulationLevel.value = '低';
+                    }
+                }
+            }
+            if (data.roofConstruction) {
+                // 屋顶构造数据
+            }
+            if (data.floorConstruction) {
+                // 楼板构造数据
+            }
+            if (data.insulationMaterial) {
+                // 保温材料选择
+            }
+        }
+
+        // ============================================
+        // 图表系统 (Canvas 2D)
+        // ============================================
+        const chartColors = {
+            material: '#ef4444',
+            construction: '#f97316',
+            operation: '#eab308',
+            demolition: '#64748b',
+            carbonSink: '#22c55e',
+            heating: '#ef4444',
+            cooling: '#3b82f6',
+            lighting: '#eab308',
+            equipment: '#8b5cf6'
+        };
+
+        function initCharts() {
+            drawPieChart();
+            drawLineChart();
+            drawMaterialChart();
+            drawOperationChart();
+            drawComparisonChart();
+        }
+
+        function drawPieChart() {
+            const canvas = document.getElementById('carbonPieChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const radius = Math.min(rect.width, rect.height) / 2 - 40;
+            
+            const data = [
+                { label: '材料碳', value: state.carbonResults.material, color: chartColors.material },
+                { label: '施工碳', value: state.carbonResults.construction, color: chartColors.construction },
+                { label: '运营碳', value: state.carbonResults.operation, color: chartColors.operation },
+                { label: '拆除碳', value: state.carbonResults.demolition, color: chartColors.demolition },
+                { label: '碳汇', value: -state.carbonResults.carbonSink, color: chartColors.carbonSink }
+            ];
+            
+            const total = data.reduce((sum, item) => sum + Math.abs(item.value), 0);
+            if (total === 0) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText('请先导入数据或输入建筑参数', centerX, centerY);
+                return;
+            }
+            
+            let startAngle = -Math.PI / 2;
+            
+            data.forEach(item => {
+                if (item.value === 0) return;
+                
+                const sliceAngle = (Math.abs(item.value) / total) * 2 * Math.PI;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.closePath();
+                ctx.fillStyle = item.color;
+                ctx.fill();
+                
+                // 标签
+                const midAngle = startAngle + sliceAngle / 2;
+                const labelRadius = radius + 25;
+                const labelX = centerX + Math.cos(midAngle) * labelRadius;
+                const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = '12px Microsoft YaHei';
+                ctx.textAlign = midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5 ? 'right' : 'left';
+                ctx.fillText(`${item.label} ${(Math.abs(item.value) / total * 100).toFixed(1)}%`, labelX, labelY);
+                
+                startAngle += sliceAngle;
+            });
+            
+            // 中心文字
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 24px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText(Math.round(state.carbonResults.total) + '', centerX, centerY - 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText('tCO₂', centerX, centerY + 15);
+            
+            // 更新图例
+            updatePieLegend(data);
+        }
+
+        function updatePieLegend(data) {
+            const legend = document.getElementById('pieLegend');
+            if (!legend) return;
+            
+            let html = '';
+            data.forEach(item => {
+                html += `<div class="legend-item">
+                    <span class="legend-color" style="background: ${item.color};"></span>
+                    <span>${item.label}: ${Math.round(Math.abs(item.value))} tCO₂</span>
+                </div>`;
+            });
+            legend.innerHTML = html;
+        }
+
+        function drawLineChart() {
+            const canvas = document.getElementById('carbonLineChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const padding = { top: 30, right: 30, bottom: 50, left: 60 };
+            const chartWidth = rect.width - padding.left - padding.right;
+            const chartHeight = rect.height - padding.top - padding.bottom;
+            
+            // 全生命周期阶段
+            const stages = ['材料生产', '施工建造', '运营期(10年)', '运营期(30年)', '运营期(50年)', '拆除阶段'];
+            const lifeYears = [0, 0, 10, 30, 50, 51];
+            
+            // 累积碳排放数据
+            const materialCarbon = state.carbonResults.material;
+            const constructionCarbon = state.carbonResults.construction;
+            const annualOperation = state.carbonResults.operation / 50;
+            
+            const cumulativeData = [
+                materialCarbon, // 材料生产
+                materialCarbon + constructionCarbon, // 施工建造
+                materialCarbon + constructionCarbon + annualOperation * 10,
+                materialCarbon + constructionCarbon + annualOperation * 30,
+                materialCarbon + constructionCarbon + annualOperation * 50,
+                materialCarbon + constructionCarbon + annualOperation * 50 + state.carbonResults.demolition - state.carbonResults.carbonSink
+            ];
+            
+            const maxValue = Math.max(...cumulativeData) * 1.1;
+            
+            // 绘制网格
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+                
+                // Y轴标签
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'right';
+                const yLabel = Math.round(maxValue * (1 - i / 5));
+                ctx.fillText(yLabel + '', padding.left - 10, y + 4);
+            }
+            
+            // 绘制折线
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            
+            cumulativeData.forEach((value, index) => {
+                const x = padding.left + (chartWidth / (stages.length - 1)) * index;
+                const y = padding.top + chartHeight * (1 - value / maxValue);
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // 绘制数据点
+            cumulativeData.forEach((value, index) => {
+                const x = padding.left + (chartWidth / (stages.length - 1)) * index;
+                const y = padding.top + chartHeight * (1 - value / maxValue);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#10b981';
+                ctx.fill();
+                ctx.strokeStyle = '#0a0e17';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 数据标签
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.round(value) + '', x, y - 12);
+            });
+            
+            // X轴标签
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            stages.forEach((stage, index) => {
+                const x = padding.left + (chartWidth / (stages.length - 1)) * index;
+                ctx.fillText(stage, x, rect.height - 15);
+            });
+            
+            // 轴标题
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText('建筑全生命周期阶段', rect.width / 2, rect.height - 3);
+            
+            ctx.save();
+            ctx.translate(15, rect.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('累计碳排放量 (tCO₂)', 0, 0);
+            ctx.restore();
+        }
+
+        function drawMaterialChart() {
+            const canvas = document.getElementById('materialChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const padding = { top: 30, right: 30, bottom: 60, left: 80 };
+            const chartWidth = rect.width - padding.left - padding.right;
+            const chartHeight = rect.height - padding.top - padding.bottom;
+            
+            const materials = ['混凝土', '钢筋', '砌体', '保温', '门窗', '其他'];
+            const carbonValues = [
+                state.carbonResults.material * 0.4,
+                state.carbonResults.material * 0.3,
+                state.carbonResults.material * 0.15,
+                state.carbonResults.material * 0.1,
+                state.carbonResults.material * 0.03,
+                state.carbonResults.material * 0.02
+            ];
+            
+            const maxValue = Math.max(...carbonValues, 1);
+            const barWidth = chartWidth / materials.length - 20;
+            const barGap = 20;
+            
+            // Y轴网格
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxValue * (1 - i / 5)) + '', padding.left - 10, y + 4);
+            }
+            
+            // 绘制柱状图
+            materials.forEach((material, index) => {
+                const x = padding.left + (chartWidth / materials.length) * index + barGap / 2;
+                const barHeight = (carbonValues[index] / maxValue) * chartHeight;
+                const y = padding.top + chartHeight - barHeight;
+                
+                // 渐变填充
+                const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
+                gradient.addColorStop(0, '#10b981');
+                gradient.addColorStop(1, '#06b6d4');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+                ctx.fill();
+                
+                // 数据标签
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.round(carbonValues[index]) + '', x + barWidth / 2, y - 8);
+                
+                // X轴标签
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px Microsoft YaHei';
+                ctx.fillText(material, x + barWidth / 2, rect.height - 25);
+            });
+            
+            // 轴标题
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText('建筑材料类别', rect.width / 2, rect.height - 3);
+            
+            ctx.save();
+            ctx.translate(15, rect.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('碳排放量 (tCO₂)', 0, 0);
+            ctx.restore();
+        }
+
+        function drawOperationChart() {
+            const canvas = document.getElementById('operationChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const radius = Math.min(rect.width, rect.height) / 2 - 50;
+            
+            const operationResult = calculateOperationCarbon();
+            
+            const data = [
+                { label: '采暖', value: operationResult.heating, color: '#ef4444' },
+                { label: '制冷', value: operationResult.cooling, color: '#3b82f6' },
+                { label: '照明', value: operationResult.lighting, color: '#eab308' },
+                { label: '设备', value: operationResult.equipment, color: '#8b5cf6' }
+            ];
+            
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            
+            if (total === 0) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText('暂无运营数据', centerX, centerY);
+                return;
+            }
+            
+            let startAngle = -Math.PI / 2;
+            
+            data.forEach(item => {
+                const sliceAngle = (item.value / total) * 2 * Math.PI;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, startAngle + sliceAngle);
+                ctx.closePath();
+                ctx.fillStyle = item.color;
+                ctx.globalAlpha = 0.85;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                // 百分比标签
+                const midAngle = startAngle + sliceAngle / 2;
+                const labelRadius = radius * 0.7;
+                const labelX = centerX + Math.cos(midAngle) * labelRadius;
+                const labelY = centerY + Math.sin(midAngle) * labelRadius;
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText((item.value / total * 100).toFixed(1) + '%', labelX, labelY);
+                
+                startAngle += sliceAngle;
+            });
+            
+            // 中心文字
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 20px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('年度能耗', centerX, centerY - 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText(Math.round(total / 50) + ' t/年', centerX, centerY + 15);
+        }
+
+        function drawComparisonChart() {
+            const canvas = document.getElementById('comparisonChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const padding = { top: 40, right: 30, bottom: 60, left: 60 };
+            const chartWidth = rect.width - padding.left - padding.right;
+            const chartHeight = rect.height - padding.top - padding.bottom;
+            
+            const categories = ['原方案', '优化方案', '绿色建筑\n标准', '同类建筑\n平均'];
+            const baseCarbon = state.carbonResults.total || 5000;
+            const optimizedCarbon = baseCarbon * (1 - calculateOptimizationReduction() / 100);
+            const greenStandard = baseCarbon * 0.7;
+            const averageLevel = baseCarbon * 0.9;
+            
+            const values = [baseCarbon, optimizedCarbon, greenStandard, averageLevel];
+            const maxValue = Math.max(...values) * 1.1;
+            
+            // Y轴网格
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxValue * (1 - i / 5)) + '', padding.left - 10, y + 4);
+            }
+            
+            // 绘制柱状图
+            const barWidth = chartWidth / categories.length - 30;
+            
+            categories.forEach((cat, index) => {
+                const x = padding.left + (chartWidth / categories.length) * index + 15;
+                const barHeight = (values[index] / maxValue) * chartHeight;
+                const y = padding.top + chartHeight - barHeight;
+                
+                // 颜色区分
+                let color;
+                if (index === 0) color = '#ef4444';
+                else if (index === 1) color = '#10b981';
+                else if (index === 2) color = '#06b6d4';
+                else color = '#64748b';
+                
+                const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, shadeColor(color, -30));
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+                ctx.fill();
+                
+                // 数据标签
+                ctx.fillStyle = '#f1f5f9';
+                ctx.font = 'bold 12px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.round(values[index]) + '', x + barWidth / 2, y - 10);
+                
+                // X轴标签
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px Microsoft YaHei';
+                ctx.fillText(cat, x + barWidth / 2, rect.height - 20);
+            });
+            
+            // 图例
+            const legendY = 20;
+            categories.forEach((cat, index) => {
+                const x = padding.left + (chartWidth / categories.length) * index + 15;
+                
+                let color;
+                if (index === 0) color = '#ef4444';
+                else if (index === 1) color = '#10b981';
+                else if (index === 2) color = '#06b6d4';
+                else color = '#64748b';
+                
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x + 8, legendY, 6, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawGreenStandardChart() {
+            const canvas = document.getElementById('greenStandardChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const padding = { top: 30, right: 30, bottom: 50, left: 60 };
+            const chartWidth = rect.width - padding.left - padding.right;
+            const chartHeight = rect.height - padding.top - padding.bottom;
+            
+            const standards = ['材料碳\n强度', '运营碳\n强度', '可再生\n能源', '绿化\n碳汇', '整体\n评级'];
+            
+            // 本项目评分（0-100）
+            const myScore = [
+                75, // 材料碳强度
+                70, // 运营碳强度
+                60, // 可再生能源
+                80, // 绿化碳汇
+                72  // 整体评级
+            ];
+            
+            // 标准要求
+            const standardScore = [80, 80, 30, 30, 60];
+            
+            const maxValue = 100;
+            
+            // Y轴
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(padding.left + chartWidth, y);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'right';
+                ctx.fillText((100 - i * 25) + '', padding.left - 10, y + 4);
+            }
+            
+            const barWidth = chartWidth / standards.length / 2 - 10;
+            
+            standards.forEach((std, index) => {
+                const baseX = padding.left + (chartWidth / standards.length) * index + 20;
+                
+                // 本项目柱
+                const myHeight = (myScore[index] / maxValue) * chartHeight;
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.roundRect(baseX, padding.top + chartHeight - myHeight, barWidth, myHeight, [4, 4, 0, 0]);
+                ctx.fill();
+                
+                // 标准柱
+                const stdHeight = (standardScore[index] / maxValue) * chartHeight;
+                ctx.fillStyle = '#06b6d4';
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.roundRect(baseX + barWidth + 5, padding.top + chartHeight - stdHeight, barWidth, stdHeight, [4, 4, 0, 0]);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                // X轴标签
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText(std, baseX + barWidth, rect.height - 20);
+            });
+            
+            // 图例
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(padding.left + 10, 15, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f1f5f9';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.textAlign = 'left';
+            ctx.fillText('本项目', padding.left + 22, 19);
+            
+            ctx.fillStyle = '#06b6d4';
+            ctx.beginPath();
+            ctx.arc(padding.left + 80, 15, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f1f5f9';
+            ctx.fillText('标准要求', padding.left + 92, 19);
+        }
+
+        function updateCharts() {
+            drawPieChart();
+            drawLineChart();
+            drawMaterialChart();
+            drawOperationChart();
+            drawComparisonChart();
+        }
+
+        function switchChart(type) {
+            const tabs = event.target.parentElement.querySelectorAll('.chart-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 切换图表显示
+            const charts = ['carbonPieChart', 'carbonLineChart'];
+            charts.forEach(chartId => {
+                const canvas = document.getElementById(chartId);
+                if (canvas) {
+                    canvas.style.display = chartId.includes('Pie') === (type === 'pie') ? 'block' : 'none';
+                }
+            });
+            
+            if (type === 'pie') {
+                drawPieChart();
+            } else if (type === 'bar') {
+                drawLineChart();
+            }
+        }
+
+        function switchGreenStandard(standard) {
+            const tabs = event.target.parentElement.querySelectorAll('.chart-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            drawGreenStandardChart();
+        }
+
+        // ============================================
+        // 优化计算系统
+        // ============================================
+        function applyLowCarbonOption() {
+            const option = parseInt(document.getElementById('lowCarbonOption').value);
+            const progress = document.getElementById('lowCarbonProgress');
+            
+            if (progress) {
+                progress.style.width = (option * 33.33) + '%';
+            }
+            
+            calculateCarbon();
+        }
+
+        function calculateOptimizationReduction() {
+            let reduction = 0;
+            
+            const options = [
+                { id: 'opt1', reduction: 5 },  // 高强度钢筋
+                { id: 'opt2', reduction: 8 },  // 高性能混凝土
+                { id: 'opt3', reduction: 10 }, // 绿色木材
+                { id: 'opt4', reduction: 6 },  // 被动式门窗
+                { id: 'opt5', reduction: 15 }, // 光伏发电
+                { id: 'opt6', reduction: 3 },  // 屋顶绿化
+                { id: 'opt7', reduction: 4 },  // 智能照明
+                { id: 'opt8', reduction: 7 }   // 热回收系统
+            ];
+            
+            options.forEach(opt => {
+                const checkbox = document.getElementById(opt.id);
+                if (checkbox && checkbox.checked) {
+                    reduction += opt.reduction;
+                }
+            });
+            
+            return Math.min(reduction, 50);
+        }
+
+        function calculateOptimization() {
+            const reduction = calculateOptimizationReduction();
+            const target = parseInt(document.getElementById('reductionTarget').value);
+            
+            // 更新进度
+            const progress = (reduction / target) * 100;
+            document.getElementById('targetProgress').style.width = Math.min(progress, 100) + '%';
+            
+            calculateCarbon();
+            drawComparisonChart();
+        }
+
+        function updateReductionTarget() {
+            const target = document.getElementById('reductionTarget').value;
+            document.getElementById('targetValue').textContent = target + '%';
+            calculateOptimization();
+        }
+
+        // ============================================
+        // 建议系统
+        // ============================================
+        function updateSuggestions() {
+            const container = document.getElementById('suggestionsContainer');
+            if (!container) return;
+            
+            const suggestions = [];
+            const totalCarbon = state.carbonResults.total;
+            const operationCarbon = state.carbonResults.operation;
+            const materialCarbon = state.carbonResults.material;
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            
+            // 材料优化建议
+            if (materialCarbon / totalCarbon > 0.3) {
+                suggestions.push({
+                    icon: '🧱',
+                    title: '材料低碳化改造',
+                    content: '当前材料碳占比过高，建议采用高强度钢筋、绿色混凝土等低碳材料，可减少10-30%材料碳排放。',
+                    impact: '预估减排: 150-450 tCO₂'
+                });
+            }
+            
+            // 保温优化建议
+            const insulationLevel = document.getElementById('insulationLevel').value;
+            if (insulationLevel === '低' || insulationLevel === '中') {
+                suggestions.push({
+                    icon: '🏠',
+                    title: '提升建筑保温性能',
+                    content: '当前保温等级偏低，建议提高墙体和屋面保温厚度，采用高性能门窗，可显著降低采暖和制冷能耗。',
+                    impact: '预估减排: 200-600 tCO₂'
+                });
+            }
+            
+            // 可再生能源建议
+            const renewableRatio = parseFloat(document.getElementById('renewableRatio').value) || 0;
+            if (renewableRatio < 20) {
+                suggestions.push({
+                    icon: '☀️',
+                    title: '增加可再生能源比例',
+                    content: '建议在屋面安装光伏系统，设置太阳能热水系统，提高建筑自给自足能力。',
+                    impact: '预估减排: 300-800 tCO₂'
+                });
+            }
+            
+            // 绿化碳汇建议
+            const greenArea = parseFloat(document.getElementById('greenArea').value) || 0;
+            if (greenArea / area < 0.2) {
+                suggestions.push({
+                    icon: '🌿',
+                    title: '增加绿化碳汇',
+                    content: '建议增加屋顶绿化和垂直绿化面积，提高场地绿化覆盖率，增强碳汇能力。',
+                    impact: '预估减排: 50-150 tCO₂'
+                });
+            }
+            
+            // 照明节能建议
+            const lightingControl = document.getElementById('lightingControl').value;
+            if (lightingControl !== '智能') {
+                suggestions.push({
+                    icon: '💡',
+                    title: '智能照明升级',
+                    content: '建议采用智能照明控制系统，结合日光感应和人员感应，进一步降低照明能耗。',
+                    impact: '预估减排: 80-150 tCO₂'
+                });
+            }
+            
+            // 生成建议卡片
+            let html = '';
+            suggestions.slice(0, 4).forEach(s => {
+                html += `<div class="suggestion-card">
+                    <div class="suggestion-title">
+                        <span>${s.icon}</span>
+                        <span>${s.title}</span>
+                    </div>
+                    <div class="suggestion-content">${s.content}</div>
+                    <span class="suggestion-impact">${s.impact}</span>
+                </div>`;
+            });
+            
+            if (suggestions.length === 0) {
+                html = `<div class="suggestion-card" style="border-color: #10b981;">
+                    <div class="suggestion-title" style="color: #10b981;">
+                        <span>✅</span>
+                        <span>表现优秀</span>
+                    </div>
+                    <div class="suggestion-content">您的建筑设计方案已经具备良好的低碳性能，继续保持！</div>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // 快速计算器
+        // ============================================
+        function quickCalculate() {
+            const area = parseFloat(document.getElementById('quickArea').value) || 5000;
+            const rate = parseFloat(document.getElementById('quickType').value) || 0.05;
+            const life = parseInt(document.getElementById('quickLife').value) || 50;
+            
+            // 隐含碳估算（约15-25 kgCO₂/m²）
+            const embodiedCarbon = area * 20;
+            
+            // 运营碳估算
+            const operationCarbon = area * rate * life * 1000; // 转换为kg再除1000
+            
+            const total = embodiedCarbon + operationCarbon;
+            
+            document.getElementById('quickResult').textContent = Math.round(total / 1000) + ' tCO₂';
+        }
+
+        // ============================================
+        // 关卡系统
+        // ============================================
+        function switchLevel(level) {
+            if (level > 1 && !state.completedLevels.includes(level - 1)) {
+                showNotification('请先完成前一关卡！');
+                return;
+            }
+            
+            state.currentLevel = level;
+            
+            // 更新关卡按钮状态
+            document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                btn.classList.remove('active');
+                if (index + 1 === level) {
+                    btn.classList.add('active');
+                }
+                if (state.completedLevels.includes(index + 1)) {
+                    btn.classList.add('completed');
+                }
+                if (index + 1 > level && !state.completedLevels.includes(index)) {
+                    btn.classList.add('locked');
+                }
+            });
+            
+            // 切换关卡内容
+            document.querySelectorAll('.level-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`level-${level}`)?.classList.add('active');
+            
+            // 重新绘制图表
+            setTimeout(() => {
+                updateCharts();
+            }, 100);
+        }
+
+        function completeLevel(level) {
+            if (!state.completedLevels.includes(level)) {
+                state.completedLevels.push(level);
+                
+                // 计算得分
+                const levelScore = level * 100;
+                const levelStars = Math.min(3, Math.ceil(state.carbonResults.total / 2000));
+                
+                state.score += levelScore;
+                state.stars += levelStars;
+                
+                // 更新UI
+                document.getElementById('score').textContent = state.score;
+                document.getElementById('stars').textContent = state.stars;
+                document.getElementById('progress').textContent = Math.round((state.completedLevels.length / 5) * 100) + '%';
+                
+                // 更新成就
+                checkAchievements();
+                
+                // 保存进度
+                saveGameData();
+                
+                // 显示成就弹窗
+                showLevelCompletion(level, levelScore, levelStars);
+                
+                // 解锁下一关
+                const nextBtn = document.querySelector(`.level-btn[data-level="${level + 1}"]`);
+                if (nextBtn) {
+                    nextBtn.classList.remove('locked');
+                }
+            }
+            
+            // 自动切换到下一关
+            if (level < 5) {
+                setTimeout(() => {
+                    switchLevel(level + 1);
+                }, 1500);
+            }
+        }
+
+        function showLevelCompletion(level, score, stars) {
+            const achievementSubtitle = document.getElementById('achievementSubtitle');
+            const achievementList = document.getElementById('achievementList');
+            
+            achievementSubtitle.textContent = `恭喜完成关卡${level}！获得 ${score} 积分和 ${stars} 颗星！`;
+            
+            // 生成星星
+            let starsHtml = '';
+            for (let i = 0; i < 5; i++) {
+                starsHtml += `<span style="font-size: 1.5rem; color: ${i < stars ? '#f59e0b' : '#64748b'};">★</span>`;
+            }
+            
+            achievementList.innerHTML = `
+                <div class="achievement-item">
+                    <div class="achievement-icon">🏆</div>
+                    <div class="achievement-info">
+                        <h4>关卡${level}完成！</h4>
+                        <p>${starsHtml}</p>
+                        <p style="color: var(--accent-primary);">+${score} 积分</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('achievementModal').classList.add('active');
+        }
+
+        function finishGame() {
+            state.score += 500; // 通关奖励
+            
+            document.getElementById('score').textContent = state.score;
+            
+            // 生成最终报告
+            generateFinalReport();
+            
+            // 检查终极成就
+            checkFinalAchievements();
+            
+            saveGameData();
+            
+            // 显示完成弹窗
+            const achievementSubtitle = document.getElementById('achievementSubtitle');
+            const achievementList = document.getElementById('achievementList');
+            
+            achievementSubtitle.textContent = '恭喜你完成了碳排放计算系统的全部关卡！';
+            achievementList.innerHTML = `
+                <div class="achievement-item">
+                    <div class="achievement-icon">🎉</div>
+                    <div class="achievement-info">
+                        <h4>碳排放计算大师</h4>
+                        <p>完成全部5个关卡</p>
+                    </div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">🌿</div>
+                    <div class="achievement-info">
+                        <h4>绿色建筑设计师</h4>
+                        <p>累计减排超过 ${Math.round(state.carbonResults.total * 0.3)} tCO₂</p>
+                    </div>
+                </div>
+                <div class="achievement-item">
+                    <div class="achievement-icon">💯</div>
+                    <div class="achievement-info">
+                        <h4>最终得分</h4>
+                        <p>${state.score} 积分 | ${state.stars} 颗星</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('achievementModal').classList.add('active');
+        }
+
+        function closeAchievementModal() {
+            document.getElementById('achievementModal').classList.remove('active');
+        }
+
+        // ============================================
+        // 成就系统
+        // ============================================
+        function checkAchievements() {
+            const newAchievements = [];
+            
+            // 首次导入数据
+            if (Object.values(state.importedData).some(d => d !== null)) {
+                if (!state.achievements.includes('first_import')) {
+                    state.achievements.push('first_import');
+                    newAchievements.push({
+                        icon: '📥',
+                        title: '数据连接',
+                        desc: '首次从前置游戏导入数据'
+                    });
+                }
+            }
+            
+            // 完成第一个关卡
+            if (state.completedLevels.length === 1 && !state.achievements.includes('level1_complete')) {
+                state.achievements.push('level1_complete');
+                newAchievements.push({
+                    icon: '🏠',
+                    title: '入门设计师',
+                    desc: '完成第1关'
+                });
+            }
+            
+            // 低碳方案应用
+            const lowCarbonOption = parseInt(document.getElementById('lowCarbonOption')?.value || 0);
+            if (lowCarbonOption >= 2 && !state.achievements.includes('low_carbon')) {
+                state.achievements.push('low_carbon');
+                newAchievements.push({
+                    icon: '🌱',
+                    title: '低碳先锋',
+                    desc: '采用低碳材料方案'
+                });
+            }
+            
+            // 更新成就数量
+            document.getElementById('achievementCount').textContent = state.achievements.length;
+            
+            return newAchievements;
+        }
+
+        function checkFinalAchievements() {
+            if (!state.achievements.includes('carbon_master')) {
+                state.achievements.push('carbon_master');
+            }
+            
+            // 减排达人
+            if (calculateOptimizationReduction() >= 30) {
+                if (!state.achievements.includes('reduction_expert')) {
+                    state.achievements.push('reduction_expert');
+                }
+            }
+            
+            // 全数据导入
+            if (Object.values(state.importedData).every(d => d !== null)) {
+                if (!state.achievements.includes('full_import')) {
+                    state.achievements.push('full_import');
+                }
+            }
+            
+            document.getElementById('achievementCount').textContent = state.achievements.length;
+        }
+
+        function showAchievements() {
+            const achievementList = document.getElementById('achievementList');
+            const achievementSubtitle = document.getElementById('achievementSubtitle');
+            
+            achievementSubtitle.textContent = `已获得 ${state.achievements.length} 个成就`;
+            
+            const allAchievements = [
+                { id: 'first_import', icon: '📥', title: '数据连接', desc: '首次从前置游戏导入数据' },
+                { id: 'level1_complete', icon: '🏠', title: '入门设计师', desc: '完成第1关' },
+                { id: 'level2_complete', icon: '🧱', title: '材料专家', desc: '完成第2关' },
+                { id: 'level3_complete', icon: '⚡', title: '能耗分析师', desc: '完成第3关' },
+                { id: 'level4_complete', icon: '🎯', title: '优化设计师', desc: '完成第4关' },
+                { id: 'low_carbon', icon: '🌱', title: '低碳先锋', desc: '采用低碳材料方案' },
+                { id: 'reduction_expert', icon: '💚', title: '减排达人', desc: '减排方案效果达到30%以上' },
+                { id: 'full_import', icon: '🔗', title: '完整链接', desc: '从所有前置游戏导入数据' },
+                { id: 'carbon_master', icon: '🏆', title: '碳排放大师', desc: '完成全部关卡' }
+            ];
+            
+            let html = '';
+            allAchievements.forEach(ach => {
+                const unlocked = state.achievements.includes(ach.id);
+                html += `<div class="achievement-item" style="opacity: ${unlocked ? 1 : 0.5};">
+                    <div class="achievement-icon">${unlocked ? ach.icon : '🔒'}</div>
+                    <div class="achievement-info">
+                        <h4>${ach.title}</h4>
+                        <p>${ach.desc}</p>
+                    </div>
+                </div>`;
+            });
+            
+            achievementList.innerHTML = html;
+            
+            document.getElementById('achievementModal').classList.add('active');
+        }
+
+        // ============================================
+        // 最终报告生成
+        // ============================================
+        function generateFinalReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent) return;
+            
+            const area = parseFloat(document.getElementById('buildingArea').value) || 5000;
+            const location = document.getElementById('location').value;
+            const buildingType = document.getElementById('buildingType').value;
+            const designLife = document.getElementById('designLife').value;
+            
+            const materialCarbon = state.carbonResults.material;
+            const constructionCarbon = state.carbonResults.construction;
+            const operationCarbon = state.carbonResults.operation;
+            const demolitionCarbon = state.carbonResults.demolition;
+            const carbonSink = state.carbonResults.carbonSink;
+            const totalCarbon = state.carbonResults.total;
+            
+            const unitCarbon = totalCarbon / area;
+            const greenRatio = (carbonSink / totalCarbon * 100).toFixed(1);
+            const reductionRatio = calculateOptimizationReduction();
+            
+            const reportHtml = `
+                <div style="line-height: 1.8;">
+                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📋 项目概况</h4>
+                    <table class="comparison-table" style="margin-bottom: 1.5rem;">
+                        <tr><td><strong>项目名称</strong></td><td>${document.getElementById('projectName').value}</td></tr>
+                        <tr><td><strong>建设地点</strong></td><td>${location}</td></tr>
+                        <tr><td><strong>建筑类型</strong></td><td>${buildingType}</td></tr>
+                        <tr><td><strong>建筑面积</strong></td><td>${area} m²</td></tr>
+                        <tr><td><strong>设计寿命</strong></td><td>${designLife} 年</td></tr>
+                    </table>
+                    
+                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📊 碳排放构成</h4>
+                    <table class="comparison-table" style="margin-bottom: 1.5rem;">
+                        <tr><td><strong>材料碳排放</strong></td><td class="highlight">${Math.round(materialCarbon)} tCO₂</td><td>${(materialCarbon / totalCarbon * 100).toFixed(1)}%</td></tr>
+                        <tr><td><strong>施工碳排放</strong></td><td class="highlight">${Math.round(constructionCarbon)} tCO₂</td><td>${(constructionCarbon / totalCarbon * 100).toFixed(1)}%</td></tr>
+                        <tr><td><strong>运营碳排放</strong></td><td class="highlight">${Math.round(operationCarbon)} tCO₂</td><td>${(operationCarbon / totalCarbon * 100).toFixed(1)}%</td></tr>
+                        <tr><td><strong>拆除碳排放</strong></td><td class="highlight">${Math.round(demolitionCarbon)} tCO₂</td><td>${(demolitionCarbon / totalCarbon * 100).toFixed(1)}%</td></tr>
+                        <tr><td><strong>碳汇抵扣</strong></td><td style="color: #22c55e;">-${Math.round(carbonSink)} tCO₂</td><td>-${greenRatio}%</td></tr>
+                        <tr style="background: rgba(16, 185, 129, 0.1);"><td><strong>全生命周期总计</strong></td><td class="highlight" style="font-size: 1.2rem;">${Math.round(totalCarbon)} tCO₂</td><td>100%</td></tr>
+                    </table>
+                    
+                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">📈 碳排放强度</h4>
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>单位面积碳排放</span>
+                            <span class="highlight">${unitCarbon.toFixed(2)} kgCO₂/m²·年</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                            <span>优化后减排比例</span>
+                            <span style="color: #22c55e;">${reductionRatio}%</span>
+                        </div>
+                    </div>
+                    
+                    <h4 style="color: var(--accent-primary); margin-bottom: 1rem;">🎯 综合评价</h4>
+                    <div style="background: ${unitCarbon < 40 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; padding: 1rem; border-radius: 0.5rem; border-left: 3px solid ${unitCarbon < 40 ? '#22c55e' : '#f59e0b'};">
+                        <p style="margin: 0;">
+                            ${unitCarbon < 35 ? '🏆 优秀：您的建筑设计达到了绿色建筑三星标准的碳排放要求。' : 
+                              unitCarbon < 45 ? '⭐ 良好：您的建筑设计达到了绿色建筑二星标准的碳排放要求。' :
+                              unitCarbon < 60 ? '📊 合格：您的建筑设计基本达到绿色建筑一星标准的碳排放要求。' :
+                              '⚠️ 需改进：建议进一步优化设计方案，降低碳排放。'}
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            reportContent.innerHTML = reportHtml;
+        }
+
+        // ============================================
+        // 数据保存与加载
+        // ============================================
+        function saveGameData() {
+            const data = {
+                currentLevel: state.currentLevel,
+                completedLevels: state.completedLevels,
+                achievements: state.achievements,
+                score: state.score,
+                stars: state.stars,
+                importedData: state.importedData,
+                carbonResults: state.carbonResults,
+                projectInfo: {
+                    projectName: document.getElementById('projectName').value,
+                    location: document.getElementById('location').value,
+                    climateZone: document.getElementById('climateZone').value,
+                    buildingType: document.getElementById('buildingType').value,
+                    designLife: document.getElementById('designLife').value
+                },
+                buildingParams: {
+                    buildingArea: document.getElementById('buildingArea').value,
+                    floors: document.getElementById('floors').value,
+                    buildingHeight: document.getElementById('buildingHeight').value,
+                    floorHeight: document.getElementById('floorHeight').value,
+                    structureType: document.getElementById('structureType').value,
+                    foundationType: document.getElementById('foundationType').value,
+                    windowRatio: document.getElementById('windowRatio').value,
+                    facadeArea: document.getElementById('facadeArea').value,
+                    greenArea: document.getElementById('greenArea').value
+                },
+                operationParams: {
+                    heatingType: document.getElementById('heatingType').value,
+                    coolingType: document.getElementById('coolingType').value,
+                    insulationLevel: document.getElementById('insulationLevel').value,
+                    hvacEfficiency: document.getElementById('hvacEfficiency').value,
+                    lightingDensity: document.getElementById('lightingDensity').value,
+                    lightingControl: document.getElementById('lightingControl').value,
+                    equipmentType: document.getElementById('equipmentType').value,
+                    renewableRatio: document.getElementById('renewableRatio').value
+                }
+            };
+            
+            localStorage.setItem('architect_game_9', JSON.stringify(data));
+        }
+
+        function loadGameData() {
+            const saved = localStorage.getItem('architect_game_9');
+            
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    
+                    state.currentLevel = data.currentLevel || 1;
+                    state.completedLevels = data.completedLevels || [];
+                    state.achievements = data.achievements || [];
+                    state.score = data.score || 0;
+                    state.stars = data.stars || 0;
+                    state.importedData = data.importedData || { game2: null, game3: null, game4: null, game8: null };
+                    state.carbonResults = data.carbonResults || { material: 0, construction: 0, operation: 0, demolition: 0, carbonSink: 0, total: 0 };
+                    
+                    // 恢复项目信息
+                    if (data.projectInfo) {
+                        document.getElementById('projectName').value = data.projectInfo.projectName || '';
+                        document.getElementById('location').value = data.projectInfo.location || '北京';
+                        document.getElementById('climateZone').value = data.projectInfo.climateZone || '寒冷地区';
+                        document.getElementById('buildingType').value = data.projectInfo.buildingType || '办公';
+                        document.getElementById('designLife').value = data.projectInfo.designLife || '50';
+                    }
+                    
+                    // 恢复建筑参数
+                    if (data.buildingParams) {
+                        document.getElementById('buildingArea').value = data.buildingParams.buildingArea || 5000;
+                        document.getElementById('floors').value = data.buildingParams.floors || 6;
+                        document.getElementById('buildingHeight').value = data.buildingParams.buildingHeight || 21;
+                        document.getElementById('floorHeight').value = data.buildingParams.floorHeight || 3.5;
+                        document.getElementById('structureType').value = data.buildingParams.structureType || '框架结构';
+                        document.getElementById('foundationType').value = data.buildingParams.foundationType || '独立基础';
+                        document.getElementById('windowRatio').value = data.buildingParams.windowRatio || 0.35;
+                        document.getElementById('facadeArea').value = data.buildingParams.facadeArea || 4200;
+                        document.getElementById('greenArea').value = data.buildingParams.greenArea || 800;
+                    }
+                    
+                    // 恢复运营参数
+                    if (data.operationParams) {
+                        document.getElementById('heatingType').value = data.operationParams.heatingType || '市政供热';
+                        document.getElementById('coolingType').value = data.operationParams.coolingType || '多联机';
+                        document.getElementById('insulationLevel').value = data.operationParams.insulationLevel || '中';
+                        document.getElementById('hvacEfficiency').value = data.operationParams.hvacEfficiency || 3.2;
+                        document.getElementById('lightingDensity').value = data.operationParams.lightingDensity || 9;
+                        document.getElementById('lightingControl').value = data.operationParams.lightingControl || '智能';
+                        document.getElementById('equipmentType').value = data.operationParams.equipmentType || '节能';
+                        document.getElementById('renewableRatio').value = data.operationParams.renewableRatio || 15;
+                    }
+                    
+                    // 更新UI
+                    document.getElementById('score').textContent = state.score;
+                    document.getElementById('stars').textContent = state.stars;
+                    document.getElementById('progress').textContent = Math.round((state.completedLevels.length / 5) * 100) + '%';
+                    document.getElementById('achievementCount').textContent = state.achievements.length;
+                    
+                    // 更新关卡按钮状态
+                    document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                        if (state.completedLevels.includes(index + 1)) {
+                            btn.classList.add('completed');
+                        }
+                        if (index + 1 > state.currentLevel && !state.completedLevels.includes(index)) {
+                            btn.classList.add('locked');
+                        }
+                    });
+                    
+                    return true;
+                } catch (e) {
+                    console.error('加载游戏数据失败:', e);
+                }
+            }
+            
+            return false;
+        }
+
+        // ============================================
+        // 通知系统
+        // ============================================
+        function showNotification(message) {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: rgba(30, 41, 59, 0.95);
+                border: 1px solid var(--accent-primary);
+                border-radius: 0.5rem;
+                color: var(--text-primary);
+                font-size: 0.9rem;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // ============================================
+        // 工具函数
+        // ============================================
+        function shadeColor(color, percent) {
+            let R = parseInt(color.substring(1, 3), 16);
+            let G = parseInt(color.substring(3, 5), 16);
+            let B = parseInt(color.substring(5, 7), 16);
+
+            R = parseInt(R * (100 + percent) / 100);
+            G = parseInt(G * (100 + percent) / 100);
+            B = parseInt(B * (100 + percent) / 100);
+
+            R = (R < 255) ? R : 255;
+            G = (G < 255) ? G : 255;
+            B = (B < 255) ? B : 255;
+
+            const RR = ((R.toString(16).length === 1) ? '0' + R.toString(16) : R.toString(16));
+            const GG = ((G.toString(16).length === 1) ? '0' + G.toString(16) : G.toString(16));
+            const BB = ((B.toString(16).length === 1) ? '0' + B.toString(16) : B.toString(16));
+
+            return '#' + RR + GG + BB;
+        }
+
+        function updateClimateZone() {
+            const location = document.getElementById('location').value;
+            const climateZoneMap = {
+                '北京': '寒冷地区',
+                '哈尔滨': '寒冷地区',
+                '西安': '寒冷地区',
+                '上海': '夏热冬冷地区',
+                '成都': '夏热冬冷地区',
+                '广州': '夏热冬暖地区'
+            };
+            
+            document.getElementById('climateZone').value = climateZoneMap[location] || '寒冷地区';
+        }
+
+        // ============================================
+        // 初始化
+        // ============================================
+        function init() {
+            // 添加CSS动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 尝试加载已保存的数据
+            const loaded = loadGameData();
+            
+            // 检查可用的导入数据源
+            checkAvailableData();
+            
+            // 设置关卡按钮点击事件
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const level = parseInt(btn.dataset.level);
+                    switchLevel(level);
+                });
+            });
+            
+            // 初始化图表
+            setTimeout(() => {
+                initCharts();
+                calculateCarbon();
+            }, 100);
+            
+            // 窗口大小变化时重新绘制图表
+            window.addEventListener('resize', () => {
+                setTimeout(updateCharts, 100);
+            });
+            
+            // 定期自动保存
+            setInterval(saveGameData, 30000);
+            
+            console.log('🏗️ 游戏9：碳排放计算系统已初始化');
+            console.log('📊 请从左侧面板导入前置游戏数据或手动输入建筑参数');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

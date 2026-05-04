@@ -1,0 +1,3218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏10:室内设计系统 - 建筑师成长之路</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2D5A4A;
+            --primary-light: #3D7A6A;
+            --primary-dark: #1D3A2A;
+            --secondary: #C4A77D;
+            --accent: #E8B86D;
+            --bg-dark: #1a1f2e;
+            --bg-medium: #232b3e;
+            --bg-light: #2d3748;
+            --bg-lighter: #3d4a5c;
+            --text-light: #e8e6e3;
+            --text-muted: #a0aec0;
+            --success: #48bb78;
+            --warning: #ecc94b;
+            --danger: #fc8181;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .game-badge {
+            background: var(--accent);
+            color: var(--bg-dark);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .game-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .game-title i {
+            font-size: 28px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .level-badge {
+            background: var(--bg-light);
+            padding: 8px 20px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--secondary);
+        }
+
+        .level-badge .star {
+            color: var(--accent);
+        }
+
+        .progress-bar {
+            width: 150px;
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--accent));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            height: calc(100vh - 70px);
+        }
+
+        /* Left Sidebar - Tools */
+        .left-sidebar {
+            background: var(--bg-medium);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+        }
+
+        .tool-section-title {
+            font-size: 13px;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-lighter);
+            border-color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            border-color: var(--accent);
+        }
+
+        .tool-btn i {
+            width: 20px;
+            text-align: center;
+            color: var(--secondary);
+        }
+
+        .tool-btn.active i {
+            color: var(--accent);
+        }
+
+        /* Furniture Grid */
+        .furniture-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .furniture-item {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .furniture-item:hover {
+            border-color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(232, 184, 109, 0.2);
+        }
+
+        .furniture-item i {
+            font-size: 24px;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .furniture-item span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .furniture-category {
+            margin-bottom: 15px;
+        }
+
+        .category-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .category-title:hover {
+            color: var(--accent);
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            background: var(--bg-dark);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-toolbar {
+            background: var(--bg-medium);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .canvas-tools {
+            display: flex;
+            gap: 10px;
+        }
+
+        .canvas-tool {
+            padding: 8px 15px;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .canvas-tool:hover, .canvas-tool.active {
+            background: var(--primary);
+            border-color: var(--accent);
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .view-btn:hover, .view-btn.active {
+            background: var(--primary);
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #designCanvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+
+        /* 3D View Container */
+        .view-3d-container {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view-3d-container.active {
+            display: block;
+        }
+
+        #view3d {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0E0E0 100%);
+        }
+
+        /* Right Sidebar - Info */
+        .right-sidebar {
+            background: var(--bg-medium);
+            border-left: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .info-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-card-title {
+            font-size: 14px;
+            color: var(--secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-info {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .level-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .level-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            padding: 10px;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .task-item.completed .task-checkbox {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        /* Property Panel */
+        .property-group {
+            margin-bottom: 15px;
+        }
+
+        .property-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .property-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-light);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+
+        .color-swatch.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(232, 184, 109, 0.5);
+        }
+
+        .material-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .material-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .material-item:hover {
+            background: var(--bg-lighter);
+        }
+
+        .material-item.selected {
+            border: 1px solid var(--accent);
+        }
+
+        .material-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background-size: cover;
+        }
+
+        .material-info {
+            flex: 1;
+        }
+
+        .material-name {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .material-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(45, 90, 74, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: var(--bg-light);
+            color: var(--text-light);
+            border: 1px solid var(--border);
+        }
+
+        .action-btn.secondary:hover {
+            background: var(--bg-lighter);
+        }
+
+        .action-btn.accent {
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            color: var(--bg-dark);
+        }
+
+        .action-btn.accent:hover {
+            box-shadow: 0 4px 15px rgba(232, 184, 109, 0.4);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-medium);
+            border-radius: var(--radius);
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--danger);
+        }
+
+        /* Level Select */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .level-card {
+            background: var(--bg-light);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .level-card.completed {
+            border-color: var(--success);
+        }
+
+        .level-card.current {
+            border-color: var(--accent);
+            background: var(--bg-lighter);
+        }
+
+        .level-number {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .level-card.completed .level-number {
+            background: var(--success);
+        }
+
+        .level-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .level-card-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Style Presets */
+        .style-presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .style-preset {
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .style-preset:hover {
+            border-color: var(--accent);
+        }
+
+        .style-preset.active {
+            border-color: var(--accent);
+        }
+
+        .style-preset.modern {
+            background: linear-gradient(135deg, #2d3436, #636e72);
+        }
+
+        .style-preset.nordic {
+            background: linear-gradient(135deg, #dfe6e9, #b2bec3);
+            color: #2d3436;
+        }
+
+        .style-preset.industrial {
+            background: linear-gradient(135deg, #474949, #2c2c2c);
+        }
+
+        .style-preset.japanese {
+            background: linear-gradient(135deg, #f5f5f5, #d4c4b0);
+            color: #5d4e37;
+        }
+
+        .style-preset.chinese {
+            background: linear-gradient(135deg, #8B0000, #2d0000);
+        }
+
+        /* Light Controls */
+        .light-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .light-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .light-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .light-value {
+            font-size: 12px;
+            color: var(--text-muted);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Lamp Types */
+        .lamp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .lamp-item {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lamp-item:hover {
+            border-color: var(--accent);
+        }
+
+        .lamp-item i {
+            font-size: 24px;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+
+        .lamp-item span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Saved Plans */
+        .saved-plans {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .plan-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+        }
+
+        .plan-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plan-name {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .plan-date {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .plan-action {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .plan-action.edit {
+            background: var(--primary);
+            color: white;
+        }
+
+        .plan-action.delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        .plan-action.export {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        /* Mini Map */
+        .mini-map {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 180px;
+            height: 140px;
+            background: rgba(255,255,255,0.95);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .mini-map-header {
+            background: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mini-map canvas {
+            width: 100%;
+            height: calc(100% - 25px);
+        }
+
+        /* Coordinates Display */
+        .coords-display {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Grid Background */
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(45, 90, 74, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(45, 90, 74, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-lighter);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Report Preview */
+        .report-preview {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: var(--radius);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .report-title {
+            font-size: 24px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .report-section {
+            margin-bottom: 25px;
+        }
+
+        .report-section-title {
+            font-size: 16px;
+            color: var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .report-table th, .report-table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .report-table th {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            z-index: 1001;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: var(--success);
+        }
+
+        .notification.success i {
+            color: var(--success);
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 250px 1fr 280px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-sidebar, .right-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <span class="game-badge">游戏 10/12</span>
+            <h1 class="game-title">
+                <i class="fas fa-home"></i>
+                室内设计系统
+            </h1>
+        </div>
+        <div class="header-right">
+            <div class="level-badge">
+                <i class="fas fa-layer-group"></i>
+                <span id="currentLevelName">关卡1: 平面布局基础</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="levelProgress" style="width: 20%"></div>
+                </div>
+            </div>
+            <button class="canvas-tool" onclick="openLevelSelect()">
+                <i class="fas fa-list"></i> 选择关卡
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar - Tools -->
+        <aside class="left-sidebar">
+            <div class="tool-section">
+                <div class="tool-section-title">
+                    <i class="fas fa-drafting-compass"></i> 设计工具
+                </div>
+                <button class="tool-btn active" data-tool="select" onclick="setTool('select')">
+                    <i class="fas fa-mouse-pointer"></i> 选择工具
+                </button>
+                <button class="tool-btn" data-tool="move" onclick="setTool('move')">
+                    <i class="fas fa-arrows-alt"></i> 移动工具
+                </button>
+                <button class="tool-btn" data-tool="wall" onclick="setTool('wall')">
+                    <i class="fas fa-vector-square"></i> 墙体绘制
+                </button>
+                <button class="tool-btn" data-tool="door" onclick="setTool('door')">
+                    <i class="fas fa-door-open"></i> 门洞设计
+                </button>
+                <button class="tool-btn" data-tool="window" onclick="setTool('window')">
+                    <i class="fas fa-window-maximize"></i> 窗户设计
+                </button>
+                <button class="tool-btn" data-tool="measure" onclick="setTool('measure')">
+                    <i class="fas fa-ruler"></i> 尺寸标注
+                </button>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">
+                    <i class="fas fa-couch"></i> 家具库
+                </div>
+                
+                <div class="furniture-category">
+                    <div class="category-title" onclick="toggleCategory('living')">
+                        <i class="fas fa-chevron-down"></i> 客厅家具
+                    </div>
+                    <div class="furniture-grid" id="living-furniture">
+                        <div class="furniture-item" draggable="true" data-type="sofa">
+                            <i class="fas fa-couch"></i>
+                            <span>沙发</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="coffeeTable">
+                            <i class="fas fa-table"></i>
+                            <span>茶几</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="tvStand">
+                            <i class="fas fa-tv"></i>
+                            <span>电视柜</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="sideboard">
+                            <i class="fas fa-utensils"></i>
+                            <span>餐边柜</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="furniture-category">
+                    <div class="category-title" onclick="toggleCategory('bedroom')">
+                        <i class="fas fa-chevron-down"></i> 卧室家具
+                    </div>
+                    <div class="furniture-grid" id="bedroom-furniture" style="display:none;">
+                        <div class="furniture-item" draggable="true" data-type="bed">
+                            <i class="fas fa-bed"></i>
+                            <span>床</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="wardrobe">
+                            <i class="fas fa-door-closed"></i>
+                            <span>衣柜</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="nightstand">
+                            <i class="fas fa-table-tennis"></i>
+                            <span>床头柜</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="dresser">
+                            <i class="fas faMirror"></i>
+                            <span>梳妆台</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="furniture-category">
+                    <div class="category-title" onclick="toggleCategory('study')">
+                        <i class="fas fa-chevron-down"></i> 书房家具
+                    </div>
+                    <div class="furniture-grid" id="study-furniture" style="display:none;">
+                        <div class="furniture-item" draggable="true" data-type="desk">
+                            <i class="fas fa-desktop"></i>
+                            <span>书桌</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="bookshelf">
+                            <i class="fas fa-book"></i>
+                            <span>书柜</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="chair">
+                            <i class="fas fa-chair"></i>
+                            <span>办公椅</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="lamp">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>台灯</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="furniture-category">
+                    <div class="category-title" onclick="toggleCategory('kitchen')">
+                        <i class="fas fa-chevron-down"></i> 厨房家具
+                    </div>
+                    <div class="furniture-grid" id="kitchen-furniture" style="display:none;">
+                        <div class="furniture-item" draggable="true" data-type="cabinet">
+                            <i class="fas fa-utensils"></i>
+                            <span>橱柜</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="island">
+                            <i class="fas fa-border-all"></i>
+                            <span>岛台</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="diningTable">
+                            <i class="fas fa-chair"></i>
+                            <span>餐桌</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="diningChair">
+                            <i class="fas fa-chair"></i>
+                            <span>餐椅</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="furniture-category">
+                    <div class="category-title" onclick="toggleCategory('bathroom')">
+                        <i class="fas fa-chevron-down"></i> 卫生间家具
+                    </div>
+                    <div class="furniture-grid" id="bathroom-furniture" style="display:none;">
+                        <div class="furniture-item" draggable="true" data-type="toilet">
+                            <i class="fas fa-toilet"></i>
+                            <span>马桶</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="sink">
+                            <i class="fas fa-hand-holding-water"></i>
+                            <span>洗手台</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="shower">
+                            <i class="fas fa-shower"></i>
+                            <span>淋浴房</span>
+                        </div>
+                        <div class="furniture-item" draggable="true" data-type="bathtub">
+                            <i class="fas fa-bath"></i>
+                            <span>浴缸</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">
+                    <i class="fas fa-palette"></i> 色彩搭配
+                </div>
+                <div class="color-picker-group">
+                    <div class="color-swatch active" style="background:#f5f5f5;" data-color="#f5f5f5" title="白色"></div>
+                    <div class="color-swatch" style="background:#e8e4e1;" data-color="#e8e4e1" title="米白"></div>
+                    <div class="color-swatch" style="background:#d4c4b0;" data-color="#d4c4b0" title="淡黄"></div>
+                    <div class="color-swatch" style="background:#a8d5ba;" data-color="#a8d5ba" title="薄荷绿"></div>
+                    <div class="color-swatch" style="background:#b8d4e8;" data-color="#b8d4e8" title="天空蓝"></div>
+                    <div class="color-swatch" style="background:#f0e6d3;" data-color="#f0e6d3" title="奶油"></div>
+                    <div class="color-swatch" style="background:#c9b8a8;" data-color="#c9b8a8" title="奶茶"></div>
+                    <div class="color-swatch" style="background:#8b9a8b;" data-color="#8b9a8b" title="灰绿"></div>
+                    <div class="color-swatch" style="background:#d4a5a5;" data-color="#d4a5a5" title="脏粉"></div>
+                    <div class="color-swatch" style="background:#2d3436;" data-color="#2d3436" title="深灰"></div>
+                </div>
+                <button class="action-btn secondary" onclick="openStylePresets()">
+                    <i class="fas fa-magic"></i> 风格预设
+                </button>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">
+                    <i class="fas fa-layer-group"></i> 材料系统
+                </div>
+                <button class="tool-btn" onclick="openMaterialPanel('floor')">
+                    <i class="fas fa-th-large"></i> 地面材料
+                </button>
+                <button class="tool-btn" onclick="openMaterialPanel('wall')">
+                    <i class="fas fa-border-all"></i> 墙面材料
+                </button>
+                <button class="tool-btn" onclick="openMaterialPanel('ceiling')">
+                    <i class="fas fa-square"></i> 顶面材料
+                </button>
+            </div>
+
+            <div class="tool-section">
+                <div class="tool-section-title">
+                    <i class="fas fa-lightbulb"></i> 灯光设计
+                </div>
+                <div class="lamp-grid">
+                    <div class="lamp-item" draggable="true" data-lamp="ceiling">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>吊灯</span>
+                    </div>
+                    <div class="lamp-item" draggable="true" data-lamp="spotlight">
+                        <i class="fas fa-bullseye"></i>
+                        <span>射灯</span>
+                    </div>
+                    <div class="lamp-item" draggable="true" data-lamp="strip">
+                        <i class="fas fa-grip-lines"></i>
+                        <span>灯带</span>
+                    </div>
+                    <div class="lamp-item" draggable="true" data-lamp="floorLamp">
+                        <i class="fas fa-torah"></i>
+                        <span>落地灯</span>
+                    </div>
+                    <div class="lamp-item" draggable="true" data-lamp="tableLamp">
+                        <i class="fas fa-lamp"></i>
+                        <span>台灯</span>
+                    </div>
+                    <div class="lamp-item" draggable="true" data-lamp="wallLamp">
+                        <i class="fas fa-image"></i>
+                        <span>壁灯</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Area -->
+        <main class="canvas-area">
+            <div class="canvas-toolbar">
+                <div class="canvas-tools">
+                    <button class="canvas-tool" onclick="newPlan()">
+                        <i class="fas fa-plus"></i> 新建
+                    </button>
+                    <button class="canvas-tool" onclick="savePlan()">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                    <button class="canvas-tool" onclick="openImport()">
+                        <i class="fas fa-upload"></i> 导入
+                    </button>
+                    <button class="canvas-tool" onclick="exportPlan()">
+                        <i class="fas fa-download"></i> 导出
+                    </button>
+                    <button class="canvas-tool" onclick="undoAction()">
+                        <i class="fas fa-undo"></i> 撤销
+                    </button>
+                    <button class="canvas-tool" onclick="redoAction()">
+                        <i class="fas fa-redo"></i> 重做
+                    </button>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn active" onclick="setView('2d')">
+                        <i class="fas fa-th"></i> 2D视图
+                    </button>
+                    <button class="view-btn" onclick="setView('3d')">
+                        <i class="fas fa-cube"></i> 3D视图
+                    </button>
+                    <button class="view-btn" onclick="setView('3dWalk')">
+                        <i class="fas fa-user"></i> 漫游
+                    </button>
+                    <button class="view-btn" onclick="zoomIn()">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="view-btn" onclick="zoomOut()">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="view-btn" onclick="resetView()">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <div class="grid-bg"></div>
+                <canvas id="designCanvas" width="800" height="600"></canvas>
+                <div class="view-3d-container" id="view3dContainer">
+                    <canvas id="view3d"></canvas>
+                </div>
+                <div class="mini-map">
+                    <div class="mini-map-header">
+                        <span>缩略图</span>
+                        <i class="fas fa-expand-arrows-alt"></i>
+                    </div>
+                    <canvas id="miniMap"></canvas>
+                </div>
+                <div class="coords-display" id="coordsDisplay">
+                    X: 0, Y: 0 | 缩放: 100%
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar - Info -->
+        <aside class="right-sidebar">
+            <!-- Level Info -->
+            <div class="level-info" id="levelInfo">
+                <div class="level-title" id="levelTitle">关卡1: 平面布局基础</div>
+                <div class="level-subtitle" id="levelSubtitle">学习目标: 掌握基本的房间划分和布局方法</div>
+            </div>
+
+            <!-- Tasks -->
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-tasks"></i> 任务清单
+                </div>
+                <ul class="task-list" id="taskList">
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                        <span>导入户型图或自己绘制一个简单户型</span>
+                    </li>
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                        <span>划分客厅、卧室、卫生间、厨房等功能区域</span>
+                    </li>
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                        <span>设置各房间的合理尺寸</span>
+                    </li>
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                        <span>设计门洞和窗户位置</span>
+                    </li>
+                    <li class="task-item" onclick="toggleTask(this)">
+                        <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                        <span>生成平面布局报告</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Selected Item Properties -->
+            <div class="info-card" id="propertyPanel" style="display:none;">
+                <div class="info-card-title">
+                    <i class="fas fa-sliders-h"></i> 属性设置
+                </div>
+                <div class="property-group">
+                    <label class="property-label">名称</label>
+                    <input type="text" class="property-input" id="propName">
+                </div>
+                <div class="property-group">
+                    <label class="property-label">尺寸 (cm)</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <input type="number" class="property-input" id="propWidth" placeholder="宽度">
+                        <input type="number" class="property-input" id="propHeight" placeholder="高度">
+                    </div>
+                </div>
+                <div class="property-group">
+                    <label class="property-label">旋转角度</label>
+                    <input type="range" class="light-slider" id="propRotation" min="0" max="360" value="0">
+                    <span class="light-value" id="rotationValue">0°</span>
+                </div>
+                <div class="property-group">
+                    <label class="property-label">颜色</label>
+                    <div class="color-picker-group" style="grid-template-columns:repeat(5,1fr);">
+                        <div class="color-swatch" style="background:#8B4513;" data-color="#8B4513"></div>
+                        <div class="color-swatch" style="background:#D2691E;" data-color="#D2691E"></div>
+                        <div class="color-swatch" style="background:#F5DEB3;" data-color="#F5DEB3"></div>
+                        <div class="color-swatch" style="background:#696969;" data-color="#696969"></div>
+                        <div class="color-swatch" style="background:#2F4F4F;" data-color="#2F4F4F"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Light Controls -->
+            <div class="info-card" id="lightPanel" style="display:none;">
+                <div class="info-card-title">
+                    <i class="fas fa-lightbulb"></i> 灯光控制
+                </div>
+                <div class="light-control">
+                    <span style="font-size:12px;">色温</span>
+                    <input type="range" class="light-slider" id="colorTemp" min="2700" max="6500" value="4000">
+                    <span class="light-value" id="tempValue">4000K</span>
+                </div>
+                <div class="light-control">
+                    <span style="font-size:12px;">亮度</span>
+                    <input type="range" class="light-slider" id="brightness" min="0" max="100" value="80">
+                    <span class="light-value" id="brightnessValue">80%</span>
+                </div>
+                <button class="action-btn secondary" onclick="toggleLight()">
+                    <i class="fas fa-power-off"></i> 开关灯
+                </button>
+            </div>
+
+            <!-- Material List -->
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-list"></i> 材料清单
+                </div>
+                <div class="material-list" id="materialList">
+                    <div class="material-item">
+                        <div class="material-preview" style="background:linear-gradient(135deg,#d4a574,#c49464);"></div>
+                        <div class="material-info">
+                            <div class="material-name">实木地板</div>
+                            <div class="material-desc">20㎡ | ¥3200</div>
+                        </div>
+                    </div>
+                    <div class="material-item">
+                        <div class="material-preview" style="background:linear-gradient(135deg,#f5f5f5,#e0e0e0);"></div>
+                        <div class="material-info">
+                            <div class="material-name">乳胶漆</div>
+                            <div class="material-desc">45㎡ | ¥900</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="action-btn secondary" onclick="exportMaterialList()">
+                    <i class="fas fa-file-export"></i> 导出清单
+                </button>
+            </div>
+
+            <!-- Saved Plans -->
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-folder-open"></i> 我的方案
+                </div>
+                <div class="saved-plans" id="savedPlans">
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>暂无保存的方案</p>
+                    </div>
+                </div>
+                <button class="action-btn primary" onclick="generateReport()">
+                    <i class="fas fa-file-alt"></i> 生成报告
+                </button>
+            </div>
+
+            <!-- Design Tips -->
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-lightbulb"></i> 设计建议
+                </div>
+                <div id="designTips" style="font-size:13px;line-height:1.6;color:var(--text-muted);">
+                    <p style="margin-bottom:10px;">💡 客厅是家庭活动的中心，建议沙发占客厅面积的25%-35%。</p>
+                    <p>💡 电视中心点的高度建议在90-110cm之间，观看距离为屏幕对角线的2-3倍。</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Level Select Modal -->
+    <div class="modal-overlay" id="levelModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">选择关卡</h2>
+                <button class="modal-close" onclick="closeModal('levelModal')">&times;</button>
+            </div>
+            <div class="level-grid">
+                <div class="level-card current" onclick="selectLevel(1)">
+                    <div class="level-number">1</div>
+                    <div class="level-card-title">平面布局基础</div>
+                    <div class="level-card-desc">掌握房间划分和布局</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(2)">
+                    <div class="level-number">2</div>
+                    <div class="level-card-title">客厅空间设计</div>
+                    <div class="level-card-desc">家具布置和配色</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(3)">
+                    <div class="level-number">3</div>
+                    <div class="level-card-title">卧室空间设计</div>
+                    <div class="level-card-desc">舒适度和私密性</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(4)">
+                    <div class="level-number">4</div>
+                    <div class="level-card-title">厨房空间设计</div>
+                    <div class="level-card-desc">功能和动线设计</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(5)">
+                    <div class="level-number">5</div>
+                    <div class="level-card-title">全屋方案整合</div>
+                    <div class="level-card-desc">综合运用全部知识</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Style Presets Modal -->
+    <div class="modal-overlay" id="styleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">风格预设</h2>
+                <button class="modal-close" onclick="closeModal('styleModal')">&times;</button>
+            </div>
+            <div class="style-presets">
+                <div class="style-preset modern active" onclick="selectStyle('modern')">
+                    <i class="fas fa-couch" style="font-size:32px;margin-bottom:10px;"></i>
+                    <div style="font-weight:600;">现代简约</div>
+                    <div style="font-size:11px;opacity:0.8;">Simple & Modern</div>
+                </div>
+                <div class="style-preset nordic" onclick="selectStyle('nordic')">
+                    <i class="fas fa-leaf" style="font-size:32px;margin-bottom:10px;"></i>
+                    <div style="font-weight:600;">北欧风格</div>
+                    <div style="font-size:11px;opacity:0.7;">Nordic Style</div>
+                </div>
+                <div class="style-preset industrial" onclick="selectStyle('industrial')">
+                    <i class="fas fa-industry" style="font-size:32px;margin-bottom:10px;"></i>
+                    <div style="font-weight:600;">工业风</div>
+                    <div style="font-size:11px;opacity:0.7;">Industrial Style</div>
+                </div>
+                <div class="style-preset japanese" onclick="selectStyle('japanese')">
+                    <i class="fas fa-spa" style="font-size:32px;margin-bottom:10px;"></i>
+                    <div style="font-weight:600;">日式风格</div>
+                    <div style="font-size:11px;opacity:0.7;">Japanese Style</div>
+                </div>
+                <div class="style-preset chinese" onclick="selectStyle('chinese')">
+                    <i class="fas fa-gopuram" style="font-size:32px;margin-bottom:10px;"></i>
+                    <div style="font-weight:600;">中式风格</div>
+                    <div style="font-size:11px;opacity:0.7;">Chinese Style</div>
+                </div>
+            </div>
+            <div style="margin-top:20px;">
+                <h4 style="margin-bottom:10px;color:var(--secondary);">配色方案</h4>
+                <div id="styleColors" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+                    <!-- Dynamic colors based on style -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Panel Modal -->
+    <div class="modal-overlay" id="materialModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="materialModalTitle">地面材料</h2>
+                <button class="modal-close" onclick="closeModal('materialModal')">&times;</button>
+            </div>
+            <div id="materialPanelContent">
+                <!-- Dynamic material content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">导入户型图</h2>
+                <button class="modal-close" onclick="closeModal('importModal')">&times;</button>
+            </div>
+            <div style="text-align:center;padding:40px;">
+                <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:40px;cursor:pointer;" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-cloud-upload-alt" style="font-size:48px;color:var(--secondary);margin-bottom:15px;"></i>
+                    <p style="margin-bottom:10px;">拖拽文件到此处，或点击选择</p>
+                    <p style="font-size:12px;color:var(--text-muted);">支持 JSON、PNG、JPG 格式</p>
+                </div>
+                <input type="file" id="fileInput" style="display:none;" accept=".json,.png,.jpg,.jpeg" onchange="handleFileSelect(event)">
+            </div>
+            <div style="margin-top:20px;">
+                <h4 style="margin-bottom:10px;color:var(--secondary);">或使用预设户型</h4>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                    <button class="action-btn secondary" onclick="loadPreset('oneBedroom')">一室一厅</button>
+                    <button class="action-btn secondary" onclick="loadPreset('twoBedroom')">两室一厅</button>
+                    <button class="action-btn secondary" onclick="loadPreset('threeBedroom')">三室两厅</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal" style="max-width:800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">设计方案报告</h2>
+                <button class="modal-close" onclick="closeModal('reportModal')">&times;</button>
+            </div>
+            <div class="report-preview" id="reportContent">
+                <!-- Dynamic report content -->
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px;">
+                <button class="action-btn primary" onclick="downloadReport()">
+                    <i class="fas fa-download"></i> 下载报告
+                </button>
+                <button class="action-btn secondary" onclick="closeModal('reportModal')">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">操作成功</span>
+    </div>
+
+    <script>
+        // ==================== Game State ====================
+        const gameState = {
+            currentLevel: 1,
+            currentTool: 'select',
+            currentView: '2d',
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            selectedObject: null,
+            plan: {
+                name: '新方案',
+                created: new Date().toISOString(),
+                rooms: [],
+                furniture: [],
+                walls: [],
+                doors: [],
+                windows: [],
+                lights: [],
+                colors: {
+                    wall: '#f5f5f5',
+                    floor: '#d4a574',
+                    style: 'modern'
+                },
+                materials: {
+                    floor: 'wood',
+                    wall: 'paint',
+                    ceiling: 'gypsum'
+                }
+            },
+            history: [],
+            historyIndex: -1,
+            lightOn: true,
+            colorTemperature: 4000,
+            brightness: 80,
+            levels: [
+                {
+                    id: 1,
+                    title: '平面布局基础',
+                    subtitle: '学习目标: 掌握基本的房间划分和布局方法',
+                    tasks: [
+                        '导入户型图或自己绘制一个简单户型',
+                        '划分客厅、卧室、卫生间、厨房等功能区域',
+                        '设置各房间的合理尺寸',
+                        '设计门洞和窗户位置',
+                        '生成平面布局报告'
+                    ]
+                },
+                {
+                    id: 2,
+                    title: '客厅空间设计',
+                    subtitle: '学习目标: 学习客厅家具布置和配色方法',
+                    tasks: [
+                        '布置沙发、茶几、电视柜、餐边柜',
+                        '选择墙面颜色和地面材料',
+                        '添加主灯和氛围灯',
+                        '调整家具位置和角度',
+                        '生成客厅设计方案'
+                    ]
+                },
+                {
+                    id: 3,
+                    title: '卧室空间设计',
+                    subtitle: '学习目标: 学习卧室的舒适度和私密性设计',
+                    tasks: [
+                        '布置床、衣柜、床头柜、梳妆台',
+                        '选择柔和的墙面颜色和地面材料',
+                        '添加床头灯和夜灯',
+                        '设计窗帘和软装',
+                        '生成卧室设计方案'
+                    ]
+                },
+                {
+                    id: 4,
+                    title: '厨房空间设计',
+                    subtitle: '学习目标: 学习厨房的功能性和动线设计',
+                    tasks: [
+                        '布置橱柜、岛台、餐桌、餐椅',
+                        '设计操作台面高度和深度',
+                        '选择易清洁的地面材料',
+                        '设计照明方案（操作灯、镜前灯）',
+                        '生成厨房设计方案'
+                    ]
+                },
+                {
+                    id: 5,
+                    title: '全屋方案整合',
+                    subtitle: '学习目标: 综合运用室内设计知识，完成全屋方案设计',
+                    tasks: [
+                        '设计所有房间的家具布置',
+                        '统一全屋配色风格',
+                        '规划全屋照明系统',
+                        '导出材料清单和预算',
+                        '生成全屋设计方案报告'
+                    ]
+                }
+            ],
+            savedPlans: []
+        };
+
+        // ==================== Canvas Setup ====================
+        const canvas = document.getElementById('designCanvas');
+        const ctx = canvas.getContext('2d');
+        const miniMap = document.getElementById('miniMap');
+        const miniCtx = miniMap.getContext('2d');
+
+        // Initialize
+        function init() {
+            loadFromStorage();
+            setupEventListeners();
+            drawCanvas();
+            drawMiniMap();
+            updateLevelInfo();
+            loadSavedPlans();
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            canvas.addEventListener('mousedown', handleCanvasMouseDown);
+            canvas.addEventListener('mousemove', handleCanvasMouseMove);
+            canvas.addEventListener('mouseup', handleCanvasMouseUp);
+            canvas.addEventListener('wheel', handleCanvasWheel);
+            
+            // Color swatches
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.addEventListener('click', function() {
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+                    gameState.plan.colors.wall = this.dataset.color;
+                    drawCanvas();
+                    saveToStorage();
+                });
+            });
+
+            // Property inputs
+            document.getElementById('propWidth').addEventListener('change', updateSelectedObject);
+            document.getElementById('propHeight').addEventListener('change', updateSelectedObject);
+            document.getElementById('propRotation').addEventListener('input', function() {
+                document.getElementById('rotationValue').textContent = this.value + '°';
+                updateSelectedObject();
+            });
+
+            // Light controls
+            document.getElementById('colorTemp').addEventListener('input', function() {
+                document.getElementById('tempValue').textContent = this.value + 'K';
+                gameState.colorTemperature = parseInt(this.value);
+                drawCanvas();
+            });
+
+            document.getElementById('brightness').addEventListener('input', function() {
+                document.getElementById('brightnessValue').textContent = this.value + '%';
+                gameState.brightness = parseInt(this.value);
+                drawCanvas();
+            });
+        }
+
+        // ==================== Drawing Functions ====================
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 0.5;
+            const gridSize = 20;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw rooms
+            gameState.plan.rooms.forEach(room => {
+                drawRoom(room);
+            });
+
+            // Draw walls
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            gameState.plan.walls.forEach(wall => {
+                ctx.moveTo(wall.x1, wall.y1);
+                ctx.lineTo(wall.x2, wall.y2);
+            });
+            ctx.stroke();
+
+            // Draw doors
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            gameState.plan.doors.forEach(door => {
+                drawDoor(door);
+            });
+
+            // Draw windows
+            ctx.strokeStyle = '#87CEEB';
+            ctx.lineWidth = 6;
+            ctx.fillStyle = '#87CEEB';
+            gameState.plan.windows.forEach(window => {
+                ctx.fillRect(window.x, window.y, window.width, window.height);
+            });
+
+            // Draw furniture
+            gameState.plan.furniture.forEach(item => {
+                drawFurniture(item);
+            });
+
+            // Draw lights
+            gameState.plan.lights.forEach(light => {
+                drawLight(light);
+            });
+
+            // Draw selected object
+            if (gameState.selectedObject) {
+                drawSelection(gameState.selectedObject);
+            }
+        }
+
+        function drawRoom(room) {
+            // Room fill
+            ctx.fillStyle = gameState.plan.colors.wall + '40';
+            ctx.fillRect(room.x, room.y, room.width, room.height);
+
+            // Room border
+            ctx.strokeStyle = '#cccccc';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(room.x, room.y, room.width, room.height);
+            ctx.setLineDash([]);
+
+            // Room label
+            ctx.fillStyle = '#666666';
+            ctx.font = '14px Noto Sans SC';
+            ctx.textAlign = 'center';
+            ctx.fillText(room.name, room.x + room.width/2, room.y + room.height/2);
+        }
+
+        function drawFurniture(item) {
+            ctx.save();
+            ctx.translate(item.x + item.width/2, item.y + item.height/2);
+            ctx.rotate(item.rotation * Math.PI / 180);
+
+            // Furniture body
+            ctx.fillStyle = item.color || '#8B4513';
+            ctx.fillRect(-item.width/2, -item.height/2, item.width, item.height);
+
+            // Furniture border
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-item.width/2, -item.height/2, item.width, item.height);
+
+            // Furniture icon based on type
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px Font Awesome';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const icons = {
+                sofa: '\uf6b4',
+                bed: '\uf236',
+                table: '\uf0c8',
+                chair: '\uf5a5',
+                desk: '\uf26c',
+                wardrobe: '\uf2a2',
+                tvStand: '\uf26c',
+                bookshelf: '\uf02d'
+            };
+            if (icons[item.type]) {
+                ctx.fillText(icons[item.type], 0, 0);
+            }
+
+            ctx.restore();
+        }
+
+        function drawDoor(door) {
+            ctx.save();
+            ctx.translate(door.x, door.y);
+            
+            // Door arc
+            ctx.beginPath();
+            ctx.arc(0, 0, door.width, 0, Math.PI/2);
+            ctx.stroke();
+
+            // Door line
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(door.width, 0);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawLight(light) {
+            if (!gameState.lightOn) return;
+
+            const gradient = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.radius);
+            const tempColor = getColorTemperature(gameState.colorTemperature);
+            gradient.addColorStop(0, tempColor + '60');
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Light icon
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(light.x, light.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawSelection(obj) {
+            ctx.strokeStyle = '#2D5A4A';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(obj.x - 2, obj.y - 2, obj.width + 4, obj.height + 4);
+            ctx.setLineDash([]);
+
+            // Resize handles
+            const handles = [
+                { x: obj.x - 4, y: obj.y - 4 },
+                { x: obj.x + obj.width - 4, y: obj.y - 4 },
+                { x: obj.x - 4, y: obj.y + obj.height - 4 },
+                { x: obj.x + obj.width - 4, y: obj.y + obj.height - 4 }
+            ];
+            
+            ctx.fillStyle = '#2D5A4A';
+            handles.forEach(h => {
+                ctx.fillRect(h.x, h.y, 8, 8);
+            });
+        }
+
+        function drawMiniMap() {
+            miniCtx.clearRect(0, 0, miniMap.width, miniMap.height);
+            
+            // Scale factor
+            const scale = 0.2;
+            
+            // Draw rooms
+            miniCtx.fillStyle = '#f0f0f0';
+            gameState.plan.rooms.forEach(room => {
+                miniCtx.fillRect(
+                    room.x * scale,
+                    room.y * scale,
+                    room.width * scale,
+                    room.height * scale
+                );
+            });
+
+            // Draw furniture
+            miniCtx.fillStyle = '#8B4513';
+            gameState.plan.furniture.forEach(item => {
+                miniCtx.fillRect(
+                    item.x * scale,
+                    item.y * scale,
+                    item.width * scale,
+                    item.height * scale
+                );
+            });
+
+            // Draw viewport rectangle
+            miniCtx.strokeStyle = '#2D5A4A';
+            miniCtx.lineWidth = 1;
+            miniCtx.strokeRect(50, 30, 80, 60);
+        }
+
+        // ==================== Canvas Interaction ====================
+        let isDragging = false;
+        let dragStartX, dragStartY;
+        let selectedHandle = null;
+
+        function handleCanvasMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - gameState.panX) / gameState.zoom;
+            const y = (e.clientY - rect.top - gameState.panY) / gameState.zoom;
+
+            dragStartX = x;
+            dragStartY = y;
+
+            if (gameState.currentTool === 'select') {
+                // Check if clicking on a handle
+                if (gameState.selectedObject) {
+                    const handles = getResizeHandles(gameState.selectedObject);
+                    for (let i = 0; i < handles.length; i++) {
+                        if (Math.abs(x - handles[i].x) < 10 && Math.abs(y - handles[i].y) < 10) {
+                            selectedHandle = i;
+                            isDragging = true;
+                            return;
+                        }
+                    }
+                }
+
+                // Check if clicking on furniture
+                for (let i = gameState.plan.furniture.length - 1; i >= 0; i--) {
+                    const item = gameState.plan.furniture[i];
+                    if (x >= item.x && x <= item.x + item.width &&
+                        y >= item.y && y <= item.y + item.height) {
+                        gameState.selectedObject = item;
+                        showPropertyPanel(item);
+                        isDragging = true;
+                        drawCanvas();
+                        return;
+                    }
+                }
+
+                // Check if clicking on light
+                for (let i = gameState.plan.lights.length - 1; i >= 0; i--) {
+                    const light = gameState.plan.lights[i];
+                    const dist = Math.sqrt((x - light.x) ** 2 + (y - light.y) ** 2);
+                    if (dist < 15) {
+                        gameState.selectedObject = light;
+                        showLightPanel(light);
+                        isDragging = true;
+                        return;
+                    }
+                }
+
+                // Deselect
+                gameState.selectedObject = null;
+                hidePropertyPanel();
+                drawCanvas();
+            } else if (gameState.currentTool === 'move') {
+                isDragging = true;
+            }
+        }
+
+        function handleCanvasMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - gameState.panX) / gameState.zoom;
+            const y = (e.clientY - rect.top - gameState.panY) / gameState.zoom;
+
+            // Update coordinates display
+            document.getElementById('coordsDisplay').textContent = 
+                `X: ${Math.round(x)}, Y: ${Math.round(y)} | 缩放: ${Math.round(gameState.zoom * 100)}%`;
+
+            if (isDragging) {
+                if (gameState.currentTool === 'select') {
+                    if (selectedHandle !== null && gameState.selectedObject) {
+                        resizeObject(gameState.selectedObject, selectedHandle, x, y);
+                    } else if (gameState.selectedObject) {
+                        gameState.selectedObject.x = x - gameState.selectedObject.width / 2;
+                        gameState.selectedObject.y = y - gameState.selectedObject.height / 2;
+                    }
+                } else if (gameState.currentTool === 'move') {
+                    const dx = x - dragStartX;
+                    const dy = y - dragStartY;
+                    if (gameState.selectedObject) {
+                        gameState.selectedObject.x += dx;
+                        gameState.selectedObject.y += dy;
+                    }
+                }
+                drawCanvas();
+                drawMiniMap();
+            }
+        }
+
+        function handleCanvasMouseUp(e) {
+            if (isDragging) {
+                saveToStorage();
+            }
+            isDragging = false;
+            selectedHandle = null;
+        }
+
+        function handleCanvasWheel(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            gameState.zoom = Math.max(0.5, Math.min(3, gameState.zoom * delta));
+            canvas.style.transform = `translate(${gameState.panX}px, ${gameState.panY}px) scale(${gameState.zoom})`;
+            document.getElementById('coordsDisplay').textContent = 
+                `X: 0, Y: 0 | 缩放: ${Math.round(gameState.zoom * 100)}%`;
+        }
+
+        function getResizeHandles(obj) {
+            return [
+                { x: obj.x, y: obj.y },
+                { x: obj.x + obj.width, y: obj.y },
+                { x: obj.x, y: obj.y + obj.height },
+                { x: obj.x + obj.width, y: obj.y + obj.height }
+            ];
+        }
+
+        function resizeObject(obj, handle, x, y) {
+            const minSize = 20;
+            switch(handle) {
+                case 0: // Top-left
+                    obj.width += obj.x - x;
+                    obj.height += obj.y - y;
+                    obj.x = x;
+                    obj.y = y;
+                    break;
+                case 1: // Top-right
+                    obj.width = x - obj.x;
+                    obj.height += obj.y - y;
+                    obj.y = y;
+                    break;
+                case 2: // Bottom-left
+                    obj.width += obj.x - x;
+                    obj.x = x;
+                    obj.height = y - obj.y;
+                    break;
+                case 3: // Bottom-right
+                    obj.width = x - obj.x;
+                    obj.height = y - obj.y;
+                    break;
+            }
+            if (obj.width < minSize) obj.width = minSize;
+            if (obj.height < minSize) obj.height = minSize;
+        }
+
+        // ==================== Tool Functions ====================
+        function setTool(tool) {
+            gameState.currentTool = tool;
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === tool);
+            });
+            canvas.style.cursor = tool === 'select' ? 'default' : 'crosshair';
+        }
+
+        function setView(view) {
+            gameState.currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            const canvasContainer = document.querySelector('.canvas-container');
+            const view3dContainer = document.getElementById('view3dContainer');
+
+            if (view === '2d') {
+                canvas.style.display = 'block';
+                view3dContainer.classList.remove('active');
+            } else {
+                canvas.style.display = 'none';
+                view3dContainer.classList.add('active');
+                if (view === '3d') {
+                    init3DView();
+                } else if (view === '3dWalk') {
+                    initWalkView();
+                }
+            }
+        }
+
+        function zoomIn() {
+            gameState.zoom = Math.min(3, gameState.zoom * 1.2);
+            canvas.style.transform = `translate(${gameState.panX}px, ${gameState.panY}px) scale(${gameState.zoom})`;
+        }
+
+        function zoomOut() {
+            gameState.zoom = Math.max(0.5, gameState.zoom * 0.8);
+            canvas.style.transform = `translate(${gameState.panX}px, ${gameState.panY}px) scale(${gameState.zoom})`;
+        }
+
+        function resetView() {
+            gameState.zoom = 1;
+            gameState.panX = 0;
+            gameState.panY = 0;
+            canvas.style.transform = 'none';
+        }
+
+        // ==================== Furniture Functions ====================
+        function toggleCategory(category) {
+            const elements = {
+                living: document.getElementById('living-furniture'),
+                bedroom: document.getElementById('bedroom-furniture'),
+                study: document.getElementById('study-furniture'),
+                kitchen: document.getElementById('kitchen-furniture'),
+                bathroom: document.getElementById('bathroom-furniture')
+            };
+            
+            const titles = document.querySelectorAll('.category-title');
+            const index = Object.keys(elements).indexOf(category);
+            
+            if (elements[category].style.display === 'none') {
+                elements[category].style.display = 'grid';
+                titles[index].querySelector('i').classList.remove('fa-chevron-right');
+                titles[index].querySelector('i').classList.add('fa-chevron-down');
+            } else {
+                elements[category].style.display = 'none';
+                titles[index].querySelector('i').classList.remove('fa-chevron-down');
+                titles[index].querySelector('i').classList.add('fa-chevron-right');
+            }
+        }
+
+        // Setup drag and drop for furniture
+        document.querySelectorAll('.furniture-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('type', item.dataset.type);
+                e.dataTransfer.setData('category', 'furniture');
+            });
+        });
+
+        document.querySelectorAll('.lamp-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('type', item.dataset.lamp);
+                e.dataTransfer.setData('category', 'light');
+            });
+        });
+
+        canvas.addEventListener('dragover', (e) => e.preventDefault());
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - gameState.panX) / gameState.zoom;
+            const y = (e.clientY - rect.top - gameState.panY) / gameState.zoom;
+
+            const type = e.dataTransfer.getData('type');
+            const category = e.dataTransfer.getData('category');
+
+            if (category === 'furniture') {
+                addFurniture(type, x, y);
+            } else if (category === 'light') {
+                addLight(type, x, y);
+            }
+        });
+
+        function addFurniture(type, x, y) {
+            const sizes = {
+                sofa: { width: 120, height: 60 },
+                coffeeTable: { width: 80, height: 50 },
+                tvStand: { width: 150, height: 40 },
+                sideboard: { width: 100, height: 40 },
+                bed: { width: 150, height: 200 },
+                wardrobe: { width: 120, height: 60 },
+                nightstand: { width: 40, height: 40 },
+                dresser: { width: 80, height: 40 },
+                desk: { width: 120, height: 60 },
+                bookshelf: { width: 80, height: 30 },
+                chair: { width: 40, height: 40 },
+                lamp: { width: 30, height: 30 },
+                cabinet: { width: 150, height: 60 },
+                island: { width: 100, height: 100 },
+                diningTable: { width: 120, height: 80 },
+                diningChair: { width: 35, height: 35 },
+                toilet: { width: 40, height: 60 },
+                sink: { width: 50, height: 40 },
+                shower: { width: 90, height: 90 },
+                bathtub: { width: 170, height: 75 }
+            };
+
+            const size = sizes[type] || { width: 60, height: 60 };
+            const furniture = {
+                id: Date.now(),
+                type: type,
+                name: getFurnitureName(type),
+                x: x - size.width / 2,
+                y: y - size.height / 2,
+                width: size.width,
+                height: size.height,
+                rotation: 0,
+                color: '#8B4513'
+            };
+
+            gameState.plan.furniture.push(furniture);
+            gameState.selectedObject = furniture;
+            showPropertyPanel(furniture);
+            drawCanvas();
+            drawMiniMap();
+            saveToStorage();
+            showNotification('已添加 ' + furniture.name);
+        }
+
+        function addLight(type, x, y) {
+            const light = {
+                id: Date.now(),
+                type: type,
+                name: getLightName(type),
+                x: x,
+                y: y,
+                radius: 80,
+                on: true
+            };
+
+            gameState.plan.lights.push(light);
+            gameState.selectedObject = light;
+            showLightPanel(light);
+            drawCanvas();
+            saveToStorage();
+            showNotification('已添加 ' + light.name);
+        }
+
+        function getFurnitureName(type) {
+            const names = {
+                sofa: '沙发',
+                coffeeTable: '茶几',
+                tvStand: '电视柜',
+                sideboard: '餐边柜',
+                bed: '床',
+                wardrobe: '衣柜',
+                nightstand: '床头柜',
+                dresser: '梳妆台',
+                desk: '书桌',
+                bookshelf: '书柜',
+                chair: '办公椅',
+                lamp: '台灯',
+                cabinet: '橱柜',
+                island: '岛台',
+                diningTable: '餐桌',
+                diningChair: '餐椅',
+                toilet: '马桶',
+                sink: '洗手台',
+                shower: '淋浴房',
+                bathtub: '浴缸'
+            };
+            return names[type] || type;
+        }
+
+        function getLightName(type) {
+            const names = {
+                ceiling: '吊灯',
+                spotlight: '射灯',
+                strip: '灯带',
+                floorLamp: '落地灯',
+                tableLamp: '台灯',
+                wallLamp: '壁灯'
+            };
+            return names[type] || type;
+        }
+
+        // ==================== Panel Functions ====================
+        function showPropertyPanel(item) {
+            document.getElementById('propertyPanel').style.display = 'block';
+            document.getElementById('lightPanel').style.display = 'none';
+            document.getElementById('propName').value = item.name || '';
+            document.getElementById('propWidth').value = item.width || 0;
+            document.getElementById('propHeight').value = item.height || 0;
+            document.getElementById('propRotation').value = item.rotation || 0;
+            document.getElementById('rotationValue').textContent = (item.rotation || 0) + '°';
+        }
+
+        function showLightPanel(light) {
+            document.getElementById('lightPanel').style.display = 'block';
+            document.getElementById('propertyPanel').style.display = 'none';
+        }
+
+        function hidePropertyPanel() {
+            document.getElementById('propertyPanel').style.display = 'none';
+        }
+
+        function updateSelectedObject() {
+            if (!gameState.selectedObject) return;
+            
+            if (gameState.selectedObject.width !== undefined) {
+                gameState.selectedObject.width = parseInt(document.getElementById('propWidth').value) || 60;
+                gameState.selectedObject.height = parseInt(document.getElementById('propHeight').value) || 60;
+                gameState.selectedObject.rotation = parseInt(document.getElementById('propRotation').value) || 0;
+            }
+            
+            drawCanvas();
+            drawMiniMap();
+            saveToStorage();
+        }
+
+        function toggleLight() {
+            gameState.lightOn = !gameState.lightOn;
+            drawCanvas();
+            showNotification(gameState.lightOn ? '灯光已开启' : '灯光已关闭');
+        }
+
+        function getColorTemperature(kelvin) {
+            if (kelvin < 3000) return '#FFB366';
+            if (kelvin < 4000) return '#FFE4B5';
+            if (kelvin < 5000) return '#FFFACD';
+            return '#E8F4FF';
+        }
+
+        // ==================== Level Functions ====================
+        function selectLevel(level) {
+            gameState.currentLevel = level;
+            updateLevelInfo();
+            closeModal('levelModal');
+            showNotification('已进入关卡' + level + ': ' + gameState.levels[level-1].title);
+        }
+
+        function updateLevelInfo() {
+            const level = gameState.levels[gameState.currentLevel - 1];
+            document.getElementById('levelTitle').textContent = '关卡' + gameState.currentLevel + ': ' + level.title;
+            document.getElementById('levelSubtitle').textContent = level.subtitle;
+            document.getElementById('currentLevelName').textContent = '关卡' + gameState.currentLevel + ': ' + level.title;
+            document.getElementById('levelProgress').style.width = (gameState.currentLevel * 20) + '%';
+
+            // Update tasks
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = level.tasks.map((task, i) => `
+                <li class="task-item" onclick="toggleTask(this)">
+                    <div class="task-checkbox"><i class="fas fa-check"></i></div>
+                    <span>${task}</span>
+                </li>
+            `).join('');
+
+            // Update design tips based on level
+            updateDesignTips();
+        }
+
+        function updateDesignTips() {
+            const tips = {
+                1: '<p style="margin-bottom:10px;">💡 合理的房间划分要考虑采光和通风。</p><p>💡 动静分区：客厅、餐厅、厨房属于动区；卧室、书房属于静区。</p>',
+                2: '<p style="margin-bottom:10px;">💡 沙发占客厅面积的25%-35%为宜。</p><p>💡 电视中心高度建议在90-110cm，观看距离为屏幕对角线的2-3倍。</p>',
+                3: '<p style="margin-bottom:10px;">💡 床的最佳位置是能看到房门但不正对门。</p><p>💡 床头柜高度应与床垫高度相近，便于取放物品。</p>',
+                4: '<p style="margin-bottom:10px;">💡 厨房工作三角：冰箱→水槽→灶台，间距80-120cm。</p><p>💡 操作台高度约85-95cm，深度60cm。</p>',
+                5: '<p style="margin-bottom:10px;">💡 全屋风格统一，注意各空间的过渡与呼应。</p><p>💡 收纳空间应占房屋面积的12%以上。</p>'
+            };
+            document.getElementById('designTips').innerHTML = tips[gameState.currentLevel] || tips[1];
+        }
+
+        function toggleTask(el) {
+            el.classList.toggle('completed');
+            checkLevelComplete();
+        }
+
+        function checkLevelComplete() {
+            const tasks = document.querySelectorAll('.task-item');
+            const completed = document.querySelectorAll('.task-item.completed');
+            
+            if (completed.length === tasks.length) {
+                showNotification('🎉 恭喜完成关卡' + gameState.currentLevel + '！');
+            }
+        }
+
+        function openLevelSelect() {
+            document.getElementById('levelModal').classList.add('active');
+            
+            // Update level card states
+            document.querySelectorAll('.level-card').forEach((card, i) => {
+                card.classList.remove('current', 'completed');
+                if (i + 1 === gameState.currentLevel) {
+                    card.classList.add('current');
+                }
+            });
+        }
+
+        // ==================== Style Functions ====================
+        function openStylePresets() {
+            document.getElementById('styleModal').classList.add('active');
+            updateStyleColors();
+        }
+
+        function selectStyle(style) {
+            gameState.plan.colors.style = style;
+            document.querySelectorAll('.style-preset').forEach(p => p.classList.remove('active'));
+            event.target.closest('.style-preset').classList.add('active');
+            
+            const colors = {
+                modern: ['#2d3436', '#636e72', '#f5f5f5', '#dfe6e9', '#000000'],
+                nordic: ['#dfe6e9', '#b2bec3', '#f5f5f5', '#81ecec', '#6c5ce7'],
+                industrial: ['#474949', '#2c2c2c', '#8b8b8b', '#d4a574', '#c0c0c0'],
+                japanese: ['#f5f5f5', '#d4c4b0', '#8b7355', '#5d4e37', '#2e2e2e'],
+                chinese: ['#8B0000', '#2d0000', '#d4a574', '#ffd700', '#f5f5f5']
+            };
+            
+            gameState.plan.colors.wall = colors[style][2];
+            updateStyleColors();
+            drawCanvas();
+            saveToStorage();
+        }
+
+        function updateStyleColors() {
+            const style = gameState.plan.colors.style;
+            const colors = {
+                modern: ['#2d3436', '#636e72', '#f5f5f5', '#dfe6e9', '#000000'],
+                nordic: ['#dfe6e9', '#b2bec3', '#f5f5f5', '#81ecec', '#6c5ce7'],
+                industrial: ['#474949', '#2c2c2c', '#8b8b8b', '#d4a574', '#c0c0c0'],
+                japanese: ['#f5f5f5', '#d4c4b0', '#8b7355', '#5d4e37', '#2e2e2e'],
+                chinese: ['#8B0000', '#2d0000', '#d4a574', '#ffd700', '#f5f5f5']
+            };
+
+            const container = document.getElementById('styleColors');
+            container.innerHTML = colors[style].map(c => 
+                `<div class="color-swatch" style="background:${c};aspect-ratio:1;" onclick="selectStyleColor('${c}')"></div>`
+            ).join('');
+        }
+
+        function selectStyleColor(color) {
+            gameState.plan.colors.wall = color;
+            document.querySelectorAll('.left-sidebar .color-swatch').forEach(s => {
+                s.classList.toggle('active', s.dataset.color === color);
+            });
+            drawCanvas();
+            saveToStorage();
+        }
+
+        // ==================== Material Functions ====================
+        const materials = {
+            floor: [
+                { name: '实木地板', desc: '自然纹理，高端大气', price: 160, unit: '㎡', color: 'linear-gradient(135deg,#d4a574,#c49464)' },
+                { name: '复合地板', desc: '耐磨易打理', price: 80, unit: '㎡', color: 'linear-gradient(135deg,#c9a87c,#b89868)' },
+                { name: '瓷砖', desc: '防水防潮', price: 120, unit: '㎡', color: 'linear-gradient(135deg,#e8e8e8,#d0d0d0)' },
+                { name: '大理石', desc: '奢华质感', price: 400, unit: '㎡', color: 'linear-gradient(135deg,#f5f5f5,#d4d4d4)' },
+                { name: '地毯', desc: '柔软舒适', price: 200, unit: '㎡', color: 'linear-gradient(135deg,#8b8b8b,#6b6b6b)' }
+            ],
+            wall: [
+                { name: '乳胶漆', desc: '环保易清洁', price: 20, unit: '㎡', color: 'linear-gradient(135deg,#f5f5f5,#e8e8e8)' },
+                { name: '壁纸', desc: '纹理丰富', price: 80, unit: '卷', color: 'linear-gradient(135deg,#e8d4c4,#d8c4b4)' },
+                { name: '墙砖', desc: '防水耐用', price: 100, unit: '㎡', color: 'linear-gradient(135deg,#ffffff,#f0f0f0)' },
+                { name: '木饰面', desc: '自然温暖', price: 300, unit: '㎡', color: 'linear-gradient(135deg,#d4a574,#c49464)' },
+                { name: '软包', desc: '隔音保温', price: 350, unit: '㎡', color: 'linear-gradient(135deg,#8b8b8b,#7b7b7b)' }
+            ],
+            ceiling: [
+                { name: '石膏板', desc: '平整美观', price: 60, unit: '㎡', color: 'linear-gradient(135deg,#ffffff,#f5f5f5)' },
+                { name: '铝扣板', desc: '防潮耐用', price: 100, unit: '㎡', color: 'linear-gradient(135deg,#e0e0e0,#c0c0c0)' },
+                { name: '木质吊顶', desc: '温馨自然', price: 180, unit: '㎡', color: 'linear-gradient(135deg,#d4a574,#c49464)' },
+                { name: '软膜天花', desc: '透光均匀', price: 250, unit: '㎡', color: 'linear-gradient(135deg,#e8f4ff,#d8e8f8)' }
+            ]
+        };
+
+        function openMaterialPanel(type) {
+            const titles = { floor: '地面材料', wall: '墙面材料', ceiling: '顶面材料' };
+            document.getElementById('materialModalTitle').textContent = titles[type];
+            
+            const content = document.getElementById('materialPanelContent');
+            content.innerHTML = materials[type].map(m => `
+                <div class="material-item" onclick="selectMaterial('${type}', '${m.name}')">
+                    <div class="material-preview" style="background:${m.color};"></div>
+                    <div class="material-info">
+                        <div class="material-name">${m.name}</div>
+                        <div class="material-desc">${m.desc} | ¥${m.price}/${m.unit}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('materialModal').classList.add('active');
+        }
+
+        function selectMaterial(type, name) {
+            gameState.plan.materials[type] = name;
+            updateMaterialList();
+            closeModal('materialModal');
+            showNotification('已选择 ' + name);
+            drawCanvas();
+        }
+
+        function updateMaterialList() {
+            const list = document.getElementById('materialList');
+            let html = '';
+            
+            for (const [type, name] of Object.entries(gameState.plan.materials)) {
+                const material = materials[type].find(m => m.name === name);
+                if (material) {
+                    html += `
+                        <div class="material-item">
+                            <div class="material-preview" style="background:${material.color};"></div>
+                            <div class="material-info">
+                                <div class="material-name">${material.name}</div>
+                                <div class="material-desc">约20㎡ | ¥${material.price * 20}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            list.innerHTML = html || '<div class="empty-state"><i class="fas fa-inbox"></i><p>暂无材料</p></div>';
+        }
+
+        // ==================== Import/Export Functions ====================
+        function openImport() {
+            document.getElementById('importModal').classList.add('active');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').style.borderColor = 'var(--accent)';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').style.borderColor = 'var(--border)';
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                processImportFile(file);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processImportFile(file);
+            }
+        }
+
+        function processImportFile(file) {
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.json')) {
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        loadPlanData(data);
+                        closeModal('importModal');
+                        showNotification('导入成功');
+                    } catch (err) {
+                        showNotification('文件格式错误');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                reader.onload = (e) => {
+                    // Handle image import (would need additional processing)
+                    showNotification('图片导入需要先进行矢量化处理');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function loadPreset(type) {
+            const presets = {
+                oneBedroom: {
+                    rooms: [
+                        { name: '客厅', x: 50, y: 50, width: 300, height: 200 },
+                        { name: '卧室', x: 370, y: 50, width: 200, height: 150 },
+                        { name: '厨房', x: 50, y: 270, width: 150, height: 100 },
+                        { name: '卫生间', x: 220, y: 270, width: 100, height: 100 }
+                    ],
+                    walls: [
+                        { x1: 50, y1: 50, x2: 570, y2: 50 },
+                        { x1: 570, y1: 50, x2: 570, y2: 200 },
+                        { x1: 570, y1: 200, x2: 370, y2: 200 },
+                        { x1: 370, y1: 200, x2: 370, y2: 370 },
+                        { x1: 370, y1: 370, x2: 50, y2: 370 },
+                        { x1: 50, y1: 370, x2: 50, y2: 50 }
+                    ]
+                },
+                twoBedroom: {
+                    rooms: [
+                        { name: '客厅', x: 50, y: 50, width: 250, height: 200 },
+                        { name: '主卧', x: 320, y: 50, width: 180, height: 150 },
+                        { name: '次卧', x: 520, y: 50, width: 150, height: 120 },
+                        { name: '厨房', x: 50, y: 270, width: 150, height: 100 },
+                        { name: '卫生间', x: 220, y: 270, width: 100, height: 100 },
+                        { name: '餐厅', x: 340, y: 220, width: 150, height: 150 }
+                    ],
+                    walls: []
+                },
+                threeBedroom: {
+                    rooms: [
+                        { name: '客厅', x: 50, y: 50, width: 280, height: 200 },
+                        { name: '餐厅', x: 350, y: 50, width: 150, height: 150 },
+                        { name: '厨房', x: 520, y: 50, width: 150, height: 120 },
+                        { name: '主卧', x: 50, y: 270, width: 200, height: 150 },
+                        { name: '次卧1', x: 270, y: 270, width: 150, height: 120 },
+                        { name: '次卧2', x: 440, y: 270, width: 150, height: 120 },
+                        { name: '卫生间', x: 270, y: 410, width: 80, height: 80 },
+                        { name: '主卫', x: 610, y: 190, width: 80, height: 80 }
+                    ],
+                    walls: []
+                }
+            };
+
+            if (presets[type]) {
+                loadPlanData(presets[type]);
+                closeModal('importModal');
+                showNotification('已加载 ' + (type === 'oneBedroom' ? '一室一厅' : type === 'twoBedroom' ? '两室一厅' : '三室两厅') + ' 户型');
+            }
+        }
+
+        function loadPlanData(data) {
+            gameState.plan.rooms = data.rooms || [];
+            gameState.plan.walls = data.walls || [];
+            gameState.plan.furniture = data.furniture || [];
+            gameState.plan.doors = data.doors || [];
+            gameState.plan.windows = data.windows || [];
+            gameState.plan.lights = data.lights || [];
+            
+            if (data.colors) gameState.plan.colors = { ...gameState.plan.colors, ...data.colors };
+            if (data.materials) gameState.plan.materials = { ...gameState.plan.materials, ...data.materials };
+            
+            drawCanvas();
+            drawMiniMap();
+            updateMaterialList();
+            saveToStorage();
+        }
+
+        function exportPlan() {
+            const data = JSON.stringify(gameState.plan, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `室内设计方案_${new Date().toLocaleDateString()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('方案已导出');
+        }
+
+        function exportMaterialList() {
+            let html = '材料清单\n\n';
+            html += '序号\t材料名称\t数量\t单价\t金额\n';
+            
+            let index = 1;
+            let total = 0;
+            
+            for (const [type, name] of Object.entries(gameState.plan.materials)) {
+                const material = materials[type]?.find(m => m.name === name);
+                if (material) {
+                    const amount = 20;
+                    const subtotal = material.price * amount;
+                    total += subtotal;
+                    html += `${index}\t${material.name}\t${amount}㎡\t¥${material.price}\t¥${subtotal}\n`;
+                    index++;
+                }
+            }
+            
+            html += `\n合计: ¥${total}`;
+            
+            const blob = new Blob([html], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '材料清单.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('材料清单已导出');
+        }
+
+        // ==================== Report Functions ====================
+        function generateReport() {
+            const level = gameState.levels[gameState.currentLevel - 1];
+            const roomCount = gameState.plan.rooms.length;
+            const furnitureCount = gameState.plan.furniture.length;
+            const lightCount = gameState.plan.lights.length;
+            
+            let materialTotal = 0;
+            let materialList = '';
+            
+            for (const [type, name] of Object.entries(gameState.plan.materials)) {
+                const material = materials[type]?.find(m => m.name === name);
+                if (material) {
+                    const amount = 20;
+                    const subtotal = material.price * amount;
+                    materialTotal += subtotal;
+                    materialList += `
+                        <tr>
+                            <td>${material.name}</td>
+                            <td>${amount}㎡</td>
+                            <td>¥${material.price}</td>
+                            <td>¥${subtotal}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            document.getElementById('reportContent').innerHTML = `
+                <div class="report-header">
+                    <div class="report-title">室内设计方案报告</div>
+                    <div style="color:#666;">生成时间: ${new Date().toLocaleString()}</div>
+                    <div style="color:#666;">关卡: ${level.title}</div>
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">一、项目概况</div>
+                    <p>本设计方案包含 ${roomCount} 个功能区域，布置了 ${furnitureCount} 件家具，设置了 ${lightCount} 处照明。设计风格为 ${getStyleName(gameState.plan.colors.style)}。</p>
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">二、功能分区</div>
+                    <table class="report-table">
+                        <tr><th>区域名称</th><th>面积估算</th></tr>
+                        ${gameState.plan.rooms.map(r => `<tr><td>${r.name}</td><td>${Math.round(r.width * r.height / 10000)}㎡</td></tr>`).join('')}
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">三、家具清单</div>
+                    <table class="report-table">
+                        <tr><th>家具名称</th><th>数量</th></tr>
+                        ${getFurnitureSummary()}
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">四、材料预算</div>
+                    <table class="report-table">
+                        <tr><th>材料名称</th><th>数量</th><th>单价</th><th>金额</th></tr>
+                        ${materialList}
+                        <tr style="font-weight:bold;background:#f5f5f5;"><td colspan="3">合计</td><td>¥${materialTotal}</td></tr>
+                    </table>
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">五、设计说明</div>
+                    <p>本方案遵循人体工程学原理，合理规划空间动线，注重采光与通风效果。色彩搭配以柔和舒适为主，营造温馨居家氛围。材料选择注重环保性与耐久性，确保居住品质。</p>
+                </div>
+            `;
+            
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function getStyleName(style) {
+            const names = {
+                modern: '现代简约风格',
+                nordic: '北欧风格',
+                industrial: '工业风格',
+                japanese: '日式风格',
+                chinese: '中式风格'
+            };
+            return names[style] || '现代简约风格';
+        }
+
+        function getFurnitureSummary() {
+            const counts = {};
+            gameState.plan.furniture.forEach(f => {
+                counts[f.name] = (counts[f.name] || 0) + 1;
+            });
+            return Object.entries(counts).map(([name, count]) => 
+                `<tr><td>${name}</td><td>${count}</td></tr>`
+            ).join('');
+        }
+
+        function downloadReport() {
+            const content = document.getElementById('reportContent').innerText;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `设计报告_${new Date().toLocaleDateString()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('报告已下载');
+        }
+
+        // ==================== Plan Management ====================
+        function newPlan() {
+            if (confirm('确定要新建方案吗？当前未保存的内容将丢失。')) {
+                gameState.plan = {
+                    name: '新方案',
+                    created: new Date().toISOString(),
+                    rooms: [],
+                    furniture: [],
+                    walls: [],
+                    doors: [],
+                    windows: [],
+                    lights: [],
+                    colors: {
+                        wall: '#f5f5f5',
+                        floor: '#d4a574',
+                        style: 'modern'
+                    },
+                    materials: {
+                        floor: 'wood',
+                        wall: 'paint',
+                        ceiling: 'gypsum'
+                    }
+                };
+                gameState.selectedObject = null;
+                hidePropertyPanel();
+                drawCanvas();
+                drawMiniMap();
+                updateMaterialList();
+                saveToStorage();
+                showNotification('已创建新方案');
+            }
+        }
+
+        function savePlan() {
+            const name = prompt('请输入方案名称:', gameState.plan.name || '我的方案');
+            if (name) {
+                gameState.plan.name = name;
+                
+                const plans = JSON.parse(localStorage.getItem('interiorPlans') || '[]');
+                const existing = plans.findIndex(p => p.name === gameState.plan.name);
+                
+                if (existing >= 0) {
+                    plans[existing] = { ...gameState.plan, saved: new Date().toISOString() };
+                } else {
+                    plans.push({ ...gameState.plan, saved: new Date().toISOString() });
+                }
+                
+                localStorage.setItem('interiorPlans', JSON.stringify(plans));
+                loadSavedPlans();
+                showNotification('方案已保存');
+            }
+        }
+
+        function loadSavedPlans() {
+            const plans = JSON.parse(localStorage.getItem('interiorPlans') || '[]');
+            gameState.savedPlans = plans;
+            
+            const container = document.getElementById('savedPlans');
+            
+            if (plans.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>暂无保存的方案</p></div>';
+                return;
+            }
+            
+            container.innerHTML = plans.map((plan, i) => `
+                <div class="plan-item">
+                    <div class="plan-info">
+                        <div class="plan-icon"><i class="fas fa-home"></i></div>
+                        <div>
+                            <div class="plan-name">${plan.name}</div>
+                            <div class="plan-date">${new Date(plan.saved).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+                    <div class="plan-actions">
+                        <button class="plan-action edit" onclick="loadPlan(${i})"><i class="fas fa-edit"></i></button>
+                        <button class="plan-action export" onclick="exportPlanByIndex(${i})"><i class="fas fa-download"></i></button>
+                        <button class="plan-action delete" onclick="deletePlan(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadPlan(index) {
+            const plans = JSON.parse(localStorage.getItem('interiorPlans') || '[]');
+            if (plans[index]) {
+                loadPlanData(plans[index]);
+                showNotification('已加载: ' + plans[index].name);
+            }
+        }
+
+        function exportPlanByIndex(index) {
+            const plans = JSON.parse(localStorage.getItem('interiorPlans') || '[]');
+            if (plans[index]) {
+                const data = JSON.stringify(plans[index], null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${plans[index].name}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function deletePlan(index) {
+            if (confirm('确定要删除这个方案吗？')) {
+                const plans = JSON.parse(localStorage.getItem('interiorPlans') || '[]');
+                plans.splice(index, 1);
+                localStorage.setItem('interiorPlans', JSON.stringify(plans));
+                loadSavedPlans();
+                showNotification('方案已删除');
+            }
+        }
+
+        // ==================== Undo/Redo ====================
+        function saveHistory() {
+            const state = JSON.stringify(gameState.plan);
+            gameState.history = gameState.history.slice(0, gameState.historyIndex + 1);
+            gameState.history.push(state);
+            gameState.historyIndex = gameState.history.length - 1;
+            
+            if (gameState.history.length > 50) {
+                gameState.history.shift();
+                gameState.historyIndex--;
+            }
+        }
+
+        function undoAction() {
+            if (gameState.historyIndex > 0) {
+                gameState.historyIndex--;
+                gameState.plan = JSON.parse(gameState.history[gameState.historyIndex]);
+                drawCanvas();
+                drawMiniMap();
+                showNotification('已撤销');
+            }
+        }
+
+        function redoAction() {
+            if (gameState.historyIndex < gameState.history.length - 1) {
+                gameState.historyIndex++;
+                gameState.plan = JSON.parse(gameState.history[gameState.historyIndex]);
+                drawCanvas();
+                drawMiniMap();
+                showNotification('已重做');
+            }
+        }
+
+        // ==================== Storage ====================
+        function saveToStorage() {
+            localStorage.setItem('interiorDesignState', JSON.stringify({
+                plan: gameState.plan,
+                currentLevel: gameState.currentLevel
+            }));
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('interiorDesignState');
+            if (saved) {
+                const data = JSON.parse(saved);
+                gameState.plan = data.plan || gameState.plan;
+                gameState.currentLevel = data.currentLevel || 1;
+            }
+            
+            saveHistory();
+        }
+
+        // ==================== Modal Functions ====================
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // ==================== Notification ====================
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            document.getElementById('notificationText').textContent = message;
+            notification.classList.add('show', 'success');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // ==================== 3D View (Simple CSS 3D) ====================
+        function init3DView() {
+            const container = document.getElementById('view3d');
+            container.innerHTML = '';
+            
+            // Create 3D room visualization using CSS transforms
+            const room = document.createElement('div');
+            room.style.cssText = `
+                width: 100%;
+                height: 100%;
+                perspective: 1000px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(180deg, #87CEEB 0%, #E0E0E0 100%);
+            `;
+            
+            const scene = document.createElement('div');
+            scene.style.cssText = `
+                width: 400px;
+                height: 300px;
+                position: relative;
+                transform-style: preserve-3d;
+                transform: rotateX(-20deg) rotateY(-30deg);
+            `;
+            
+            // Floor
+            const floor = document.createElement('div');
+            floor.style.cssText = `
+                width: 400px;
+                height: 300px;
+                background: linear-gradient(135deg, ${gameState.plan.colors.floor || '#d4a574'}, ${gameState.plan.colors.floor || '#d4a574'}dd);
+                position: absolute;
+                transform: rotateX(90deg) translateZ(-150px);
+                border: 2px solid #333;
+            `;
+            
+            // Back wall
+            const backWall = document.createElement('div');
+            backWall.style.cssText = `
+                width: 400px;
+                height: 200px;
+                background: ${gameState.plan.colors.wall || '#f5f5f5'};
+                position: absolute;
+                transform: translateZ(-150px);
+                border: 2px solid #333;
+            `;
+            
+            // Left wall
+            const leftWall = document.createElement('div');
+            leftWall.style.cssText = `
+                width: 300px;
+                height: 200px;
+                background: ${gameState.plan.colors.wall || '#f5f5f5'}dd;
+                position: absolute;
+                left: 0;
+                transform: rotateY(90deg) translateZ(0px);
+                border: 2px solid #333;
+            `;
+            
+            // Right wall
+            const rightWall = document.createElement('div');
+            rightWall.style.cssText = `
+                width: 300px;
+                height: 200px;
+                background: ${gameState.plan.colors.wall || '#f5f5f5'}cc;
+                position: absolute;
+                right: 0;
+                transform: rotateY(-90deg) translateZ(-400px);
+                border: 2px solid #333;
+            `;
+            
+            scene.appendChild(floor);
+            scene.appendChild(backWall);
+            scene.appendChild(leftWall);
+            scene.appendChild(rightWall);
+            
+            // Add furniture representations
+            gameState.plan.furniture.forEach(item => {
+                const furniture = document.createElement('div');
+                const scale = 0.3;
+                furniture.style.cssText = `
+                    width: ${item.width * scale}px;
+                    height: ${item.height * scale}px;
+                    background: ${item.color || '#8B4513'};
+                    position: absolute;
+                    left: ${item.x * scale + 50}px;
+                    top: ${item.y * scale + 50}px;
+                    transform: rotateX(90deg);
+                    border: 1px solid #333;
+                    opacity: 0.9;
+                `;
+                scene.appendChild(furniture);
+            });
+            
+            room.appendChild(scene);
+            container.appendChild(room);
+        }
+
+        function initWalkView() {
+            init3DView();
+            showNotification('使用 WASD 或方向键移动，鼠标旋转视角');
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
