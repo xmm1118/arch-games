@@ -683,6 +683,26 @@
                                     <button class="dir-btn" id="roofDirEW" onclick="updateRoofDirection('east-west')">东西向</button>
                                 </div>
                             </div>
+                            <!-- 【本次修复】屋顶范围 -->
+                            <div>
+                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">屋顶范围：</div>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="roof-scope-btn active" data-scope="full" onclick="setRoofScope('full')" 
+                                            style="flex:1;padding:8px 12px;border:2px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:0.8rem;transition:all 0.3s;">
+                                        全建筑
+                                    </button>
+                                    <button class="roof-scope-btn" data-scope="custom" onclick="setRoofScope('custom')"
+                                            style="flex:1;padding:8px 12px;border:2px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:0.8rem;transition:all 0.3s;">
+                                        自定义
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- 自定义范围提示 -->
+                            <div id="roofCustomHint" style="display:none;margin-top:8px;padding:6px;background:#e3f2fd;border-radius:4px;font-size:0.75rem;color:#1565c0;">
+                                💡 在画布上拖拽绘制屋顶区域
+                            </div>
+                            <!-- 屋顶区域列表 -->
+                            <div id="roofAreasList" style="display:none;margin-top:8px;"></div>
                         </div>
                     </div>
                     
@@ -1147,8 +1167,14 @@
             roofDesign: {
                 type: 'flat',      // 'flat' | 'singlePitch' | 'doublePitch'
                 pitch: 30,         // 坡度角度
-                direction: 'north-south'  // 排水方向: 'north-south' | 'east-west'
-            }
+                direction: 'north-south',  // 排水方向: 'north-south' | 'east-west'
+                scope: 'full',     // 【本次修复】屋顶范围: 'full' | 'custom'
+                roofAreas: []     // 【本次修复】自定义屋顶区域 [{x, y, width, height}]
+            },
+            // 【本次修复】屋顶区域绘制状态
+            roofAreaDrawing: false,
+            roofAreaStart: null,
+            roofAreaEnd: null
         };
 
         // ========== Shift键监听 ==========
@@ -4375,6 +4401,12 @@
          * 关卡4：结构选型点击处理
          */
         function handleLevel4Click(pos) {
+            // 【本次修复】屋顶图层自定义范围绘制
+            if (gameState.currentStructuralLayer === 'roof' && gameState.roofDesign.scope === 'custom') {
+                handleRoofAreaClick(pos);
+                return;
+            }
+            
             switch (gameState.structuralElementTool) {
                 case 'select':
                     // ========== 【本次修复】选择工具：选择和移动结构构件 ==========
@@ -5402,13 +5434,23 @@ function updateStructuralToolHint() {
                     `;
                     break;
                 case 'foundation':
-                    title = '🔲 基础工具';
+                    // 【本次修复】获取当前基础子类型并显示对应提示
+                    const foundationType = gameState.foundationSubType || 'independent';
+                    const foundationTypeNames = {
+                        'independent': '独立基础',
+                        'strip': '条形基础',
+                        'raft': '筏板基础'
+                    };
+                    const currentFoundationName = foundationTypeNames[foundationType] || '独立基础';
+                    
+                    title = '🔲 基础工具（当前：' + currentFoundationName + '）';
                     content = `
                         <ul>
+                            <li>当前选择：<b>${currentFoundationName}</b></li>
                             <li><b>独立基础</b>：用于柱下，常见于框架结构</li>
                             <li><b>条形基础</b>：用于承重墙下，常见于砌体结构</li>
                             <li><b>筏板基础</b>：整块板，用于荷载大或地基弱的情况</li>
-                            <li>点击画布放置基础（基础平面图层）</li>
+                            <li>已自动切换到基础图层</li>
                             <li>独立基础：点击柱位置放置</li>
                             <li>条形基础：点击起点→点击终点画线</li>
                         </ul>
@@ -5431,9 +5473,12 @@ function updateStructuralToolHint() {
             gameState.structuralElementDrawing = false;
             gameState.structuralElementStart = null;
             
-            // 【任务3修复】：当选择基础工具时，重置子类型
+            // 【任务3修复】：当选择基础工具时，重置子类型并自动切换到基础图层
             if (tool === 'foundation') {
                 gameState.foundationSubType = 'independent';  // 默认独立基础
+                // 【本次修复】：自动切换到基础图层并显示基础设计面板
+                setStructuralLayer('foundation');
+                showNotification('已切换到基础图层，请选择基础类型', 'success');
             }
             
             // 更新工具栏UI（包括画布上方和右侧面板）
@@ -5633,6 +5678,271 @@ function updateStructuralToolHint() {
             
             render();
         }
+        
+        /**
+         * 【本次修复】设置屋顶范围
+         */
+        function setRoofScope(scope) {
+            gameState.roofDesign.scope = scope;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.roof-scope-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.scope === scope) btn.classList.add('active');
+            });
+            
+            // 显示/隐藏自定义提示
+            const customHint = document.getElementById('roofCustomHint');
+            const roofAreasList = document.getElementById('roofAreasList');
+            if (customHint) {
+                customHint.style.display = (scope === 'custom') ? 'block' : 'none';
+            }
+            if (roofAreasList) {
+                roofAreasList.style.display = (scope === 'custom') ? 'block' : 'none';
+                if (scope === 'custom') {
+                    updateRoofAreasList();
+                }
+            }
+            
+            // 如果切换到自定义范围，设置画布光标
+            if (scope === 'custom') {
+                canvas.style.cursor = 'crosshair';
+                showNotification('在画布上拖拽绘制屋顶区域', 'success');
+            } else {
+                canvas.style.cursor = 'default';
+            }
+            
+            render();
+        }
+        
+        /**
+         * 【本次修复】更新屋顶区域列表显示
+         */
+        function updateRoofAreasList() {
+            const container = document.getElementById('roofAreasList');
+            if (!container) return;
+            
+            const areas = gameState.roofDesign.roofAreas || [];
+            
+            if (areas.length === 0) {
+                container.innerHTML = '<div style="font-size:0.75rem;color:#888;text-align:center;padding:8px;">暂无屋顶区域</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="font-size:0.8rem;color:#666;margin-bottom:6px;">已绘制区域（${areas.length}个）：</div>
+                ${areas.map((area, index) => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;">
+                        <span style="font-size:0.75rem;color:#666;">区域${index + 1}：${area.width.toFixed(1)}×${area.height.toFixed(1)}m</span>
+                        <button onclick="deleteRoofArea(${index})" style="background:#e74c3c;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem;">删除</button>
+                    </div>
+                `).join('')}
+            `;
+        }
+        
+        /**
+         * 【本次修复】删除屋顶区域
+         */
+        function deleteRoofArea(index) {
+            gameState.roofDesign.roofAreas.splice(index, 1);
+            updateRoofAreasList();
+            render();
+            showNotification('屋顶区域已删除', 'success');
+        }
+        
+        /**
+         * 【本次修复】绘制单个屋顶区域
+         */
+        function drawSingleRoofArea(ctx, area, roofType, roofPitch, roofDirection, isSelected) {
+            const { x, y, width, height } = area;
+            
+            ctx.save();
+            
+            if (roofType === 'flat') {
+                // 平屋顶：灰色半透明矩形
+                ctx.fillStyle = isSelected ? 'rgba(46, 204, 113, 0.5)' : 'rgba(128, 128, 128, 0.4)';
+                ctx.fillRect(x, y, width, height);
+                ctx.strokeStyle = isSelected ? '#27ae60' : '#555';
+                ctx.lineWidth = isSelected ? 3 : 2;
+                ctx.strokeRect(x, y, width, height);
+                
+                // 添加平屋顶标注
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('平屋顶', x + width/2, y + height/2);
+                
+            } else if (roofType === 'singlePitch') {
+                // 单坡屋顶
+                const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(width, height) * 0.3;
+                
+                ctx.fillStyle = isSelected ? 'rgba(46, 204, 113, 0.5)' : 'rgba(139, 90, 43, 0.5)';
+                ctx.strokeStyle = isSelected ? '#27ae60' : '#5D4E37';
+                ctx.lineWidth = 2;
+                
+                let triangle;
+                if (roofDirection === 'north-south') {
+                    triangle = [
+                        { x: x, y: y + height },
+                        { x: x + width, y: y + height },
+                        { x: x + width, y: y - roofHeight }
+                    ];
+                } else {
+                    triangle = [
+                        { x: x + width, y: y },
+                        { x: x + width, y: y + height },
+                        { x: x - roofHeight, y: y + height }
+                    ];
+                }
+                
+                ctx.beginPath();
+                ctx.moveTo(triangle[0].x, triangle[0].y);
+                for (let i = 1; i < triangle.length; i++) {
+                    ctx.lineTo(triangle[i].x, triangle[i].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+            } else if (roofType === 'doublePitch') {
+                // 双坡屋顶
+                const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(width, height) * 0.2;
+                
+                ctx.fillStyle = isSelected ? 'rgba(46, 204, 113, 0.5)' : 'rgba(139, 90, 43, 0.5)';
+                ctx.strokeStyle = isSelected ? '#27ae60' : '#5D4E37';
+                ctx.lineWidth = 2;
+                
+                let triangle;
+                if (roofDirection === 'north-south') {
+                    const ridgeY = (y + y + height) / 2;
+                    triangle = [
+                        { x: x, y: y + height },
+                        { x: x, y: y },
+                        { x: x + width, y: y },
+                        { x: x + width, y: y + height },
+                        { x: (x + x + width) / 2, y: ridgeY - roofHeight }
+                    ];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[0].x, triangle[0].y);
+                    ctx.lineTo(triangle[1].x, triangle[1].y);
+                    ctx.lineTo(triangle[4].x, triangle[4].y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[2].x, triangle[2].y);
+                    ctx.lineTo(triangle[3].x, triangle[3].y);
+                    ctx.lineTo(triangle[4].x, triangle[4].y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[4].x, triangle[4].y);
+                    ctx.lineTo((x + x + width) / 2, (y + y + height) / 2);
+                    ctx.stroke();
+                    
+                } else {
+                    const ridgeX = (x + x + width) / 2;
+                    triangle = [
+                        { x: x, y: y },
+                        { x: x + width, y: y },
+                        { x: x + width, y: y + height },
+                        { x: x, y: y + height },
+                        { x: ridgeX - roofHeight, y: (y + y + height) / 2 }
+                    ];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[0].x, triangle[0].y);
+                    ctx.lineTo(triangle[1].x, triangle[1].y);
+                    ctx.lineTo(triangle[4].x, triangle[4].y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[2].x, triangle[2].y);
+                    ctx.lineTo(triangle[3].x, triangle[3].y);
+                    ctx.lineTo(triangle[4].x, triangle[4].y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(triangle[4].x, triangle[4].y);
+                    ctx.lineTo((x + x + width) / 2, (y + y + height) / 2);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.restore();
+        }
+        
+        /**
+         * 【本次修复】处理屋顶区域点击 - 开始绘制
+         */
+        function handleRoofAreaClick(pos) {
+            // 开始绘制区域
+            if (!gameState.roofAreaDrawing) {
+                gameState.roofAreaDrawing = true;
+                gameState.roofAreaStart = { x: pos.x, y: pos.y };
+                gameState.roofAreaEnd = { x: pos.x, y: pos.y };
+            } else {
+                // 完成绘制
+                finalizeRoofArea();
+            }
+        }
+        
+        /**
+         * 【本次修复】完成屋顶区域绘制
+         */
+        function finalizeRoofArea() {
+            if (!gameState.roofAreaStart || !gameState.roofAreaEnd) {
+                gameState.roofAreaDrawing = false;
+                gameState.roofAreaStart = null;
+                gameState.roofAreaEnd = null;
+                return;
+            }
+            
+            const start = gameState.roofAreaStart;
+            const end = gameState.roofAreaEnd;
+            
+            // 计算矩形区域（确保宽度和高度为正）
+            const x = Math.min(start.x, end.x);
+            const y = Math.min(start.y, end.y);
+            const width = Math.abs(end.x - start.x);
+            const height = Math.abs(end.y - start.y);
+            
+            // 最小尺寸限制（防止误点击）
+            const minSize = 20;
+            if (width >= minSize && height >= minSize) {
+                // 转换为米
+                const m2px = siteRect.width / gameState.siteSize.width;
+                const roofArea = {
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    widthM: width / m2px,
+                    heightM: height / m2px
+                };
+                
+                gameState.roofDesign.roofAreas.push(roofArea);
+                showNotification(`屋顶区域已添加 (${roofArea.widthM.toFixed(1)}×${roofArea.heightM.toFixed(1)}m)`, 'success');
+                updateRoofAreasList();
+            } else {
+                showNotification('区域太小，请绘制更大的区域', 'warning');
+            }
+            
+            // 重置绘制状态
+            gameState.roofAreaDrawing = false;
+            gameState.roofAreaStart = null;
+            gameState.roofAreaEnd = null;
+            
+            render();
+        }
 
         canvas.addEventListener('mousemove', (e) => {
             const pos = getMousePos(e);
@@ -5816,6 +6126,13 @@ function updateStructuralToolHint() {
                     render();
                 }
             }
+            
+            // 【本次修复】屋顶区域绘制预览
+            if (gameState.currentLevel === 4 && gameState.currentStructuralLayer === 'roof' && 
+                gameState.roofDesign.scope === 'custom' && gameState.roofAreaDrawing) {
+                gameState.roofAreaEnd = { x: pos.x, y: pos.y };
+                render();
+            }
         });
 
         canvas.addEventListener('mouseup', (e) => {
@@ -5886,6 +6203,12 @@ function updateStructuralToolHint() {
             gameState.movingOffset = null;
             // 清除柱预览
             gameState.columnPreview = null;
+            
+            // 【本次修复】完成屋顶区域绘制
+            if (gameState.currentLevel === 4 && gameState.currentStructuralLayer === 'roof' && 
+                gameState.roofDesign.scope === 'custom' && gameState.roofAreaDrawing) {
+                finalizeRoofArea();
+            }
             
             render();
         });
@@ -7452,13 +7775,11 @@ function updateStructuralToolHint() {
             } else if (layer === 'roof') {
                 // 屋顶平面：根据屋顶类型绘制屋顶结构
                 
-                // 计算建筑外轮廓范围（基于房间布局）
-                let buildingBounds = getBuildingBounds();
-                
                 // 获取屋顶设计数据
                 const roofType = gameState.roofDesign.type;
                 const roofPitch = gameState.roofDesign.pitch;
                 const roofDirection = gameState.roofDesign.direction;
+                const roofScope = gameState.roofDesign.scope || 'full';
                 
                 // 绘制梁（虚线）
                 gameState.structuralElements.beams.forEach(beam => {
@@ -7478,174 +7799,229 @@ function updateStructuralToolHint() {
                     ctx.fillRect(col.x, col.y, col.width, col.depth);
                 });
                 
-                // 绘制屋顶
+                // 【本次修复】根据屋顶范围绘制屋顶
                 ctx.save();
                 
-                if (buildingBounds) {
-                    const { minX, minY, maxX, maxY } = buildingBounds;
-                    const buildingWidth = maxX - minX;
-                    const buildingDepth = maxY - minY;
+                if (roofScope === 'full') {
+                    // 全建筑屋顶（原有逻辑）
+                    let buildingBounds = getBuildingBounds();
                     
-                    if (roofType === 'flat') {
-                        // 平屋顶：灰色半透明矩形
-                        ctx.fillStyle = 'rgba(128, 128, 128, 0.4)';
-                        ctx.fillRect(minX, minY, buildingWidth, buildingDepth);
-                        ctx.strokeStyle = '#555';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(minX, minY, buildingWidth, buildingDepth);
+                    if (buildingBounds) {
+                        const { minX, minY, maxX, maxY } = buildingBounds;
+                        const buildingWidth = maxX - minX;
+                        const buildingDepth = maxY - minY;
                         
-                        // 添加平屋顶标注
-                        ctx.fillStyle = '#333';
-                        ctx.font = 'bold 12px Arial';
+                        if (roofType === 'flat') {
+                            // 平屋顶：灰色半透明矩形
+                            ctx.fillStyle = 'rgba(128, 128, 128, 0.4)';
+                            ctx.fillRect(minX, minY, buildingWidth, buildingDepth);
+                            ctx.strokeStyle = '#555';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(minX, minY, buildingWidth, buildingDepth);
+                            
+                            // 添加平屋顶标注
+                            ctx.fillStyle = '#333';
+                            ctx.font = 'bold 12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('平屋顶', minX + buildingWidth/2, minY + buildingDepth/2);
+                            
+                            // 绘制排水箭头（简化）
+                            ctx.fillStyle = '#666';
+                            ctx.font = '10px Arial';
+                            ctx.textAlign = 'left';
+                            const arrowLen = 15;
+                            const arrowX = minX + 20;
+                            const arrowY = minY + buildingDepth/2;
+                            // 箭头线
+                            ctx.beginPath();
+                            ctx.moveTo(arrowX, arrowY);
+                            ctx.lineTo(arrowX + arrowLen, arrowY);
+                            ctx.stroke();
+                            // 箭头头部
+                            ctx.beginPath();
+                            ctx.moveTo(arrowX + arrowLen, arrowY);
+                            ctx.lineTo(arrowX + arrowLen - 5, arrowY - 3);
+                            ctx.lineTo(arrowX + arrowLen - 5, arrowY + 3);
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.fillText('排水方向', arrowX - 50, arrowY + 3);
+                            
+                        } else if (roofType === 'singlePitch') {
+                            // 单坡屋顶：三角形，一边高一边低
+                            const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(buildingWidth, buildingDepth) * 0.3;
+                            
+                            ctx.fillStyle = 'rgba(139, 90, 43, 0.5)';
+                            ctx.strokeStyle = '#5D4E37';
+                            ctx.lineWidth = 2;
+                            
+                            // 根据排水方向决定高低边
+                            let triangle;
+                            if (roofDirection === 'north-south') {
+                                // 南北向：南边高（底部），北边低（顶部）
+                                triangle = [
+                                    { x: minX, y: maxY },           // 左下
+                                    { x: maxX, y: maxY },           // 右下
+                                    { x: maxX, y: minY - roofHeight } // 右上（高）
+                                ];
+                            } else {
+                                // 东西向：东边高（底部），西边低（顶部）
+                                triangle = [
+                                    { x: maxX, y: minY },           // 右下
+                                    { x: maxX, y: maxY },           // 右上
+                                    { x: minX - roofHeight, y: maxY } // 左上（高）
+                                ];
+                            }
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(triangle[0].x, triangle[0].y);
+                            for (let i = 1; i < triangle.length; i++) {
+                                ctx.lineTo(triangle[i].x, triangle[i].y);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+                            ctx.stroke();
+                            
+                            // 标注
+                            ctx.fillStyle = '#5D4E37';
+                            ctx.font = 'bold 11px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('单坡屋顶 ' + roofPitch + '°', minX + buildingWidth/2, minY + buildingDepth + 20);
+                            
+                        } else if (roofType === 'doublePitch') {
+                            // 双坡屋顶：三角形屋脊线
+                            const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(buildingWidth, buildingDepth) * 0.2;
+                            
+                            ctx.fillStyle = 'rgba(139, 90, 43, 0.5)';
+                            ctx.strokeStyle = '#5D4E37';
+                            ctx.lineWidth = 2;
+                            
+                            let triangle;
+                            if (roofDirection === 'north-south') {
+                                // 南北向：屋脊在中间，东西两侧低
+                                const ridgeY = (minY + maxY) / 2;
+                                triangle = [
+                                    { x: minX, y: maxY },              // 左下
+                                    { x: minX, y: minY },              // 左上
+                                    { x: maxX, y: minY },              // 右上
+                                    { x: maxX, y: maxY },              // 右下
+                                    { x: (minX + maxX) / 2, y: ridgeY - roofHeight } // 屋脊最高点
+                                ];
+                                
+                                // 绘制填充
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[0].x, triangle[0].y);
+                                ctx.lineTo(triangle[1].x, triangle[1].y);
+                                ctx.lineTo(triangle[4].x, triangle[4].y);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.stroke();
+                                
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[2].x, triangle[2].y);
+                                ctx.lineTo(triangle[3].x, triangle[3].y);
+                                ctx.lineTo(triangle[4].x, triangle[4].y);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.stroke();
+                                
+                                // 屋脊线
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[4].x, triangle[4].y);
+                                ctx.lineTo((minX + maxX) / 2, (minY + maxY) / 2);
+                                ctx.stroke();
+                                
+                            } else {
+                                // 东西向：屋脊在中间，南北两侧低
+                                const ridgeX = (minX + maxX) / 2;
+                                triangle = [
+                                    { x: minX, y: minY },              // 左上
+                                    { x: maxX, y: minY },              // 右上
+                                    { x: maxX, y: maxY },              // 右下
+                                    { x: minX, y: maxY },              // 左下
+                                    { x: ridgeX - roofHeight, y: (minY + maxY) / 2 } // 屋脊最高点
+                                ];
+                                
+                                // 绘制填充
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[0].x, triangle[0].y);
+                                ctx.lineTo(triangle[1].x, triangle[1].y);
+                                ctx.lineTo(triangle[4].x, triangle[4].y);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.stroke();
+                                
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[2].x, triangle[2].y);
+                                ctx.lineTo(triangle[3].x, triangle[3].y);
+                                ctx.lineTo(triangle[4].x, triangle[4].y);
+                                ctx.closePath();
+                                ctx.fill();
+                                ctx.stroke();
+                                
+                                // 屋脊线
+                                ctx.beginPath();
+                                ctx.moveTo(triangle[4].x, triangle[4].y);
+                                ctx.lineTo((minX + maxX) / 2, (minY + maxY) / 2);
+                                ctx.stroke();
+                            }
+                            
+                            // 标注
+                            ctx.fillStyle = '#5D4E37';
+                            ctx.font = 'bold 11px Arial';
+                            ctx.textAlign = 'center';
+                            const dirText = roofDirection === 'north-south' ? '南北向' : '东西向';
+                            ctx.fillText('双坡屋顶 ' + roofPitch + '° ' + dirText, minX + buildingWidth/2, minY + buildingDepth + 20);
+                        }
+                    }
+                } else {
+                    // 自定义屋顶范围
+                    const roofAreas = gameState.roofDesign.roofAreas || [];
+                    
+                    if (roofAreas.length === 0 && !gameState.roofAreaDrawing) {
+                        // 没有绘制区域时显示提示
+                        ctx.fillStyle = '#888';
+                        ctx.font = '14px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('平屋顶', minX + buildingWidth/2, minY + buildingDepth/2);
+                        ctx.fillText('请在画布上拖拽绘制屋顶区域', canvas.width / 2, canvas.height / 2);
+                    } else {
+                        // 绘制每个屋顶区域
+                        roofAreas.forEach((area, index) => {
+                            drawSingleRoofArea(ctx, area, roofType, roofPitch, roofDirection, false);
+                        });
                         
-                        // 绘制排水箭头（简化）
+                        // 【本次修复】绘制屋顶区域预览
+                        if (gameState.roofAreaDrawing && gameState.roofAreaStart && gameState.roofAreaEnd) {
+                            const start = gameState.roofAreaStart;
+                            const end = gameState.roofAreaEnd;
+                            const x = Math.min(start.x, end.x);
+                            const y = Math.min(start.y, end.y);
+                            const w = Math.abs(end.x - start.x);
+                            const h = Math.abs(end.y - start.y);
+                            
+                            // 绘制预览矩形
+                            ctx.fillStyle = 'rgba(46, 204, 113, 0.3)';
+                            ctx.fillRect(x, y, w, h);
+                            ctx.strokeStyle = '#27ae60';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([5, 5]);
+                            ctx.strokeRect(x, y, w, h);
+                            ctx.setLineDash([]);
+                            
+                            // 显示尺寸
+                            const m2px = siteRect.width / gameState.siteSize.width;
+                            const widthM = (w / m2px).toFixed(1);
+                            const heightM = (h / m2px).toFixed(1);
+                            ctx.fillStyle = '#27ae60';
+                            ctx.font = 'bold 12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(`${widthM}×${heightM}m`, x + w/2, y + h/2);
+                        }
+                        
+                        // 标注区域数量
                         ctx.fillStyle = '#666';
-                        ctx.font = '10px Arial';
-                        ctx.textAlign = 'left';
-                        const arrowLen = 15;
-                        const arrowX = minX + 20;
-                        const arrowY = minY + buildingDepth/2;
-                        // 箭头线
-                        ctx.beginPath();
-                        ctx.moveTo(arrowX, arrowY);
-                        ctx.lineTo(arrowX + arrowLen, arrowY);
-                        ctx.stroke();
-                        // 箭头头部
-                        ctx.beginPath();
-                        ctx.moveTo(arrowX + arrowLen, arrowY);
-                        ctx.lineTo(arrowX + arrowLen - 5, arrowY - 3);
-                        ctx.lineTo(arrowX + arrowLen - 5, arrowY + 3);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.fillText('排水方向', arrowX - 50, arrowY + 3);
-                        
-                    } else if (roofType === 'singlePitch') {
-                        // 单坡屋顶：三角形，一边高一边低
-                        const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(buildingWidth, buildingDepth) * 0.3;
-                        
-                        ctx.fillStyle = 'rgba(139, 90, 43, 0.5)';
-                        ctx.strokeStyle = '#5D4E37';
-                        ctx.lineWidth = 2;
-                        
-                        // 根据排水方向决定高低边
-                        let triangle;
-                        if (roofDirection === 'north-south') {
-                            // 南北向：南边高（底部），北边低（顶部）
-                            triangle = [
-                                { x: minX, y: maxY },           // 左下
-                                { x: maxX, y: maxY },           // 右下
-                                { x: maxX, y: minY - roofHeight } // 右上（高）
-                            ];
-                        } else {
-                            // 东西向：东边高（底部），西边低（顶部）
-                            triangle = [
-                                { x: maxX, y: minY },           // 右下
-                                { x: maxX, y: maxY },           // 右上
-                                { x: minX - roofHeight, y: maxY } // 左上（高）
-                            ];
-                        }
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(triangle[0].x, triangle[0].y);
-                        for (let i = 1; i < triangle.length; i++) {
-                            ctx.lineTo(triangle[i].x, triangle[i].y);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                        
-                        // 标注
-                        ctx.fillStyle = '#5D4E37';
                         ctx.font = 'bold 11px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('单坡屋顶 ' + roofPitch + '°', minX + buildingWidth/2, minY + buildingDepth + 20);
-                        
-                    } else if (roofType === 'doublePitch') {
-                        // 双坡屋顶：三角形屋脊线
-                        const roofHeight = Math.tan(roofPitch * Math.PI / 180) * Math.min(buildingWidth, buildingDepth) * 0.2;
-                        
-                        ctx.fillStyle = 'rgba(139, 90, 43, 0.5)';
-                        ctx.strokeStyle = '#5D4E37';
-                        ctx.lineWidth = 2;
-                        
-                        let triangle;
-                        if (roofDirection === 'north-south') {
-                            // 南北向：屋脊在中间，东西两侧低
-                            const ridgeY = (minY + maxY) / 2;
-                            triangle = [
-                                { x: minX, y: maxY },              // 左下
-                                { x: minX, y: minY },              // 左上
-                                { x: maxX, y: minY },              // 右上
-                                { x: maxX, y: maxY },              // 右下
-                                { x: (minX + maxX) / 2, y: ridgeY - roofHeight } // 屋脊最高点
-                            ];
-                            
-                            // 绘制填充
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[0].x, triangle[0].y);
-                            ctx.lineTo(triangle[1].x, triangle[1].y);
-                            ctx.lineTo(triangle[4].x, triangle[4].y);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[2].x, triangle[2].y);
-                            ctx.lineTo(triangle[3].x, triangle[3].y);
-                            ctx.lineTo(triangle[4].x, triangle[4].y);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            
-                            // 屋脊线
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[4].x, triangle[4].y);
-                            ctx.lineTo((minX + maxX) / 2, (minY + maxY) / 2);
-                            ctx.stroke();
-                            
-                        } else {
-                            // 东西向：屋脊在中间，南北两侧低
-                            const ridgeX = (minX + maxX) / 2;
-                            triangle = [
-                                { x: minX, y: minY },              // 左上
-                                { x: maxX, y: minY },              // 右上
-                                { x: maxX, y: maxY },              // 右下
-                                { x: minX, y: maxY },              // 左下
-                                { x: ridgeX - roofHeight, y: (minY + maxY) / 2 } // 屋脊最高点
-                            ];
-                            
-                            // 绘制填充
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[0].x, triangle[0].y);
-                            ctx.lineTo(triangle[1].x, triangle[1].y);
-                            ctx.lineTo(triangle[4].x, triangle[4].y);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[2].x, triangle[2].y);
-                            ctx.lineTo(triangle[3].x, triangle[3].y);
-                            ctx.lineTo(triangle[4].x, triangle[4].y);
-                            ctx.closePath();
-                            ctx.fill();
-                            ctx.stroke();
-                            
-                            // 屋脊线
-                            ctx.beginPath();
-                            ctx.moveTo(triangle[4].x, triangle[4].y);
-                            ctx.lineTo((minX + maxX) / 2, (minY + maxY) / 2);
-                            ctx.stroke();
-                        }
-                        
-                        // 标注
-                        ctx.fillStyle = '#5D4E37';
-                        ctx.font = 'bold 11px Arial';
-                        ctx.textAlign = 'center';
-                        const dirText = roofDirection === 'north-south' ? '南北向' : '东西向';
-                        ctx.fillText('双坡屋顶 ' + roofPitch + '° ' + dirText, minX + buildingWidth/2, minY + buildingDepth + 20);
+                        ctx.fillText(`自定义屋顶 - ${roofAreas.length}个区域`, canvas.width / 2, 25);
                     }
                 }
                 
@@ -7655,7 +8031,8 @@ function updateStructuralToolHint() {
                 ctx.fillStyle = '#666';
                 ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('🏠 屋顶平面 - ' + (roofType === 'flat' ? '平屋顶' : roofType === 'singlePitch' ? '单坡屋顶' : '双坡屋顶'), canvas.width / 2, 50);
+                const scopeText = roofScope === 'full' ? '' : '（自定义）';
+                ctx.fillText('🏠 屋顶平面 - ' + (roofType === 'flat' ? '平屋顶' : roofType === 'singlePitch' ? '单坡屋顶' : '双坡屋顶') + scopeText, canvas.width / 2, 50);
             } else if (layer === 'foundation') {
                 // 基础平面：绘制基础和柱
                 // 基础只在1层，绘制1层的基础数据
