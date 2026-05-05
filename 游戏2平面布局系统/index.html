@@ -685,6 +685,44 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 【任务3新增】基础设计面板 - 仅在基础图层显示 -->
+                    <div id="foundationDesignPanel" style="display:none;margin-top:12px;padding:10px;background:#fff3e0;border-radius:10px;border:1px solid #ff9800;">
+                        <div style="font-size:0.85rem;font-weight:600;color:#e65100;margin-bottom:8px;">
+                            <span>🔲</span> 基础类型
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <!-- 基础类型选择 -->
+                            <button class="foundation-type-btn active" data-type="independent" onclick="selectFoundationType('independent')" 
+                                    style="padding:8px 12px;border:2px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:0.8rem;text-align:left;display:flex;align-items:center;gap:8px;transition:all 0.3s;">
+                                <span>⬜</span>
+                                <div>
+                                    <div style="font-weight:600;">独立基础</div>
+                                    <div style="font-size:0.7rem;color:#888;">点状 · 柱下放置</div>
+                                </div>
+                            </button>
+                            <button class="foundation-type-btn" data-type="strip" onclick="selectFoundationType('strip')" 
+                                    style="padding:8px 12px;border:2px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:0.8rem;text-align:left;display:flex;align-items:center;gap:8px;transition:all 0.3s;">
+                                <span>━</span>
+                                <div>
+                                    <div style="font-weight:600;">条形基础</div>
+                                    <div style="font-size:0.7rem;color:#888;">线状 · 沿墙/柱连线</div>
+                                </div>
+                            </button>
+                            <button class="foundation-type-btn" data-type="raft" onclick="selectFoundationType('raft')" 
+                                    style="padding:8px 12px;border:2px solid #ddd;border-radius:8px;background:white;cursor:pointer;font-size:0.8rem;text-align:left;display:flex;align-items:center;gap:8px;transition:all 0.3s;">
+                                <span>▣</span>
+                                <div>
+                                    <div style="font-weight:600;">筏板基础</div>
+                                    <div style="font-size:0.7rem;color:#888;">面状 · 覆盖建筑底面</div>
+                                </div>
+                            </button>
+                        </div>
+                        <!-- 基础说明 -->
+                        <div id="foundationHint" style="margin-top:10px;padding:8px;background:#fffbe6;border-radius:6px;font-size:0.75rem;color:#856404;">
+                            💡 点击柱位置自动放置独立基础
+                        </div>
+                    </div>
                 </div>
                 <!-- 关卡4：结构工具提示面板 -->
                 <div class="panel-section" id="structuralToolHintPanel" style="display:none;">
@@ -1094,10 +1132,16 @@
             },
             selectedStructuralElement: null,  // 选中的结构构件
             structuralElementTool: 'select',  // 结构工具: select/column/beam/bearingWall/slab/foundation
+            foundationSubType: 'independent',  // 【任务3新增】基础子类型: independent/strip/raft
             currentStructuralLayer: 'building', // 当前图层: building/beam/roof/foundation
             structuralElementDrawing: false,   // 是否正在绘制结构构件
             structuralElementStart: null,      // 绘制起点
             structuralElementPreview: null,     // 预览线终点
+            // ========== 【本次修复】新增：柱预览和移动功能 ==========
+            columnPreview: null,               // 柱放置预览位置 {x, y}
+            movingStructuralElement: null,     // 当前正在移动的结构构件
+            movingOffset: null,               // 移动偏移量 {x, y}
+            structuralElementDragging: false, // 是否正在拖拽结构构件
             shiftPressed: false,                 // Shift键状态
             // 屋顶设计数据
             roofDesign: {
@@ -4333,10 +4377,28 @@
         function handleLevel4Click(pos) {
             switch (gameState.structuralElementTool) {
                 case 'select':
-                    // 选择工具：选择结构构件
+                    // ========== 【本次修复】选择工具：选择和移动结构构件 ==========
                     const elemHit = findStructuralElementAt(pos.x, pos.y);
                     if (elemHit) {
-                        selectStructuralElement(elemHit);
+                        // 检查是否点击到已选中的构件（开始拖拽移动）
+                        if (gameState.selectedStructuralElement && 
+                            gameState.selectedStructuralElement.element.id === elemHit.element.id) {
+                            // 点击到已选中的构件，准备拖拽移动
+                            const elem = elemHit.element;
+                            gameState.structuralElementDragging = true;
+                            gameState.movingStructuralElement = elemHit;
+                            
+                            // 计算偏移量
+                            if (elemHit.type === 'column') {
+                                gameState.movingOffset = { x: pos.x - elem.x, y: pos.y - elem.y };
+                            } else if (elemHit.type === 'beam' || elemHit.type === 'bearingWall') {
+                                // 梁和承重墙：记录起点偏移
+                                gameState.movingOffset = { x: pos.x - elem.startX, y: pos.y - elem.startY };
+                            }
+                        } else {
+                            // 点击到新构件，选中它
+                            selectStructuralElement(elemHit);
+                        }
                     } else {
                         deselectStructuralElement();
                     }
@@ -4347,62 +4409,72 @@
                         showNotification('请先选择结构类型', 'warning');
                         return;
                     }
+                    // 【任务1修复】：检查是否在最高楼层放置柱子
+                    const maxFloor = gameState.totalFloors || 1;
+                    if (gameState.currentFloor < maxFloor) {
+                        // 检查下方楼层是否有对齐的柱子
+                        const hasSupport = checkColumnSupportBelow(pos.x, pos.y);
+                        if (!hasSupport) {
+                            showNotification('⚠️ 下方楼层此处无支撑，建议从最高层开始设置柱子', 'warning');
+                        }
+                    }
                     const snappedX = snapToGrid(pos.x);
                     const snappedY = snapToGrid(pos.y);
-                    addColumn(snappedX, snappedY);
+                    // ========== 【本次修复】柱预览确认放置 ==========
+                    // 如果已有预览且点击位置与预览位置相近，确认放置
+                    if (gameState.columnPreview && 
+                        Math.abs(gameState.columnPreview.x - snappedX) < 15 && 
+                        Math.abs(gameState.columnPreview.y - snappedY) < 15) {
+                        // 预览位置确认放置
+                        addColumn(gameState.columnPreview.x, gameState.columnPreview.y);
+                        gameState.columnPreview = null; // 清除预览
+                    } else {
+                        // 新位置直接放置并更新预览
+                        addColumn(snappedX, snappedY);
+                    }
                     break;
                 case 'beam':
                 case 'bearingWall':
-                    // 梁/承重墙工具：点击开始绘制
+                    // ========== 【本次修复】梁/承重墙工具：增强吸附预览 ==========
                     if (!gameState.currentStructureType) {
                         showNotification('请先选择结构类型', 'warning');
                         return;
                     }
                     if (!gameState.structuralElementDrawing) {
                         // 第一点：起点
-                        // 先网格对齐，再尝试吸附到柱
-                        let startMeter = pixelToMeter(pos.x, pos.y);
-                        startMeter.x = Math.round(startMeter.x / 0.3) * 0.3;
-                        startMeter.y = Math.round(startMeter.y / 0.3) * 0.3;
+                        const clickedX = snapToGrid(pos.x);
+                        const clickedY = snapToGrid(pos.y);
                         
-                        // 尝试吸附到最近的柱
-                        const startSnap = snapToNearestColumn(startMeter.x, startMeter.y, 0.5);
-                        if (startSnap) {
-                            startMeter.x = startSnap.x;
-                            startMeter.y = startSnap.y;
-                        }
+                        // 尝试吸附到最近的柱（像素坐标系，阈值100像素）
+                        const startSnap = snapToNearestColumn(clickedX, clickedY, 100);
+                        const finalX = startSnap ? startSnap.x : clickedX;
+                        const finalY = startSnap ? startSnap.y : clickedY;
                         
-                        const startPixel = meterToPixel(startMeter.x, startMeter.y);
                         gameState.structuralElementDrawing = true;
-                        gameState.structuralElementStart = startPixel;
-                        showNotification('点击终点位置完成绘制（按住Shift画水平/垂直线）', 'warning');
+                        gameState.structuralElementStart = { x: finalX, y: finalY };
+                        
+                        // 根据是否吸附到柱显示不同提示
+                        if (startSnap) {
+                            showNotification('✅ 起点已吸附到柱，点击终点完成绘制', 'success');
+                        } else {
+                            showNotification('⚠️ 起点未吸附到柱，建议连接柱（按住Shift画水平/垂直线）', 'warning');
+                        }
                     } else {
                         // 第二点：终点
-                        let endMeter = pixelToMeter(pos.x, pos.y);
-                        endMeter.x = Math.round(endMeter.x / 0.3) * 0.3;
-                        endMeter.y = Math.round(endMeter.y / 0.3) * 0.3;
+                        const clickedX = snapToGrid(pos.x);
+                        const clickedY = snapToGrid(pos.y);
                         
                         // 应用Shift约束
-                        const constrained = applyShiftConstraint(
+                        let endPixel = applyShiftConstraint(
                             gameState.structuralElementStart.x, gameState.structuralElementStart.y,
-                            meterToPixel(endMeter.x, endMeter.y).x, meterToPixel(endMeter.x, endMeter.y).y
+                            clickedX, clickedY
                         );
                         
-                        // 如果应用了Shift约束，需要重新转换为米制
-                        if (gameState.shiftPressed) {
-                            const constrainedMeter = pixelToMeter(constrained.x, constrained.y);
-                            endMeter.x = constrainedMeter.x;
-                            endMeter.y = constrainedMeter.y;
-                        }
-                        
-                        // 尝试吸附到最近的柱
-                        const endSnap = snapToNearestColumn(endMeter.x, endMeter.y, 0.5);
+                        // 尝试吸附到最近的柱（像素坐标系，阈值100像素）
+                        const endSnap = snapToNearestColumn(endPixel.x, endPixel.y, 100);
                         if (endSnap) {
-                            endMeter.x = endSnap.x;
-                            endMeter.y = endSnap.y;
+                            endPixel = endSnap;
                         }
-                        
-                        const endPixel = meterToPixel(endMeter.x, endMeter.y);
                         
                         if (gameState.structuralElementTool === 'beam') {
                             addBeam(gameState.structuralElementStart.x, gameState.structuralElementStart.y, endPixel.x, endPixel.y);
@@ -4579,12 +4651,42 @@
         /**
          * 添加柱 - 只检查当前楼层，放置后自动向下传递到底层
          */
-        function addColumn(x, y) {
-            const m2px = siteRect.width / gameState.siteSize.width;
+        
+        /**
+         * 【任务1修复】：检查下方楼层是否有支撑柱
+         * @param {number} x - 像素X坐标
+         * @param {number} y - 像素Y坐标
+         * @returns {boolean} - 是否有支撑
+         */
+        function checkColumnSupportBelow(x, y) {
+            const m2pxX = siteRect.width / gameState.siteSize.width;
+            // 容许偏差：0.5米
+            const tolerance = 0.5 * m2pxX;
+            
+            // 检查所有下层楼层
+            for (let floor = 1; floor < gameState.currentFloor; floor++) {
+                const floorData = gameState.structuralElements.floors[floor];
+                if (!floorData || !floorData.columns) continue;
+                
+                // 检查该层是否有靠近的柱
+                const hasColumn = floorData.columns.some(col => 
+                    Math.abs(col.x - x) < tolerance && Math.abs(col.y - y) < tolerance
+                );
+                if (!hasColumn) {
+                    return false;  // 某层无支撑
+                }
+            }
+            return true;  // 所有层都有支撑
+        }
+
+function addColumn(x, y) {
+            // 使用X/Y比例尺分别计算宽深
+            const m2pxX = siteRect.width / gameState.siteSize.width;
+            const m2pxY = siteRect.height / gameState.siteSize.depth;
             const structType = gameState.currentStructureType;
             let material = 'concrete';
-            let width = 0.3 * m2px;
-            let depth = 0.3 * m2px;
+            let width = 0.3 * m2pxX;  // 宽度用X比例尺
+            let depth = 0.3 * m2pxY;  // 深度用Y比例尺
             
             // 根据结构类型设置材质和尺寸
             if (structType === 'masonry') {
@@ -4605,7 +4707,7 @@
             const currentFloorColumns = currentFloorData ? currentFloorData.columns : gameState.structuralElements.columns;
             
             // 检查是否与当前楼层现有柱重叠
-            const threshold = 0.3 * m2px;
+            const threshold = 0.3 * m2pxX;  // 使用X比例尺
             const overlap = currentFloorColumns.some(col => 
                 Math.abs(col.x - x) < threshold && Math.abs(col.y - y) < threshold
             );
@@ -4633,7 +4735,7 @@
                 const floorData = gameState.structuralElements.floors[floor];
                 // 检查底层是否已有相同位置的柱
                 const floorOverlap = floorData.columns.some(col => 
-                    Math.abs(col.x - x) < threshold && Math.abs(col.y - y) < threshold
+                    Math.abs(col.x - x) < 0.3 * m2pxX && Math.abs(col.y - y) < 0.3 * m2pxX
                 );
                 if (!floorOverlap) {
                     floorData.columns.push({
@@ -4654,10 +4756,12 @@
          * 添加独立基础（柱下）
          */
         function addIndependentFoundation(x, y) {
-            const m2px = siteRect.width / gameState.siteSize.width;
+            // 【任务2修复】：使用X/Y比例尺分别计算宽深
+            const m2pxX = siteRect.width / gameState.siteSize.width;
+            const m2pxY = siteRect.height / gameState.siteSize.depth;
             
             // 检查是否已有基础重叠
-            const threshold = 0.5 * m2px;
+            const threshold = 0.5 * m2pxX;
             const overlap = gameState.structuralElements.foundations.some(f => {
                 if (f.type !== 'independentFoundation') return false;
                 return Math.abs(f.x - x) < threshold && Math.abs(f.y - y) < threshold;
@@ -4671,9 +4775,9 @@
                 id: Date.now(),
                 type: 'independentFoundation',
                 x: x, y: y,
-                width: 0.8 * m2px,  // 0.8米
-                depth: 0.8 * m2px,  // 0.8米
-                thickness: 0.3 * m2px  // 300mm
+                width: 0.8 * m2pxX,  // 【修复】宽度用X比例尺
+                depth: 0.8 * m2pxY,  // 【修复】深度用Y比例尺
+                thickness: 0.3 * m2pxX  // 【修复】厚度用X比例尺
             });
             
             updateProgress();
@@ -4685,15 +4789,16 @@
          * 添加条形基础（承重墙下）
          */
         function addStripFoundation(startX, startY, endX, endY) {
-            const m2px = siteRect.width / gameState.siteSize.width;
+            // 【任务2修复】：使用X比例尺计算条形基础尺寸
+            const m2pxX = siteRect.width / gameState.siteSize.width;
             
             gameState.structuralElements.foundations.push({
                 id: Date.now(),
                 type: 'stripFoundation',
                 startX: startX, startY: startY,
                 endX: endX, endY: endY,
-                width: 0.5 * m2px,  // 500mm
-                thickness: 0.3 * m2px  // 300mm
+                width: 0.5 * m2pxX,  // 【修复】宽度用X比例尺
+                thickness: 0.3 * m2pxX  // 【修复】厚度用X比例尺
             });
             
             updateProgress();
@@ -4705,15 +4810,17 @@
          * 添加筏板基础
          */
         function addRaftFoundation(x, y, width, depth) {
-            const m2px = siteRect.width / gameState.siteSize.width;
+            // 【任务2修复】：使用X/Y比例尺分别计算宽深
+            const m2pxX = siteRect.width / gameState.siteSize.width;
+            const m2pxY = siteRect.height / gameState.siteSize.depth;
             
             gameState.structuralElements.foundations.push({
                 id: Date.now(),
                 type: 'raftFoundation',
                 x: x, y: y,
-                width: width * m2px,
-                depth: depth * m2px,
-                thickness: 0.3 * m2px  // 300mm
+                width: width * m2pxX,   // 【修复】宽度用X比例尺
+                depth: depth * m2pxY,   // 【修复】深度用Y比例尺
+                thickness: 0.3 * m2pxX  // 【修复】厚度用X比例尺
             });
             
             updateProgress();
@@ -4725,7 +4832,9 @@
          * 添加梁
          */
         function addBeam(startX, startY, endX, endY) {
-            const m2px = siteRect.width / gameState.siteSize.width;
+            // 【任务2修复】：跨度计算需要分别用X/Y比例尺
+            const m2pxX = siteRect.width / gameState.siteSize.width;
+            const m2pxY = siteRect.height / gameState.siteSize.depth;
             const structType = gameState.currentStructureType;
             let material = 'concrete';
             
@@ -4737,7 +4846,10 @@
                 material = structType === 'prefabWood' ? 'timber' : 'steel';
             }
             
-            const span = Math.sqrt(Math.pow((endX - startX) / m2px, 2) + Math.pow((endY - startY) / m2px, 2));
+            // 跨度计算：将像素距离转换为米（需要考虑X/Y比例尺）
+            const spanX = Math.abs(endX - startX) / m2pxX;
+            const spanY = Math.abs(endY - startY) / m2pxY;
+            const span = Math.sqrt(spanX * spanX + spanY * spanY);
             const maxSpan = structureTypes[structType]?.maxSpan || 9;
             
             if (span > maxSpan) {
@@ -4766,15 +4878,15 @@
          * 添加承重墙
          */
         function addBearingWall(startX, startY, endX, endY) {
-            const m2px = siteRect.width / gameState.siteSize.width;
-            const structType = gameState.currentStructureType;
+            // 【任务2修复】：承重墙厚度用X比例尺
+            const m2pxX = siteRect.width / gameState.siteSize.width;
             
             gameState.structuralElements.bearingWalls.push({
                 id: Date.now(),
                 type: 'bearingWall',
                 startX: startX, startY: startY,
                 endX: endX, endY: endY,
-                thickness: 0.24 * m2px,
+                thickness: 0.24 * m2pxX,  // 【修复】厚度用X比例尺
                 material: 'brick'
             });
             
@@ -5155,7 +5267,64 @@
         /**
          * 更新结构工具提示面板
          */
-        function updateStructuralToolHint() {
+        
+        /**
+         * 【任务3新增】选择基础类型
+         */
+        function selectFoundationType(type) {
+            gameState.foundationSubType = type;
+            
+            // 更新UI
+            document.querySelectorAll('.foundation-type-btn').forEach(btn => {
+                if (btn.dataset.type === type) {
+                    btn.classList.add('active');
+                    btn.style.borderColor = '#ff9800';
+                    btn.style.background = 'linear-gradient(135deg, #fff3e0, #ffe0b2)';
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.borderColor = '#ddd';
+                    btn.style.background = 'white';
+                }
+            });
+            
+            // 更新提示
+            const hint = document.getElementById('foundationHint');
+            if (hint) {
+                const hints = {
+                    'independent': '💡 点击柱位置自动放置独立基础',
+                    'strip': '💡 两次点击绘制条形基础线',
+                    'raft': '💡 两次点击绘制筏板区域'
+                };
+                hint.innerHTML = hints[type] || '';
+            }
+            
+            // 重置绘制状态
+            gameState.structuralElementDrawing = false;
+            gameState.structuralElementStart = null;
+            
+            // 显示通知
+            const names = { 'independent': '独立基础', 'strip': '条形基础', 'raft': '筏板基础' };
+            showNotification(`已选择${names[type]}，点击开始绘制`, 'success');
+            
+            render();
+        }
+
+        /**
+         * 【任务3新增】更新基础面板显示
+         */
+        function updateFoundationPanelVisibility() {
+            const panel = document.getElementById('foundationDesignPanel');
+            if (!panel) return;
+            
+            // 仅在基础图层显示
+            if (gameState.currentStructuralLayer === 'foundation') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+function updateStructuralToolHint() {
             const tool = gameState.structuralElementTool;
             const structConfig = gameState.currentStructureType ? structureTypes[gameState.currentStructureType] : null;
             const hintTitle = document.getElementById('toolHintTitle');
@@ -5262,6 +5431,11 @@
             gameState.structuralElementDrawing = false;
             gameState.structuralElementStart = null;
             
+            // 【任务3修复】：当选择基础工具时，重置子类型
+            if (tool === 'foundation') {
+                gameState.foundationSubType = 'independent';  // 默认独立基础
+            }
+            
             // 更新工具栏UI（包括画布上方和右侧面板）
             document.querySelectorAll('.structural-tool-btn').forEach(btn => {
                 btn.classList.remove('active');
@@ -5297,6 +5471,8 @@
             };
             
             updateStructureTypeUI();
+            // ========== 【本次修复】更新柱工具按钮状态 ==========
+            updateColumnToolButton();
             updateProgress();
             render();
             
@@ -5322,6 +5498,53 @@
         }
 
         /**
+         * 【本次修复】更新柱工具按钮状态
+         * 砌体结构不需要柱，禁用柱工具按钮并显示提示
+         * 其他结构类型启用柱工具按钮
+         */
+        function updateColumnToolButton() {
+            const columnBtn = document.querySelector('[data-tool="column"]');
+            if (!columnBtn) return;
+            
+            const isMasonry = gameState.currentStructureType === 'masonry';
+            
+            if (isMasonry) {
+                // 砌体结构：禁用柱按钮
+                columnBtn.classList.add('disabled');
+                columnBtn.style.opacity = '0.5';
+                columnBtn.style.pointerEvents = 'none';
+                columnBtn.title = '砌体结构不需要柱（承重墙承重）';
+                
+                // 更新工具提示
+                const hintContent = document.getElementById('toolHintContent');
+                if (hintContent && gameState.structuralElementTool === 'column') {
+                    hintContent.innerHTML = `
+                        <ul>
+                            <li>⚠️ <b>砌体结构不需要柱</b></li>
+                            <li>砌体结构由承重墙承担荷载</li>
+                            <li>请选择「承重墙」工具绘制墙体</li>
+                        </ul>
+                    `;
+                    const hintTitle = document.getElementById('toolHintTitle');
+                    if (hintTitle) {
+                        hintTitle.innerHTML = `<span>⚠️</span> 砌体结构不支持柱`;
+                    }
+                }
+                
+                // 如果当前选择了柱工具，自动切换到选择工具
+                if (gameState.structuralElementTool === 'column') {
+                    setStructuralTool('select');
+                }
+            } else {
+                // 其他结构类型：启用柱按钮
+                columnBtn.classList.remove('disabled');
+                columnBtn.style.opacity = '1';
+                columnBtn.style.pointerEvents = 'auto';
+                columnBtn.title = '柱';
+            }
+        }
+
+        /**
          * 设置当前图层
          */
         function setStructuralLayer(layer) {
@@ -5332,6 +5555,9 @@
             gameState.layers.beam = layer === 'beam';
             gameState.layers.roof = layer === 'roof';
             gameState.layers.foundation = layer === 'foundation';
+            
+            // 【任务3修复】：更新基础面板显示
+            updateFoundationPanelVisibility();
             
             // 切换到基础图层时，自动切换到1楼（基础只在1楼）
             if (layer === 'foundation' && gameState.currentFloor !== 1) {
@@ -5526,6 +5752,70 @@
                     render();
                 }
             }
+            
+            // ========== 【本次修复】关卡4：柱预览和结构构件移动 ==========
+            // 柱预览更新（柱工具下）
+            if (gameState.currentLevel === 4 && gameState.structuralElementTool === 'column') {
+                if (gameState.currentStructureType && gameState.currentStructureType !== 'masonry') {
+                    const snappedX = snapToGrid(pos.x);
+                    const snappedY = snapToGrid(pos.y);
+                    gameState.columnPreview = { x: snappedX, y: snappedY };
+                    render();
+                }
+            }
+            
+            // 结构构件移动（选择工具下）
+            if (gameState.currentLevel === 4 && gameState.structuralElementTool === 'select' && gameState.structuralElementDragging && gameState.movingStructuralElement) {
+                const { element, type } = gameState.movingStructuralElement;
+                const m2pxX = siteRect.width / gameState.siteSize.width;
+                const m2pxY = siteRect.height / gameState.siteSize.depth;
+                
+                if (type === 'column') {
+                    // 柱子：计算新位置，网格吸附
+                    const newX = snapToGrid(pos.x - gameState.movingOffset.x);
+                    const newY = snapToGrid(pos.y - gameState.movingOffset.y);
+                    
+                    // 限制在地块范围内
+                    element.x = Math.max(siteRect.x, Math.min(newX, siteRect.x + siteRect.width - element.width));
+                    element.y = Math.max(siteRect.y, Math.min(newY, siteRect.y + siteRect.height - element.depth));
+                    
+                    render();
+                } else if (type === 'beam') {
+                    // 梁：起点和终点一起移动
+                    const dx = pos.x - gameState.movingOffset.x - element.startX;
+                    const dy = pos.y - gameState.movingOffset.y - element.startY;
+                    
+                    // 移动后网格吸附起点，终点跟随
+                    const newStartX = snapToGrid(element.startX + dx);
+                    const newStartY = snapToGrid(element.startY + dy);
+                    const newEndX = snapToGrid(element.endX + dx);
+                    const newEndY = snapToGrid(element.endY + dy);
+                    
+                    element.startX = newStartX;
+                    element.startY = newStartY;
+                    element.endX = newEndX;
+                    element.endY = newEndY;
+                    
+                    render();
+                } else if (type === 'bearingWall') {
+                    // 承重墙：起点和终点一起移动
+                    const dx = pos.x - gameState.movingOffset.x - element.startX;
+                    const dy = pos.y - gameState.movingOffset.y - element.startY;
+                    
+                    // 移动后网格吸附起点，终点跟随
+                    const newStartX = snapToGrid(element.startX + dx);
+                    const newStartY = snapToGrid(element.startY + dy);
+                    const newEndX = snapToGrid(element.endX + dx);
+                    const newEndY = snapToGrid(element.endY + dy);
+                    
+                    element.startX = newStartX;
+                    element.startY = newStartY;
+                    element.endX = newEndX;
+                    element.endY = newEndY;
+                    
+                    render();
+                }
+            }
         });
 
         canvas.addEventListener('mouseup', (e) => {
@@ -5578,6 +5868,24 @@
             gameState.isDraggingBubble = false;
             gameState.dragOffset = null;
             // 注意不要重置selectedBubble以保持选中状态
+            
+            // ========== 【本次修复】重置结构构件移动状态（关卡4）==========
+            if (gameState.structuralElementDragging && gameState.movingStructuralElement) {
+                const { type } = gameState.movingStructuralElement;
+                // 移动完成后显示提示
+                if (type === 'column') {
+                    showNotification('✅ 柱位置已更新', 'success');
+                } else if (type === 'beam') {
+                    showNotification('✅ 梁位置已更新', 'success');
+                } else if (type === 'bearingWall') {
+                    showNotification('✅ 承重墙位置已更新', 'success');
+                }
+            }
+            gameState.structuralElementDragging = false;
+            gameState.movingStructuralElement = null;
+            gameState.movingOffset = null;
+            // 清除柱预览
+            gameState.columnPreview = null;
             
             render();
         });
@@ -7546,6 +7854,51 @@
                     ctx.stroke();
                 }
                 ctx.setLineDash([]);
+            }
+            
+            // ========== 【本次修复】绘制柱预览（半透明预览）==========
+            if (gameState.columnPreview && gameState.structuralElementTool === 'column') {
+                const m2pxX = siteRect.width / gameState.siteSize.width;
+                const m2pxY = siteRect.height / gameState.siteSize.depth;
+                const preview = gameState.columnPreview;
+                
+                // 根据结构类型设置预览尺寸
+                const structType = gameState.currentStructureType;
+                let previewWidth = 0.3 * m2pxX;
+                let previewDepth = 0.3 * m2pxY;
+                
+                if (structType === 'steel' || structType === 'prefabSteel') {
+                    previewWidth = 0.2 * m2pxX;
+                    previewDepth = 0.2 * m2pxY;
+                } else if (structType === 'wood' || structType === 'prefabWood') {
+                    previewWidth = 0.15 * m2pxX;
+                    previewDepth = 0.15 * m2pxY;
+                }
+                
+                // 绘制半透明预览柱
+                ctx.fillStyle = 'rgba(44, 90, 160, 0.4)';
+                ctx.strokeStyle = '#2c5aa0';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.fillRect(preview.x, preview.y, previewWidth, previewDepth);
+                ctx.strokeRect(preview.x, preview.y, previewWidth, previewDepth);
+                ctx.setLineDash([]);
+                
+                // 绘制预览标注
+                ctx.fillStyle = '#2c5aa0';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('预览', preview.x + previewWidth / 2, preview.y + previewDepth / 2 + 4);
+                
+                // 绘制十字准心
+                ctx.strokeStyle = '#2c5aa0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(preview.x + previewWidth / 2 - 10, preview.y + previewDepth / 2);
+                ctx.lineTo(preview.x + previewWidth / 2 + 10, preview.y + previewDepth / 2);
+                ctx.moveTo(preview.x + previewWidth / 2, preview.y + previewDepth / 2 - 10);
+                ctx.lineTo(preview.x + previewWidth / 2, preview.y + previewDepth / 2 + 10);
+                ctx.stroke();
             }
         }
 
