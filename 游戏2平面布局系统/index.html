@@ -629,6 +629,9 @@
                         <button class="tool-btn structural-tool-btn" data-tool="slab" onclick="setStructuralTool('slab')" title="板">
                             <span class="icon">▣</span><span class="name">板</span>
                         </button>
+                        <button class="tool-btn structural-tool-btn" data-tool="roof" onclick="setStructuralTool('roof')" title="屋顶">
+                            <span class="icon">🏠</span><span class="name">屋顶</span>
+                        </button>
                         <button class="tool-btn structural-tool-btn" data-tool="foundation" onclick="setStructuralTool('foundation')" title="基础">
                             <span class="icon">🔲</span><span class="name">基础</span>
                         </button>
@@ -5417,8 +5420,20 @@ function addColumn(x, y) {
             const panel = document.getElementById('foundationDesignPanel');
             if (!panel) return;
             
-            // 仅在基础图层显示
+            // 仅在基础图层且选中基础工具时显示
             if (gameState.currentStructuralLayer === 'foundation') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        function updateRoofDesignPanelVisibility() {
+            const panel = document.getElementById('roofDesignPanel');
+            if (!panel) return;
+            
+            // 仅在屋顶图层显示
+            if (gameState.currentStructuralLayer === 'roof') {
                 panel.style.display = 'block';
             } else {
                 panel.style.display = 'none';
@@ -5490,6 +5505,18 @@ function updateStructuralToolHint() {
                         </ul>
                     `;
                     break;
+                case 'roof':
+                    title = '🏠 屋顶工具';
+                    content = `
+                        <ul>
+                            <li>已自动切换到屋顶图层</li>
+                            <li><b>全建筑</b>：屋顶覆盖整层</li>
+                            <li><b>自定义</b>：拖拽绘制局部屋顶区域</li>
+                            <li>每个屋顶区域可独立设置类型（平/单坡/双坡）</li>
+                            <li>切换楼层绘制各层屋顶</li>
+                        </ul>
+                    `;
+                    break;
                 case 'slab':
                     title = '▣ 板工具';
                     content = `
@@ -5542,11 +5569,15 @@ function updateStructuralToolHint() {
             gameState.structuralElementDrawing = false;
             gameState.structuralElementStart = null;
             
-            // 【问题1修复】：当选择基础工具时，保留用户之前选择的基础子类型，自动切换到基础图层
+            // 当选择基础工具时，自动切换到基础图层
             if (tool === 'foundation') {
-                // 【本次修复】：自动切换到基础图层并显示基础设计面板
                 setStructuralLayer('foundation');
                 showNotification('已切换到基础图层，请选择基础类型', 'success');
+            }
+            // 当选择屋顶工具时，自动切换到屋顶图层
+            if (tool === 'roof') {
+                setStructuralLayer('roof');
+                showNotification('已切换到屋顶图层，请设计屋顶', 'success');
             }
             
             // 更新工具栏UI（包括画布上方和右侧面板）
@@ -5669,8 +5700,9 @@ function updateStructuralToolHint() {
             gameState.layers.roof = layer === 'roof';
             gameState.layers.foundation = layer === 'foundation';
             
-            // 【任务3修复】：更新基础面板显示
+            // 更新基础面板和屋顶面板显示（互斥）
             updateFoundationPanelVisibility();
+            updateRoofDesignPanelVisibility();
             
             // 切换到基础图层时，自动切换到1楼（基础只在1楼）
             if (layer === 'foundation' && gameState.currentFloor !== 1) {
@@ -5687,12 +5719,6 @@ function updateStructuralToolHint() {
             const slabAnnotation = document.getElementById('slabAnnotation');
             if (slabAnnotation) {
                 slabAnnotation.style.display = (layer === 'beam') ? 'flex' : 'none';
-            }
-            
-            // 屋顶设计面板 - 仅在屋顶图层显示
-            const roofDesignPanel = document.getElementById('roofDesignPanel');
-            if (roofDesignPanel) {
-                roofDesignPanel.style.display = (layer === 'roof') ? 'block' : 'none';
             }
             
             // 【问题3修复】切换到屋顶图层时更新楼层提示和区域列表
