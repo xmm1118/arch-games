@@ -651,14 +651,29 @@
                         </div>
                     </div>
                     <!-- 屋顶设计面板 - 仅在屋顶图层显示 -->
+                    <!-- 【问题3修复】添加楼层提示和绘制规则说明 -->
                     <div id="roofDesignPanel" style="display:none;margin-top:12px;padding:10px;background:#f0f7ff;border-radius:10px;border:1px solid #2c5aa0;">
                         <div style="font-size:0.85rem;font-weight:600;color:#2c5aa0;margin-bottom:8px;">
                             <span>🏠</span> 屋顶设计
                         </div>
+                        <!-- 【问题3修复】屋顶绘制规则说明 -->
+                        <div style="margin-bottom:10px;padding:8px;background:#fff;border-radius:6px;font-size:0.7rem;color:#666;border:1px solid #e0e0e0;">
+                            <div style="font-weight:600;color:#2c5aa0;margin-bottom:4px;">💡 屋顶绘制规则</div>
+                            <ul style="margin:0;padding-left:16px;">
+                                <li>最顶楼层：绘制覆盖整层（或部分）的屋顶</li>
+                                <li>中间/底层：只绘制上方没有建筑部分的屋顶</li>
+                                <li>切换楼层后分别绘制各层屋顶</li>
+                                <li>每个区域可独立设置屋顶类型</li>
+                            </ul>
+                        </div>
+                        <!-- 【问题3修复】当前楼层提示 -->
+                        <div id="roofFloorHint" style="margin-bottom:10px;padding:8px;background:#e8f5e9;border-radius:6px;font-size:0.8rem;color:#2e7d32;text-align:center;font-weight:600;">
+                            🏗️ 当前楼层：<span id="roofCurrentFloor">1</span>F - 在此绘制屋顶
+                        </div>
                         <div style="display:flex;flex-direction:column;gap:8px;">
                             <!-- 屋顶类型 -->
                             <div>
-                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">屋顶类型：</div>
+                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">新绘制区域类型：</div>
                                 <select id="roofTypeSelect" onchange="updateRoofType(this.value)" 
                                         style="width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;">
                                     <option value="flat">平屋顶</option>
@@ -668,7 +683,7 @@
                             </div>
                             <!-- 坡度设置 - 仅坡屋顶显示 -->
                             <div id="roofPitchSection" style="display:none;">
-                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">坡度（°）：</div>
+                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">新绘制区域坡度（°）：</div>
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     <input type="range" id="roofPitchRange" min="10" max="60" value="30" step="5"
                                            style="flex:1;" onchange="updateRoofPitch(this.value)">
@@ -677,13 +692,13 @@
                             </div>
                             <!-- 排水方向 - 仅坡屋顶显示 -->
                             <div id="roofDirectionSection" style="display:none;">
-                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">排水方向：</div>
+                                <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">新绘制区域排水方向：</div>
                                 <div style="display:flex;gap:8px;">
                                     <button class="dir-btn active" id="roofDirNS" onclick="updateRoofDirection('north-south')">南北向</button>
                                     <button class="dir-btn" id="roofDirEW" onclick="updateRoofDirection('east-west')">东西向</button>
                                 </div>
                             </div>
-                            <!-- 【本次修复】屋顶范围 -->
+                            <!-- 屋顶范围 -->
                             <div>
                                 <div style="font-size:0.8rem;color:#666;margin-bottom:4px;">屋顶范围：</div>
                                 <div style="display:flex;gap:8px;">
@@ -1549,8 +1564,27 @@
             
             renderFloorTabs();
             updateFloorBadge();
+            
+            // 【问题3修复】切换楼层时更新屋顶楼层提示
+            updateRoofFloorHint();
+            
+            // 如果在屋顶图层，需要更新区域列表
+            if (gameState.currentStructuralLayer === 'roof' && gameState.roofDesign.scope === 'custom') {
+                updateRoofAreasList();
+            }
+            
             render();
             showNotification(`已切换到 ${floorNum}F`, 'success');
+        }
+        
+        /**
+         * 【问题3修复】更新屋顶楼层提示
+         */
+        function updateRoofFloorHint() {
+            const hint = document.getElementById('roofCurrentFloor');
+            if (hint) {
+                hint.textContent = gameState.currentFloor;
+            }
         }
 
         function prevFloor() {
@@ -1575,6 +1609,8 @@
             updateFloorBadge();
             // 更新图层列表，添加新楼层
             renderLayerList();
+            // 【问题3修复】更新屋顶楼层提示
+            updateRoofFloorHint();
             render();
             checkAchievement('multiFloor');
             showNotification(`已添加 ${gameState.totalFloors}F`, 'success');
@@ -4534,8 +4570,8 @@
                     }
                     break;
                 case 'foundation':
-                    // 基础工具：放置独立基础或绘制条形基础
-                    // 【问题1修复】：简化逻辑 - 直接点击柱位置放置独立基础，不在柱位置则画条形基础
+                    // 基础工具：根据选择的基础子类型进行绘制
+                    // 【问题1修复】：根据 foundationSubType 决定绘制行为
                     if (gameState.currentFloor !== 1) {
                         showNotification('基础只能在1楼设计，切换到1楼', 'warning');
                         loadFloor(1);
@@ -4550,19 +4586,43 @@
                     const clickedX = snapToGrid(pos.x);
                     const clickedY = snapToGrid(pos.y);
                     
-                    // 直接在像素坐标系中检查是否在柱的吸附范围内（100像素范围）
-                    const colSnap = snapToNearestColumn(clickedX, clickedY, 100);
+                    // 获取当前选择的基础子类型
+                    const foundationType = gameState.foundationSubType || 'independent';
                     
-                    if (colSnap) {
-                        // 找到吸附的柱，将基础放置在柱中心（colSnap 已经是像素坐标）
-                        addIndependentFoundation(colSnap.x, colSnap.y);
-                    } else {
-                        // 没有柱可吸附，进入条形基础绘制模式
+                    if (foundationType === 'independent') {
+                        // 独立基础：点击柱位置放置
+                        const colSnap = snapToNearestColumn(clickedX, clickedY, 100);
+                        if (colSnap) {
+                            // 找到吸附的柱，将基础放置在柱中心
+                            addIndependentFoundation(colSnap.x, colSnap.y);
+                        } else {
+                            showNotification('独立基础需要放在柱的位置，请点击柱', 'warning');
+                        }
+                    } else if (foundationType === 'strip') {
+                        // 条形基础：两次点击绘制
                         if (!gameState.structuralElementDrawing) {
                             // 第一点：起点
                             gameState.structuralElementDrawing = true;
                             gameState.structuralElementStart = { x: clickedX, y: clickedY };
-                            showNotification('条形基础起点已设置，点击终点完成绘制', 'warning');
+                            showNotification('条形基础起点已设置，点击终点完成绘制', 'success');
+                        } else {
+                            // 第二点：终点
+                            const endX = snapToGrid(pos.x);
+                            const endY = snapToGrid(pos.y);
+                            const startX = gameState.structuralElementStart.x;
+                            const startY = gameState.structuralElementStart.y;
+                            addStripFoundation(startX, startY, endX, endY);
+                            gameState.structuralElementDrawing = false;
+                            gameState.structuralElementStart = null;
+                        }
+                    } else if (foundationType === 'raft') {
+                        // 筏板基础：两次点击绘制矩形区域
+                        if (!gameState.structuralElementDrawing) {
+                            // 第一点：起点
+                            gameState.structuralElementDrawing = true;
+                            gameState.structuralElementStart = { x: clickedX, y: clickedY };
+                            gameState.structuralElementEnd = { x: clickedX, y: clickedY };
+                            showNotification('筏板基础起点已设置，点击终点完成绘制', 'success');
                         } else {
                             // 第二点：终点
                             const endX = snapToGrid(pos.x);
@@ -4570,11 +4630,20 @@
                             const startX = gameState.structuralElementStart.x;
                             const startY = gameState.structuralElementStart.y;
                             
-                            // 添加条形基础
-                            addStripFoundation(startX, startY, endX, endY);
+                            // 计算矩形区域（确保宽高为正）
+                            const minX = Math.min(startX, endX);
+                            const minY = Math.min(startY, endY);
+                            const width = Math.abs(endX - startX);
+                            const height = Math.abs(endY - startY);
                             
+                            if (width < 50 || height < 50) {
+                                showNotification('筏板基础区域太小，请绘制更大的区域', 'warning');
+                            } else {
+                                addRaftFoundation(minX, minY, width, height);
+                            }
                             gameState.structuralElementDrawing = false;
                             gameState.structuralElementStart = null;
+                            gameState.structuralElementEnd = null;
                         }
                     }
                     break;
@@ -5473,9 +5542,8 @@ function updateStructuralToolHint() {
             gameState.structuralElementDrawing = false;
             gameState.structuralElementStart = null;
             
-            // 【任务3修复】：当选择基础工具时，重置子类型并自动切换到基础图层
+            // 【问题1修复】：当选择基础工具时，保留用户之前选择的基础子类型，自动切换到基础图层
             if (tool === 'foundation') {
-                gameState.foundationSubType = 'independent';  // 默认独立基础
                 // 【本次修复】：自动切换到基础图层并显示基础设计面板
                 setStructuralLayer('foundation');
                 showNotification('已切换到基础图层，请选择基础类型', 'success');
@@ -5627,6 +5695,14 @@ function updateStructuralToolHint() {
                 roofDesignPanel.style.display = (layer === 'roof') ? 'block' : 'none';
             }
             
+            // 【问题3修复】切换到屋顶图层时更新楼层提示和区域列表
+            if (layer === 'roof') {
+                updateRoofFloorHint();
+                if (gameState.roofDesign.scope === 'custom') {
+                    updateRoofAreasList();
+                }
+            }
+            
             // 更新左侧图层管理面板
             renderLayerList();
             
@@ -5716,7 +5792,21 @@ function updateStructuralToolHint() {
         }
         
         /**
+         * 【问题2修复】获取屋顶类型名称
+         */
+        function getRoofTypeName(type) {
+            const typeNames = {
+                'flat': '平屋顶',
+                'singlePitch': '单坡',
+                'doublePitch': '双坡'
+            };
+            return typeNames[type] || '平屋顶';
+        }
+        
+        /**
          * 【本次修复】更新屋顶区域列表显示
+         * 【问题2修复】：每个区域显示类型选择和删除按钮
+         * 【问题3修复】：按楼层筛选显示
          */
         function updateRoofAreasList() {
             const container = document.getElementById('roofAreasList');
@@ -5724,20 +5814,97 @@ function updateStructuralToolHint() {
             
             const areas = gameState.roofDesign.roofAreas || [];
             
-            if (areas.length === 0) {
-                container.innerHTML = '<div style="font-size:0.75rem;color:#888;text-align:center;padding:8px;">暂无屋顶区域</div>';
+            // 【问题3修复】：筛选当前楼层的屋顶区域
+            const currentFloorAreas = areas.filter(a => a.floor === gameState.currentFloor);
+            
+            if (currentFloorAreas.length === 0) {
+                container.innerHTML = `
+                    <div style="font-size:0.75rem;color:#888;text-align:center;padding:8px;">
+                        当前楼层暂无屋顶区域<br>
+                        <span style="color:#2c5aa0;">在画布上拖拽绘制${gameState.currentFloor}F屋顶</span>
+                    </div>
+                `;
                 return;
             }
             
+            // 按楼层分组显示
+            const floorGroups = {};
+            areas.forEach((area, index) => {
+                if (!floorGroups[area.floor]) {
+                    floorGroups[area.floor] = [];
+                }
+                floorGroups[area.floor].push({ area, index });
+            });
+            
             container.innerHTML = `
-                <div style="font-size:0.8rem;color:#666;margin-bottom:6px;">已绘制区域（${areas.length}个）：</div>
-                ${areas.map((area, index) => `
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;">
-                        <span style="font-size:0.75rem;color:#666;">区域${index + 1}：${area.width.toFixed(1)}×${area.height.toFixed(1)}m</span>
-                        <button onclick="deleteRoofArea(${index})" style="background:#e74c3c;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem;">删除</button>
+                <div style="font-size:0.8rem;color:#666;margin-bottom:6px;">
+                    已绘制区域（${areas.length}个）：
+                </div>
+                ${Object.entries(floorGroups).sort((a, b) => b[0] - a[0]).map(([floor, items]) => `
+                    <div style="margin-bottom:8px;">
+                        <div style="font-size:0.7rem;color:#2c5aa0;font-weight:600;margin-bottom:4px;">
+                            ${floor}F（${items.length}个区域）
+                        </div>
+                        ${items.map(({ area, index }) => `
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;">
+                                <span style="font-size:0.7rem;color:#666;flex:1;">
+                                    区域${index + 1}：${area.widthM?.toFixed(1) || (area.width / (siteRect.width / gameState.siteSize.width)).toFixed(1)}×${area.heightM?.toFixed(1) || (area.height / (siteRect.height / gameState.siteSize.depth)).toFixed(1)}m
+                                </span>
+                                <select onchange="updateRoofAreaType(${index}, this.value)" 
+                                        style="padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:0.7rem;margin-right:4px;cursor:pointer;">
+                                    <option value="flat" ${area.type === 'flat' ? 'selected' : ''}>平屋顶</option>
+                                    <option value="singlePitch" ${area.type === 'singlePitch' ? 'selected' : ''}>单坡</option>
+                                    <option value="doublePitch" ${area.type === 'doublePitch' ? 'selected' : ''}>双坡</option>
+                                </select>
+                                <button onclick="deleteRoofArea(${index})" style="background:#e74c3c;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem;">删除</button>
+                            </div>
+                        `).join('')}
                     </div>
                 `).join('')}
             `;
+        }
+        
+        /**
+         * 【问题2修复】更新指定屋顶区域的类型
+         */
+        function updateRoofAreaType(index, type) {
+            const areas = gameState.roofDesign.roofAreas;
+            if (index < 0 || index >= areas.length) return;
+            
+            areas[index].type = type;
+            
+            // 如果是平屋顶，重置坡度和方向设置（因为平屋顶不需要）
+            if (type === 'flat') {
+                areas[index].pitch = 0;
+            } else if (!areas[index].pitch || areas[index].pitch === 0) {
+                // 如果之前没有坡度或为0，设置默认值
+                areas[index].pitch = 30;
+            }
+            
+            render();
+            showNotification(`屋顶区域已更新为${getRoofTypeName(type)}`, 'success');
+        }
+        
+        /**
+         * 【问题2修复】更新指定屋顶区域的坡度
+         */
+        function updateRoofAreaPitch(index, pitch) {
+            const areas = gameState.roofDesign.roofAreas;
+            if (index < 0 || index >= areas.length) return;
+            
+            areas[index].pitch = parseInt(pitch);
+            render();
+        }
+        
+        /**
+         * 【问题2修复】更新指定屋顶区域的排水方向
+         */
+        function updateRoofAreaDirection(index, direction) {
+            const areas = gameState.roofDesign.roofAreas;
+            if (index < 0 || index >= areas.length) return;
+            
+            areas[index].direction = direction;
+            render();
         }
         
         /**
@@ -5920,17 +6087,25 @@ function updateStructuralToolHint() {
             if (width >= minSize && height >= minSize) {
                 // 转换为米
                 const m2px = siteRect.width / gameState.siteSize.width;
+                
+                // 【问题2修复】：每个屋顶区域有独立的类型、坡度、方向和楼层属性
                 const roofArea = {
                     x: x,
                     y: y,
                     width: width,
                     height: height,
                     widthM: width / m2px,
-                    heightM: height / m2px
+                    heightM: height / m2px,
+                    // 每个区域独立的屋顶属性
+                    type: gameState.roofDesign.type,  // 当前面板选择的类型
+                    pitch: gameState.roofDesign.pitch,
+                    direction: gameState.roofDesign.direction,
+                    // 【问题3修复】：记录该区域属于哪个楼层
+                    floor: gameState.currentFloor
                 };
                 
                 gameState.roofDesign.roofAreas.push(roofArea);
-                showNotification(`屋顶区域已添加 (${roofArea.widthM.toFixed(1)}×${roofArea.heightM.toFixed(1)}m)`, 'success');
+                showNotification(`屋顶区域已添加 (${roofArea.widthM.toFixed(1)}×${roofArea.heightM.toFixed(1)}m, ${getRoofTypeName(roofArea.type)})`, 'success');
                 updateRoofAreasList();
             } else {
                 showNotification('区域太小，请绘制更大的区域', 'warning');
@@ -7975,18 +8150,26 @@ function updateStructuralToolHint() {
                     }
                 } else {
                     // 自定义屋顶范围
-                    const roofAreas = gameState.roofDesign.roofAreas || [];
+                    const allRoofAreas = gameState.roofDesign.roofAreas || [];
+                    
+                    // 【问题3修复】：只显示当前楼层的屋顶区域
+                    const currentFloor = gameState.currentFloor;
+                    const roofAreas = allRoofAreas.filter(area => area.floor === currentFloor);
                     
                     if (roofAreas.length === 0 && !gameState.roofAreaDrawing) {
                         // 没有绘制区域时显示提示
                         ctx.fillStyle = '#888';
                         ctx.font = '14px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText('请在画布上拖拽绘制屋顶区域', canvas.width / 2, canvas.height / 2);
+                        ctx.fillText(`请在画布上拖拽绘制${currentFloor}F屋顶区域`, canvas.width / 2, canvas.height / 2);
                     } else {
                         // 绘制每个屋顶区域
+                        // 【问题2修复】：使用每个区域自己的 type/pitch/direction
                         roofAreas.forEach((area, index) => {
-                            drawSingleRoofArea(ctx, area, roofType, roofPitch, roofDirection, false);
+                            const areaType = area.type || roofType;
+                            const areaPitch = area.pitch || roofPitch;
+                            const areaDirection = area.direction || roofDirection;
+                            drawSingleRoofArea(ctx, area, areaType, areaPitch, areaDirection, false);
                         });
                         
                         // 【本次修复】绘制屋顶区域预览
@@ -8007,21 +8190,23 @@ function updateStructuralToolHint() {
                             ctx.strokeRect(x, y, w, h);
                             ctx.setLineDash([]);
                             
-                            // 显示尺寸
+                            // 显示尺寸和当前屋顶类型
                             const m2px = siteRect.width / gameState.siteSize.width;
                             const widthM = (w / m2px).toFixed(1);
                             const heightM = (h / m2px).toFixed(1);
+                            const previewTypeName = getRoofTypeName(gameState.roofDesign.type);
                             ctx.fillStyle = '#27ae60';
                             ctx.font = 'bold 12px Arial';
                             ctx.textAlign = 'center';
-                            ctx.fillText(`${widthM}×${heightM}m`, x + w/2, y + h/2);
+                            ctx.fillText(`${widthM}×${heightM}m (${previewTypeName})`, x + w/2, y + h/2);
                         }
                         
-                        // 标注区域数量
+                        // 【问题3修复】标注当前楼层区域数量和总区域数
                         ctx.fillStyle = '#666';
                         ctx.font = 'bold 11px Arial';
                         ctx.textAlign = 'center';
-                        ctx.fillText(`自定义屋顶 - ${roofAreas.length}个区域`, canvas.width / 2, 25);
+                        const totalAreas = allRoofAreas.length;
+                        ctx.fillText(`${currentFloor}F屋顶 - ${roofAreas.length}个区域（共${totalAreas}个区域）`, canvas.width / 2, 25);
                     }
                 }
                 
