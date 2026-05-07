@@ -2227,8 +2227,8 @@
 
                 this.raycaster.setFromCamera(this.mouse, this.camera);
 
-                // 右键：相机旋转
-                if (event.button === 2) {
+                // 右键：相机旋转（2D模式下禁用旋转）
+                if (event.button === 2 && state.coordSystem !== '2d') {
                     this.isRotatingCamera = true;
                     this.dragStart = { x: event.clientX, y: event.clientY };
                     event.preventDefault();
@@ -3085,21 +3085,36 @@
                     this.gridHelper = null;
                 }
 
-                // 同步坐标轴 - 使用正确的颜色
-                if (state.showAxes && !this.axesHelper) {
-                    this.axesHelper = new THREE.AxesHelper(10);
-                    // 设置正确的坐标轴颜色：X-红, Y-绿, Z-蓝
+                // 同步坐标轴 - 使用正确的颜色，2D模式隐藏Z轴
+                if (state.showAxes) {
+                    if (!this.axesHelper) {
+                        this.axesHelper = new THREE.AxesHelper(10);
+                        // 设置正确的坐标轴颜色：X-红, Y-绿, Z-蓝
+                        const colors = this.axesHelper.geometry.attributes.color;
+                        // X轴 - 红色
+                        colors.setXYZ(0, 1, 0, 0);
+                        colors.setXYZ(1, 1, 0, 0);
+                        // Y轴 - 绿色
+                        colors.setXYZ(2, 0, 1, 0);
+                        colors.setXYZ(3, 0, 1, 0);
+                        // Z轴 - 蓝色
+                        colors.setXYZ(4, 0, 0, 1);
+                        colors.setXYZ(5, 0, 0, 1);
+                        this.scene.add(this.axesHelper);
+                    }
+                    
+                    // 2D模式下，让Z轴透明不可见
                     const colors = this.axesHelper.geometry.attributes.color;
-                    // X轴 - 红色
-                    colors.setXYZ(0, 1, 0, 0);
-                    colors.setXYZ(1, 1, 0, 0);
-                    // Y轴 - 绿色
-                    colors.setXYZ(2, 0, 1, 0);
-                    colors.setXYZ(3, 0, 1, 0);
-                    // Z轴 - 蓝色
-                    colors.setXYZ(4, 0, 0, 1);
-                    colors.setXYZ(5, 0, 0, 1);
-                    this.scene.add(this.axesHelper);
+                    if (state.coordSystem === '2d') {
+                        // Z轴设为完全透明
+                        colors.setXYZ(4, 0, 0, 0);
+                        colors.setXYZ(5, 0, 0, 0);
+                    } else {
+                        // 3D模式恢复蓝色
+                        colors.setXYZ(4, 0, 0, 1);
+                        colors.setXYZ(5, 0, 0, 1);
+                    }
+                    colors.needsUpdate = true;
                 } else if (!state.showAxes && this.axesHelper) {
                     this.scene.remove(this.axesHelper);
                     this.axesHelper = null;
@@ -3765,14 +3780,25 @@
                 document.getElementById('editCoordZContainer').style.display =
                     coordSystem === '2d' ? 'none' : 'block';
 
-                // 如果是2D模式，将所有现有点的Z坐标重置为0
+                // 如果是2D模式，设置相机正对着XY平面，并将所有现有点的Z坐标重置为0
                 if (coordSystem === '2d') {
+                    // 设置相机：从Z轴正方向看原点，X轴水平左右，Y轴垂直上下
+                    const camera = renderer3d.camera;
+                    camera.position.set(0, 0, 12);  // 从Z轴正方向看
+                    camera.up.set(0, 1, 0);         // Y轴向上
+                    camera.lookAt(0, 0, 0);         // 看向原点
+                    camera.updateProjectionMatrix();
+
+                    // 将所有现有点的Z坐标重置为0
                     const state = store.getState();
                     state.points.forEach(point => {
                         if (point.z !== 0) {
                             geometryManager.updatePoint(point.id, { z: 0 });
                         }
                     });
+                } else {
+                    // 3D模式恢复默认轴测图视角
+                    renderer3d.setAxonometricView(store.getState().axoType);
                 }
             });
         });
