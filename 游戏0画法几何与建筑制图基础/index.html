@@ -1955,9 +1955,9 @@
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // 添加方向光
+                // 添加方向光 - Z轴向上坐标系，从斜上方照射
                 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(10, 20, 10);
+                directionalLight.position.set(10, 10, 20);
                 this.scene.add(directionalLight);
 
                 // 射线检测
@@ -1979,62 +1979,68 @@
                 let position;
 
                 switch (type) {
-                    case 'iso': // 正等轴测
+                    case 'iso': // 正等轴测 - Z轴向上
                         position = new THREE.Vector3(10, 10, 10);
                         break;
-                    case 'dimetric': // 正二等轴测 - Y轴压缩
-                        position = new THREE.Vector3(14, 10, 7);
+                    case 'dimetric': // 正二等轴测 - Z轴向上
+                        position = new THREE.Vector3(14, 7, 10);
                         break;
-                    case 'cabinet': // 正面斜二测
-                        position = new THREE.Vector3(7, 7, 14);
+                    case 'cabinet': // 正面斜二测 - Z轴向上
+                        position = new THREE.Vector3(7, 14, 7);
                         break;
-                    case 'horizontal': // 水平斜等测
-                        position = new THREE.Vector3(10, 14, 7);
+                    case 'horizontal': // 水平斜等测 - Z轴向上
+                        position = new THREE.Vector3(10, 7, 14);
                         break;
                     default:
                         position = new THREE.Vector3(10, 10, 10);
                 }
 
                 this.camera.position.copy(position);
+                this.camera.up.set(0, 0, 1);
                 this.camera.lookAt(0, 0, 0);
             }
 
             initViewPanels() {
                 const frustumSize = 10;
 
-                // 平面图（俯视图，从上往下）
+                // 平面图（俯视图，从上往下看Z轴，Z轴向上）
                 this.viewCameras.top = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.viewCameras.top.position.set(0, 30, 0);
+                this.viewCameras.top.position.set(0, 0, 30);
+                this.viewCameras.top.up.set(0, 0, 1);
                 this.viewCameras.top.lookAt(0, 0, 0);
 
-                // 正立面（从前往后看）
+                // 正立面（从-Y方向看，Z轴向上）
                 this.viewCameras.front = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.viewCameras.front.position.set(0, 0, 30);
+                this.viewCameras.front.position.set(0, -30, 0);
+                this.viewCameras.front.up.set(0, 0, 1);
                 this.viewCameras.front.lookAt(0, 0, 0);
 
-                // 左侧立面
+                // 左侧立面（从+X方向看，Z轴向上）
                 this.viewCameras.left = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.viewCameras.left.position.set(-30, 0, 0);
+                this.viewCameras.left.position.set(30, 0, 0);
+                this.viewCameras.left.up.set(0, 0, 1);
                 this.viewCameras.left.lookAt(0, 0, 0);
 
-                // 右侧立面
+                // 右侧立面（从-X方向看，Z轴向上）
                 this.viewCameras.right = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.viewCameras.right.position.set(30, 0, 0);
+                this.viewCameras.right.position.set(-30, 0, 0);
+                this.viewCameras.right.up.set(0, 0, 1);
                 this.viewCameras.right.lookAt(0, 0, 0);
 
-                // 背立面
+                // 背立面（从+Y方向看，Z轴向上）
                 this.viewCameras.back = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.viewCameras.back.position.set(0, 0, -30);
+                this.viewCameras.back.position.set(0, 30, 0);
+                this.viewCameras.back.up.set(0, 0, 1);
                 this.viewCameras.back.lookAt(0, 0, 0);
 
                 // 创建视图渲染器
@@ -2114,9 +2120,9 @@
                                 this.isDraggingSolid = true;
                                 this.dragSolidId = solidId;
 
-                                // 创建拖拽平面（X-Z平面，与当前相机视角垂直）
+                                // 创建拖拽平面（X-Y平面，Z轴向上坐标系）
                                 const solid = state.solids.find(s => s.id === solidId);
-                                this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -solid.position.y);
+                                this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -solid.position.z);
 
                                 // 计算拖拽偏移
                                 const intersectPoint = new THREE.Vector3();
@@ -2938,9 +2944,10 @@
                 // 同步切割面
                 this.syncCutPlane();
 
-                // 同步网格
+                // 同步网格 - Z轴向上坐标系（X-Y平面）
                 if (state.showGrid && !this.gridHelper) {
                     this.gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+                    this.gridHelper.rotation.x = Math.PI / 2; // 旋转90度使网格在X-Y平面（Z轴向上）
                     this.scene.add(this.gridHelper);
                 } else if (!state.showGrid && this.gridHelper) {
                     this.scene.remove(this.gridHelper);
@@ -3033,39 +3040,20 @@
                 const solidPos = solid.position;
 
                 switch (planeType) {
-                    case 'horizontal': // 水平面（平行于XY）
+                    case 'horizontal': // 水平面（平行于XY，Z轴向上坐标系）
                         // 对于四棱柱，创建矩形填充
                         if (solid.type === 'cube') {
-                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.z);
-                            fillGeometry.rotateX(Math.PI / 2);
-                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.y);
+                            fillGeometry.translate(solidPos.x, solidPos.y, position);
                         }
                         // 对于圆柱，创建圆形填充
                         else if (solid.type === 'cylinder') {
                             const radius = solidScale.x / 2;
                             fillGeometry = new THREE.CircleGeometry(radius, 32);
-                            fillGeometry.rotateX(Math.PI / 2);
-                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                            fillGeometry.translate(solidPos.x, solidPos.y, position);
                         }
                         // 对于球体，创建圆形填充
                         else if (solid.type === 'sphere') {
-                            const radius = solidScale.x / 2;
-                            const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.y) * (position - solidPos.y)));
-                            fillGeometry = new THREE.CircleGeometry(r, 32);
-                            fillGeometry.rotateX(Math.PI / 2);
-                            fillGeometry.translate(solidPos.x, position, solidPos.z);
-                        }
-                        break;
-                        
-                    case 'frontal': // 正垂面（垂直于V面）
-                        if (solid.type === 'cube') {
-                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.y);
-                            fillGeometry.translate(solidPos.x, solidPos.y, position);
-                        } else if (solid.type === 'cylinder') {
-                            const radius = solidScale.x / 2;
-                            fillGeometry = new THREE.CircleGeometry(radius, 32);
-                            fillGeometry.translate(solidPos.x, solidPos.y, position);
-                        } else if (solid.type === 'sphere') {
                             const radius = solidScale.x / 2;
                             const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.z) * (position - solidPos.z)));
                             fillGeometry = new THREE.CircleGeometry(r, 32);
@@ -3073,20 +3061,42 @@
                         }
                         break;
                         
-                    case 'profile': // 铅垂面（垂直于H面）
+                    case 'frontal': // 正垂面（垂直于Y轴，Z轴向上坐标系）
                         if (solid.type === 'cube') {
-                            fillGeometry = new THREE.PlaneGeometry(solidScale.z, solidScale.y);
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.z);
+                            fillGeometry.rotateX(-Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        } else if (solid.type === 'cylinder') {
+                            const radius = solidScale.x / 2;
+                            fillGeometry = new THREE.CircleGeometry(radius, 32);
+                            fillGeometry.rotateX(-Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.y) * (position - solidPos.y)));
+                            fillGeometry = new THREE.CircleGeometry(r, 32);
+                            fillGeometry.rotateX(-Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        }
+                        break;
+                        
+                    case 'profile': // 铅垂面（垂直于X轴，Z轴向上坐标系）
+                        if (solid.type === 'cube') {
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.y, solidScale.z);
                             fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.rotateZ(Math.PI / 2);
                             fillGeometry.translate(position, solidPos.y, solidPos.z);
                         } else if (solid.type === 'cylinder') {
-                            fillGeometry = new THREE.PlaneGeometry(solidScale.y, solidScale.y);
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.z, solidScale.z);
                             fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.rotateZ(Math.PI / 2);
                             fillGeometry.translate(position, solidPos.y, solidPos.z);
                         } else if (solid.type === 'sphere') {
                             const radius = solidScale.x / 2;
                             const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.x) * (position - solidPos.x)));
                             fillGeometry = new THREE.CircleGeometry(r, 32);
                             fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.rotateZ(Math.PI / 2);
                             fillGeometry.translate(position, solidPos.y, solidPos.z);
                         }
                         break;
@@ -3123,18 +3133,18 @@
                 let positionLine1, positionLine2, directionArrow1, directionArrow2;
 
                 switch (planeType) {
-                    case 'horizontal': // 水平面剖切
+                    case 'horizontal': // 水平面剖切（Z轴向上坐标系）
                         // 位置线1 - X轴方向
                         positionLine1 = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-lineLength, position, -6),
-                            new THREE.Vector3(lineLength, position, -6)
+                            new THREE.Vector3(-lineLength, -6, position),
+                            new THREE.Vector3(lineLength, -6, position)
                         ]);
                         // 位置线2
                         positionLine2 = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-lineLength, position, 6),
-                            new THREE.Vector3(lineLength, position, 6)
+                            new THREE.Vector3(-lineLength, 6, position),
+                            new THREE.Vector3(lineLength, 6, position)
                         ]);
-                        // 方向箭头 - 指向Y轴正方向
+                        // 方向箭头 - 指向Z轴正方向
                         const arrowShape = new THREE.Shape();
                         arrowShape.moveTo(0, 0);
                         arrowShape.lineTo(-arrowLength/2, -arrowLength);
@@ -3143,32 +3153,32 @@
                         const arrowGeom = new THREE.ShapeGeometry(arrowShape);
                         
                         directionArrow1 = new THREE.Mesh(arrowGeom, textMaterial);
-                        directionArrow1.position.set(lineLength + 0.5, position, -6);
-                        directionArrow1.rotation.z = -Math.PI / 2;
+                        directionArrow1.position.set(lineLength + 0.5, -6, position);
+                        directionArrow1.rotation.x = -Math.PI / 2;
                         
                         directionArrow2 = new THREE.Mesh(arrowGeom.clone(), textMaterial);
-                        directionArrow2.position.set(lineLength + 0.5, position, 6);
-                        directionArrow2.rotation.z = -Math.PI / 2;
+                        directionArrow2.position.set(lineLength + 0.5, 6, position);
+                        directionArrow2.rotation.x = -Math.PI / 2;
                         break;
 
-                    case 'frontal': // 正垂面剖切
+                    case 'frontal': // 正垂面剖切（Y轴方向，Z轴向上坐标系）
                         positionLine1 = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-lineLength, -4, position),
-                            new THREE.Vector3(lineLength, -4, position)
+                            new THREE.Vector3(-lineLength, position, -4),
+                            new THREE.Vector3(lineLength, position, -4)
                         ]);
                         positionLine2 = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(-lineLength, 6, position),
-                            new THREE.Vector3(lineLength, 6, position)
+                            new THREE.Vector3(-lineLength, position, 6),
+                            new THREE.Vector3(lineLength, position, 6)
                         ]);
                         break;
 
-                    case 'profile': // 铅垂面剖切
+                    case 'profile': // 铅垂面剖切（X轴方向，Z轴向上坐标系）
                         positionLine1 = new THREE.BufferGeometry().setFromPoints([
                             new THREE.Vector3(position, -4, -lineLength),
-                            new THREE.Vector3(position, -4, lineLength)
+                            new THREE.Vector3(position, 6, -lineLength)
                         ]);
                         positionLine2 = new THREE.BufferGeometry().setFromPoints([
-                            new THREE.Vector3(position, 6, -lineLength),
+                            new THREE.Vector3(position, -4, lineLength),
                             new THREE.Vector3(position, 6, lineLength)
                         ]);
                         break;
@@ -3226,16 +3236,16 @@
                 
                 if (!state.cutPlaneType) return;
 
-                // 创建裁剪平面
+                // 创建裁剪平面 - Z轴向上坐标系
                 let clipPlane;
                 switch (state.cutPlaneType) {
-                    case 'horizontal':
-                        clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), state.cutPosition);
-                        break;
-                    case 'frontal':
+                    case 'horizontal': // 水平面（平行于XY，Z轴方向）
                         clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), state.cutPosition);
                         break;
-                    case 'profile':
+                    case 'frontal': // 正垂面（垂直于Y轴）
+                        clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), state.cutPosition);
+                        break;
+                    case 'profile': // 铅垂面（垂直于X轴）
                         clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), state.cutPosition);
                         break;
                 }
@@ -3260,29 +3270,7 @@
                 const solidPos = solid.position;
 
                 switch (planeType) {
-                    case 'horizontal':
-                        if (solid.type === 'cube') {
-                            return solidScale.x * solidScale.z;
-                        } else if (solid.type === 'cylinder') {
-                            const radius = solidScale.x / 2;
-                            return Math.PI * radius * radius;
-                        } else if (solid.type === 'sphere') {
-                            const radius = solidScale.x / 2;
-                            const dist = Math.abs(position - solidPos.y);
-                            if (dist > radius) return 0;
-                            const r = Math.sqrt(radius * radius - dist * dist);
-                            return Math.PI * r * r;
-                        } else if (solid.type === 'cone') {
-                            const radius = solidScale.x / 2;
-                            const height = solidScale.y;
-                            const relPos = (position - (solidPos.y - height/2)) / height;
-                            if (relPos < 0 || relPos > 1) return 0;
-                            const r = radius * (1 - relPos);
-                            return Math.PI * r * r;
-                        }
-                        break;
-
-                    case 'frontal':
+                    case 'horizontal': // 水平面（平行于XY，Z轴方向）
                         if (solid.type === 'cube') {
                             return solidScale.x * solidScale.y;
                         } else if (solid.type === 'cylinder') {
@@ -3294,14 +3282,36 @@
                             if (dist > radius) return 0;
                             const r = Math.sqrt(radius * radius - dist * dist);
                             return Math.PI * r * r;
+                        } else if (solid.type === 'cone') {
+                            const radius = solidScale.x / 2;
+                            const height = solidScale.z;
+                            const relPos = (position - (solidPos.z - height/2)) / height;
+                            if (relPos < 0 || relPos > 1) return 0;
+                            const r = radius * (1 - relPos);
+                            return Math.PI * r * r;
                         }
                         break;
 
-                    case 'profile':
+                    case 'frontal': // 正垂面（垂直于Y轴）
                         if (solid.type === 'cube') {
-                            return solidScale.z * solidScale.y;
+                            return solidScale.x * solidScale.z;
                         } else if (solid.type === 'cylinder') {
-                            return solidScale.y * solidScale.y;
+                            const radius = solidScale.x / 2;
+                            return Math.PI * radius * radius;
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const dist = Math.abs(position - solidPos.y);
+                            if (dist > radius) return 0;
+                            const r = Math.sqrt(radius * radius - dist * dist);
+                            return Math.PI * r * r;
+                        }
+                        break;
+
+                    case 'profile': // 铅垂面（垂直于X轴）
+                        if (solid.type === 'cube') {
+                            return solidScale.y * solidScale.z;
+                        } else if (solid.type === 'cylinder') {
+                            return solidScale.z * solidScale.z;
                         } else if (solid.type === 'sphere') {
                             const radius = solidScale.x / 2;
                             const dist = Math.abs(position - solidPos.x);

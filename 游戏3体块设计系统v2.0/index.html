@@ -1722,6 +1722,7 @@
                     1000
                 );
                 this.orthoCamera.position.set(20, 20, 20);
+                this.orthoCamera.up.set(0, 0, 1);
                 this.orthoCamera.lookAt(0, 0, 0);
 
                 // 创建透视相机（备用）
@@ -1732,6 +1733,7 @@
                     1000
                 );
                 this.perspCamera.position.set(20, 20, 20);
+                this.perspCamera.up.set(0, 0, 1);
                 this.perspCamera.lookAt(0, 0, 0);
 
                 this.camera = this.orthoCamera;
@@ -1750,9 +1752,9 @@
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // 添加方向光（产生阴影）
+                // 添加方向光（产生阴影）- Z轴向上坐标系，从斜上方照射
                 this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                this.directionalLight.position.set(10, 20, 10);
+                this.directionalLight.position.set(10, 10, 20);
                 this.directionalLight.castShadow = true;
                 this.directionalLight.shadow.mapSize.width = 2048;
                 this.directionalLight.shadow.mapSize.height = 2048;
@@ -1760,8 +1762,9 @@
                 this.directionalLight.shadow.camera.far = 50;
                 this.scene.add(this.directionalLight);
 
-                // 添加网格辅助线
+                // 添加网格辅助线 - Z轴向上坐标系（X-Y平面）
                 this.gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                this.gridHelper.rotation.x = Math.PI / 2;
                 this.scene.add(this.gridHelper);
 
                 // 添加自定义坐标轴（X红、Y蓝、Z绿）
@@ -1807,6 +1810,7 @@
                     1000
                 );
                 this.orthoCamera.position.set(20, 20, 20);
+                this.orthoCamera.up.set(0, 0, 1);
                 this.orthoCamera.lookAt(0, 0, 0);
 
                 // 创建透视相机（备用）
@@ -1817,6 +1821,7 @@
                     1000
                 );
                 this.perspCamera.position.set(20, 20, 20);
+                this.perspCamera.up.set(0, 0, 1);
                 this.perspCamera.lookAt(0, 0, 0);
 
                 this.camera = this.orthoCamera;
@@ -1835,9 +1840,9 @@
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // 添加方向光（产生阴影）
+                // 添加方向光（产生阴影）- Z轴向上坐标系，从斜上方照射
                 this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                this.directionalLight.position.set(10, 20, 10);
+                this.directionalLight.position.set(10, 10, 20);
                 this.directionalLight.castShadow = true;
                 this.directionalLight.shadow.mapSize.width = 2048;
                 this.directionalLight.shadow.mapSize.height = 2048;
@@ -1845,8 +1850,9 @@
                 this.directionalLight.shadow.camera.far = 50;
                 this.scene.add(this.directionalLight);
 
-                // 添加网格辅助线
+                // 添加网格辅助线 - Z轴向上坐标系（X-Y平面）
                 this.gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                this.gridHelper.rotation.x = Math.PI / 2;
                 this.scene.add(this.gridHelper);
 
                 // 添加自定义坐标轴（X红、Y蓝、Z绿）
@@ -1866,43 +1872,48 @@
             }
 
             
-            // 初始化三视图（四个立面 + 平面图）
+            // 初始化三视图（四个立面 + 平面图）- Z轴向上坐标系
             initViewPanels() {
                 const frustumSize = 12;
                 
-                // 背视图相机（从后往前看，Z负方向）- 显示宽度×高度
+                // 背视图相机（从后往前看，Y正方向）- 显示宽度×高度（Z轴向上）
                 this.backCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.backCamera.position.set(0, 5, -30);
-                this.backCamera.lookAt(0, 5, 0);
+                this.backCamera.position.set(0, 30, 5);
+                this.backCamera.up.set(0, 0, 1);
+                this.backCamera.lookAt(0, 0, 5);
                 
-                // 左侧视图相机（从左往右看，X负方向）- 显示深度×高度
+                // 左侧视图相机（从左往右看，X正方向）- 显示深度×高度（Z轴向上）
                 this.leftCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.leftCamera.position.set(-30, 5, 0);
-                this.leftCamera.lookAt(0, 5, 0);
+                this.leftCamera.position.set(30, 0, 5);
+                this.leftCamera.up.set(0, 0, 1);
+                this.leftCamera.lookAt(0, 0, 5);
                 
-                // 正视图相机（从前往后看，Z正方向）- 显示宽度×高度
+                // 正视图相机（从前往后看，Y负方向）- 显示宽度×高度（Z轴向上）
                 this.frontCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.frontCamera.position.set(0, 5, 30);
-                this.frontCamera.lookAt(0, 5, 0);
+                this.frontCamera.position.set(0, -30, 5);
+                this.frontCamera.up.set(0, 0, 1);
+                this.frontCamera.lookAt(0, 0, 5);
                 
-                // 右侧视图相机（从右往左看，X正方向）- 显示深度×高度
+                // 右侧视图相机（从右往左看，X负方向）- 显示深度×高度（Z轴向上）
                 this.rightCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.rightCamera.position.set(30, 5, 0);
-                this.rightCamera.lookAt(0, 5, 0);
+                this.rightCamera.position.set(-30, 0, 5);
+                this.rightCamera.up.set(0, 0, 1);
+                this.rightCamera.lookAt(0, 0, 5);
                 
-                // 平面图相机（从上往下看，Y轴方向）- 显示宽度×深度
+                // 平面图相机（从上往下看，Z轴方向）- 显示宽度×深度（Z轴向上）
                 this.topCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.topCamera.position.set(0, 30, 0.01);
+                this.topCamera.position.set(0, 0.01, 30);
+                this.topCamera.up.set(0, 0, 1);
                 this.topCamera.lookAt(0, 0, 0);
                 
                 // 五个视图渲染器
@@ -1941,11 +1952,11 @@
                 this.updateViewPanelSizes();
             }
             
-            // 创建自定义坐标轴（X红、Y蓝垂直、Z绿）
+            // 创建自定义坐标轴（X红、Y绿、Z蓝垂直 - 建筑学标准）
             createCustomAxes() {
                 const axisLength = 8;
                 
-                // X轴 - 红色
+                // X轴 - 红色（水平左右）
                 const xGeometry = new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
                     new THREE.Vector3(axisLength, 0, 0)
@@ -1954,21 +1965,21 @@
                 const xAxis = new THREE.Line(xGeometry, xMaterial);
                 this.scene.add(xAxis);
                 
-                // Y轴 - 蓝色（垂直方向）
+                // Y轴 - 绿色（水平前后）
                 const yGeometry = new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
                     new THREE.Vector3(0, axisLength, 0)
                 ]);
-                const yMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 2 });
+                const yMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
                 const yAxis = new THREE.Line(yGeometry, yMaterial);
                 this.scene.add(yAxis);
                 
-                // Z轴 - 绿色
+                // Z轴 - 蓝色（垂直向上）
                 const zGeometry = new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
                     new THREE.Vector3(0, 0, axisLength)
                 ]);
-                const zMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
+                const zMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 2 });
                 const zAxis = new THREE.Line(zGeometry, zMaterial);
                 this.scene.add(zAxis);
                 
@@ -1984,13 +1995,14 @@
                 
                 // Y轴箭头
                 const yArrow = new THREE.ConeGeometry(arrowSize, arrowSize * 2, 8);
-                const yArrowMesh = new THREE.Mesh(yArrow, new THREE.MeshBasicMaterial({ color: 0x0000ff }));
+                const yArrowMesh = new THREE.Mesh(yArrow, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
                 yArrowMesh.position.set(0, axisLength, 0);
+                yArrowMesh.rotation.x = Math.PI / 2;
                 this.scene.add(yArrowMesh);
                 
                 // Z轴箭头
                 const zArrow = new THREE.ConeGeometry(arrowSize, arrowSize * 2, 8);
-                const zArrowMesh = new THREE.Mesh(zArrow, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+                const zArrowMesh = new THREE.Mesh(zArrow, new THREE.MeshBasicMaterial({ color: 0x0000ff }));
                 zArrowMesh.position.set(0, 0, axisLength);
                 zArrowMesh.rotation.x = Math.PI / 2;
                 this.scene.add(zArrowMesh);
@@ -2603,53 +2615,54 @@
                 return mesh;
             }
 
-            // 定位开洞mesh到正确的面
+            // 定位开洞mesh到正确的面 - Z轴向上坐标系
             positionOpeningMesh(mesh, face, node, width, height, offsetX, offsetY) {
                 const w = node.dimensions.width;
                 const h = node.dimensions.height;
                 const d = node.dimensions.depth;
 
-                // 基本位置（长方体中心）
-                const baseY = node.position.y + h / 2;
+                // 基本位置（长方体中心）- Z轴向上坐标系
+                const baseZ = node.position.z + h / 2;
                 const baseX = node.position.x;
-                const baseZ = node.position.z;
+                const baseY = node.position.y;
 
                 // 偏移量（基于面大小和位置参数）
                 const xOffset = offsetX * w;
-                const yOffset = offsetY * h;
+                const zOffset = offsetY * h; // 高度偏移现在沿Z轴
 
-                // 根据面方向定位
+                // 根据面方向定位（Z轴向上坐标系）
                 switch (face) {
-                    case 'front':
-                        mesh.position.set(baseX + xOffset, baseY + yOffset, baseZ + d / 2 + 0.02);
-                        mesh.rotation.set(0, 0, 0);
-                        break;
-                    case 'back':
-                        mesh.position.set(baseX + xOffset, baseY + yOffset, baseZ - d / 2 - 0.02);
-                        mesh.rotation.set(0, Math.PI, 0);
-                        break;
-                    case 'left':
-                        mesh.position.set(baseX - w / 2 - 0.02, baseY + yOffset, baseZ + xOffset);
-                        mesh.rotation.set(0, -Math.PI / 2, 0);
-                        break;
-                    case 'right':
-                        mesh.position.set(baseX + w / 2 + 0.02, baseY + yOffset, baseZ + xOffset);
-                        mesh.rotation.set(0, Math.PI / 2, 0);
-                        break;
-                    case 'top':
-                        mesh.position.set(baseX + xOffset, node.position.y + h + 0.02, baseZ + yOffset);
+                    case 'front': // Y正方向
+                        mesh.position.set(baseX + xOffset, baseY + d / 2 + 0.02, baseZ + zOffset);
                         mesh.rotation.set(-Math.PI / 2, 0, 0);
                         break;
-                    case 'bottom':
-                        mesh.position.set(baseX + xOffset, node.position.y - 0.02, baseZ + yOffset);
-                        mesh.rotation.set(Math.PI / 2, 0, 0);
+                    case 'back': // Y负方向
+                        mesh.position.set(baseX + xOffset, baseY - d / 2 - 0.02, baseZ + zOffset);
+                        mesh.rotation.set(-Math.PI / 2, Math.PI, 0);
+                        break;
+                    case 'left': // X负方向
+                        mesh.position.set(baseX - w / 2 - 0.02, baseY + xOffset, baseZ + zOffset);
+                        mesh.rotation.set(-Math.PI / 2, -Math.PI / 2, 0);
+                        break;
+                    case 'right': // X正方向
+                        mesh.position.set(baseX + w / 2 + 0.02, baseY + xOffset, baseZ + zOffset);
+                        mesh.rotation.set(-Math.PI / 2, Math.PI / 2, 0);
+                        break;
+                    case 'top': // Z正方向（顶面）
+                        mesh.position.set(baseX + xOffset, baseY + offsetY * d, node.position.z + h + 0.02);
+                        mesh.rotation.set(0, 0, 0);
+                        break;
+                    case 'bottom': // Z负方向（底面）
+                        mesh.position.set(baseX + xOffset, baseY + offsetY * d, node.position.z - 0.02);
+                        mesh.rotation.set(Math.PI, 0, 0);
                         break;
                     default:
-                        mesh.position.set(baseX + xOffset, baseY + yOffset, baseZ + d / 2 + 0.02);
+                        mesh.position.set(baseX + xOffset, baseY + d / 2 + 0.02, baseZ + zOffset);
+                        mesh.rotation.set(-Math.PI / 2, 0, 0);
                 }
 
-                // 应用体块旋转
-                mesh.rotation.y += node.rotation || 0;
+                // 应用体块旋转（绕Z轴）
+                mesh.rotation.z += node.rotation || 0;
             }
 
             // 更新开洞mesh
@@ -2705,10 +2718,11 @@
 
                 const mesh = new THREE.Mesh(geometry, material);
                 // 对于三棱柱，位置需要特殊处理（重心在底部）
+                // Z轴向上坐标系：高度沿Z轴方向
                 if (node.type === 'prism') {
                     mesh.position.set(node.position.x, node.position.y, node.position.z);
                 } else {
-                    mesh.position.set(node.position.x, node.position.y + node.dimensions.height / 2, node.position.z);
+                    mesh.position.set(node.position.x, node.position.y, node.position.z + node.dimensions.height / 2);
                 }
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
@@ -2716,11 +2730,11 @@
                 return mesh;
             }
             
-            // 创建三棱柱几何体（双坡屋顶）
+            // 创建三棱柱几何体（双坡屋顶）- Z轴向上坐标系
             createPrismGeometry(dimensions) {
                 const w = dimensions.width;   // 宽度（X轴）
-                const h = dimensions.height;  // 屋顶高度（脊线高度）
-                const d = dimensions.depth;   // 进深（Z轴）
+                const h = dimensions.height;  // 屋顶高度（脊线高度，Z轴方向）
+                const d = dimensions.depth;   // 进深（Y轴）
                 
                 // 双坡屋顶：底部矩形 + 顶部脊线
                 // 8个顶点：底部4个 + 脊线2个
@@ -2728,46 +2742,46 @@
                 //       ridge1 -------- ridge2  (脊线，高度h)
                 //      /        \      /
                 //     /          \    /
-                //   b1------------b2--b3      (底部，高度0)
+                //   b1------------b2--b3      (底部，Z=0)
                 //   |             |    |
                 //   b4------------b5---b6     (底部后方)
                 //
                 // 侧面看是三角形，正面看是矩形
                 
                 const vertices = new Float32Array([
-                    // 底面（2个三角形，逆时针）
+                    // 底面（2个三角形，逆时针）- Z=0
                     0, 0, 0,           // b1
                     w, 0, 0,           // b2  
-                    w, 0, d,           // b5
+                    w, d, 0,           // b5
                     0, 0, 0,           // b1
-                    w, 0, d,           // b5
-                    0, 0, d,           // b4
+                    w, d, 0,           // b5
+                    0, d, 0,           // b4
                     
-                    // 前山墙（三角形）
+                    // 前山墙（三角形）- Y=0
                     0, 0, 0,           // b1
                     w/2, h, 0,         // ridge1 (脊线前点)
                     w, 0, 0,           // b2
                     
                     // 后山墙（三角形）
-                    0, 0, d,           // b4
-                    w, 0, d,           // b5
-                    w/2, h, d,         // ridge2 (脊线后点)
+                    0, d, 0,           // b4
+                    w, d, 0,           // b5
+                    w/2, d, h,         // ridge2 (脊线后点)
                     
                     // 左斜坡（矩形，2个三角形）
                     0, 0, 0,           // b1
-                    0, 0, d,           // b4
-                    w/2, h, d,         // ridge2
+                    0, d, 0,           // b4
+                    w/2, d, h,         // ridge2
                     0, 0, 0,           // b1
-                    w/2, h, d,         // ridge2
-                    w/2, h, 0,         // ridge1
+                    w/2, d, h,         // ridge2
+                    w/2, 0, h,         // ridge1
                     
                     // 右斜坡（矩形，2个三角形）
                     w, 0, 0,           // b2
-                    w/2, h, 0,         // ridge1
-                    w/2, h, d,         // ridge2
+                    w/2, 0, h,         // ridge1
+                    w/2, d, h,         // ridge2
                     w, 0, 0,           // b2
-                    w/2, h, d,         // ridge2
-                    w, 0, d            // b5
+                    w/2, d, h,         // ridge2
+                    w, d, 0            // b5
                 ]);
                 
                 const geometry = new THREE.BufferGeometry();
@@ -2779,14 +2793,15 @@
 
             updateMesh(mesh, node) {
                 // 对于三棱柱，位置需要特殊处理
+                // Z轴向上坐标系：高度沿Z轴方向
                 if (node.type === 'prism') {
                     mesh.position.set(node.position.x, node.position.y, node.position.z);
                 } else {
-                    mesh.position.set(node.position.x, node.position.y + node.dimensions.height / 2, node.position.z);
+                    mesh.position.set(node.position.x, node.position.y, node.position.z + node.dimensions.height / 2);
                 }
 
-                // 更新旋转
-                mesh.rotation.y = node.rotation || 0;
+                // 更新旋转（绕Z轴旋转）
+                mesh.rotation.z = node.rotation || 0;
 
                 // 更新几何体
                 if (mesh.geometry) {
