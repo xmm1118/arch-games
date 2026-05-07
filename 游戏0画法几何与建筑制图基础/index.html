@@ -1256,12 +1256,10 @@
                     <h4>💡 操作指南</h4>
                     <ul>
                         <li>📦 点击左侧"体块创建工具"直接在原点创建体块</li>
-                        <li>🔴 顶点模式：点击顶点后可拖拽移动，实时变形</li>
-                        <li>📏 边模式：点击边后可拖拽拉伸，两端点联动</li>
-                        <li>🔲 面模式：点击面后可拖拽移动，所有顶点联动</li>
-                        <li>📦 体块模式：选中后可拖拽整体移动</li>
-                        <li>⌨️ 方向键：选中体块后按↑↓←→微调位置</li>
-                        <li>🔄 右侧面板：输入坐标和角度精确控制</li>
+                        <li>🖱️ 体块模式：点击选中体块，按住鼠标可拖拽移动</li>
+                        <li>⬆️⬇️⬅️➡️ 方向键微调体块位置，Shift+↑↓调整Y轴高度</li>
+                        <li>🔴 顶点模式：点击顶点选中，在右侧面板输入世界坐标后点击"应用"</li>
+                        <li>📍 坐标系统：局部坐标 + 整体偏移 = 世界坐标</li>
                         <li>🔄 右键拖拽旋转视图，滚轮缩放视图</li>
                     </ul>
                 </div>
@@ -1414,7 +1412,8 @@
                         <input type="number" id="solidPosZ" step="0.1" value="0">
                     </div>
                 </div>
-                <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">提示: 选中体块后可拖拽移动，或用方向键(↑↓←→)微调</p>
+                <button class="tool-btn" id="applySolidPositionBtn" style="margin-bottom: 10px;">✓ 应用位置</button>
+                <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">体块模式下可拖拽移动，或用方向键微调(每次0.1单位)</p>
                 
                 <!-- 体块旋转控制 -->
                 <h4 style="font-size: 12px; color: var(--accent-secondary); margin: 10px 0 8px 0;">🔄 旋转控制</h4>
@@ -1432,7 +1431,8 @@
                         <input type="number" id="solidRotZ" step="5" value="0">
                     </div>
                 </div>
-                <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">输入角度后自动应用旋转</p>
+                <button class="tool-btn" id="applySolidRotationBtn">✓ 应用旋转</button>
+                <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">输入角度后点击应用</p>
             </div>
 
             <!-- 原有选中点坐标编辑 (保留用于独立点) -->
@@ -1895,22 +1895,15 @@
                 this.sectionSymbolMeshes = [];    // 剖切符号
                 this.clippedSolidMeshes = new Map(); // 裁剪后的立体网格
 
-                // 拖拽相关
-                this.isDraggingPoint = false;
+                // 相机旋转相关
                 this.isRotatingCamera = false;
                 this.dragStart = { x: 0, y: 0 };
-                this.dragPointStart = { x: 0, y: 0, z: 0 };
-                this.hasDragged = false;
 
-                // 顶点/边/面/体块编辑拖拽相关
-                this.isDraggingVertex = false;
-                this.isDraggingEdge = false;
-                this.isDraggingFace = false;
+                // 体块拖拽相关
                 this.isDraggingSolid = false;
-                this.dragStartWorld = new THREE.Vector3();
-                this.dragVertexIndex = -1;
                 this.dragSolidId = null;
-                this.dragSolidStartPos = { x: 0, y: 0, z: 0 };
+                this.dragPlane = null;
+                this.dragOffset = new THREE.Vector3();
 
                 // 顶点/边/面相关
                 this.vertexMarkers = new Map(); // 顶点标记小球
@@ -2107,50 +2100,7 @@
 
                 // 左键
                 if (event.button === 0) {
-                    // 1. 顶点模式：拖拽编辑顶点
-                    if (state.selectionMode === 'vertex' && state.selectedSolidId && state.selectedVertex) {
-                        const mesh = this.solidMeshes.get(state.selectedSolidId);
-                        if (mesh) {
-                            const positionAttribute = mesh.geometry.attributes.position;
-                            const vertex = new THREE.Vector3();
-                            vertex.fromBufferAttribute(positionAttribute, state.selectedVertex.vertexIndex);
-                            vertex.applyMatrix4(mesh.matrixWorld);
-                            
-                            this.isDraggingVertex = true;
-                            this.dragVertexIndex = state.selectedVertex.vertexIndex;
-                            this.dragSolidId = state.selectedSolidId;
-                            this.dragStartWorld.copy(vertex);
-                            this.dragStart = { x: event.clientX, y: event.clientY };
-                            event.preventDefault();
-                            return;
-                        }
-                    }
-
-                    // 2. 边模式：拖拽编辑边
-                    if (state.selectionMode === 'edge' && state.selectedSolidId && state.selectedEdge) {
-                        const mesh = this.solidMeshes.get(state.selectedSolidId);
-                        if (mesh) {
-                            this.isDraggingEdge = true;
-                            this.dragSolidId = state.selectedSolidId;
-                            this.dragStart = { x: event.clientX, y: event.clientY };
-                            event.preventDefault();
-                            return;
-                        }
-                    }
-
-                    // 3. 面模式：拖拽编辑面
-                    if (state.selectionMode === 'face' && state.selectedSolidId && state.selectedFace) {
-                        const mesh = this.solidMeshes.get(state.selectedSolidId);
-                        if (mesh) {
-                            this.isDraggingFace = true;
-                            this.dragSolidId = state.selectedSolidId;
-                            this.dragStart = { x: event.clientX, y: event.clientY };
-                            event.preventDefault();
-                            return;
-                        }
-                    }
-
-                    // 4. 体块模式：选择并准备拖拽
+                    // 体块模式：选择并可拖拽移动体块
                     if (state.selectionMode === 'solid') {
                         const solidMeshes = Array.from(this.solidMeshes.values());
                         const intersects = this.raycaster.intersectObjects(solidMeshes, false);
@@ -2158,18 +2108,25 @@
                             const mesh = intersects[0].object;
                             const solidId = this.findSolidIdByMesh(mesh);
                             if (solidId) {
-                                // 先选中体块
+                                // 选中体块，开始拖拽
                                 this.geometryManager.selectSolid(solidId);
                                 this.highlightSolid(solidId);
-                                
-                                // 准备拖拽
+                                this.isDraggingSolid = true;
+                                this.dragSolidId = solidId;
+
+                                // 创建拖拽平面（X-Z平面，与当前相机视角垂直）
                                 const solid = state.solids.find(s => s.id === solidId);
-                                if (solid) {
-                                    this.isDraggingSolid = true;
-                                    this.dragSolidId = solidId;
-                                    this.dragSolidStartPos = { ...solid.position };
-                                    this.dragStart = { x: event.clientX, y: event.clientY };
-                                }
+                                this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -solid.position.y);
+
+                                // 计算拖拽偏移
+                                const intersectPoint = new THREE.Vector3();
+                                this.raycaster.ray.intersectPlane(this.dragPlane, intersectPoint);
+                                this.dragOffset.copy(intersectPoint).sub(new THREE.Vector3(
+                                    solid.position.x,
+                                    solid.position.y,
+                                    solid.position.z
+                                ));
+
                                 event.preventDefault();
                                 return;
                             }
@@ -2227,20 +2184,14 @@
                         }
                     }
 
-                    // 6. 检查是否点击了独立点（原有功能）
+                    // 5. 检查是否点击了独立点（原有功能）
                     const pointMeshes = Array.from(this.pointMeshes.values());
                     const intersects = this.raycaster.intersectObjects(pointMeshes, false);
                     if (intersects.length > 0) {
                         const mesh = intersects[0].object;
                         const pointId = this.findPointIdByMesh(mesh);
                         if (pointId) {
-                            this.isDraggingPoint = true;
-                            this.dragStart = { x: event.clientX, y: event.clientY };
-                            const point = state.points.find(p => p.id === pointId);
-                            if (point) {
-                                this.dragPointStart = { x: point.x, y: point.y, z: point.z };
-                                this.geometryManager.selectPoint(pointId, event.shiftKey);
-                            }
+                            this.geometryManager.selectPoint(pointId, event.shiftKey);
                             event.preventDefault();
                             return;
                         }
@@ -2315,14 +2266,17 @@
                 const vertex = new THREE.Vector3();
                 vertex.fromBufferAttribute(positionAttribute, vertexIndex);
 
-                // 应用体块变换
-                vertex.applyMatrix4(mesh.matrix);
+                // 核心原则：局部坐标 + 整体偏移 = 世界坐标
+                // 显示给用户的是世界坐标
+                const worldX = vertex.x + solid.position.x;
+                const worldY = vertex.y + solid.position.y;
+                const worldZ = vertex.z + solid.position.z;
 
                 this.store.setState({
                     selectedVertex: {
                         solidId: solidId,
                         vertexIndex: vertexIndex,
-                        position: { x: vertex.x, y: vertex.y, z: vertex.z }
+                        position: { x: worldX, y: worldY, z: worldZ }
                     },
                     selectedEdge: null,
                     selectedFace: null
@@ -2518,13 +2472,20 @@
                     const mesh = this.solidMeshes.get(state.selectedSolidId);
                     if (!mesh) return;
 
+                    const solid = state.solids.find(s => s.id === state.selectedSolidId);
                     const positionAttribute = mesh.geometry.attributes.position;
                     const vertexCount = positionAttribute.count;
 
                     for (let i = 0; i < vertexCount; i++) {
                         const vertex = new THREE.Vector3();
                         vertex.fromBufferAttribute(positionAttribute, i);
-                        vertex.applyMatrix4(mesh.matrix);
+                        // 核心原则：局部坐标 + 整体偏移 = 世界坐标
+                        // 标记小球需要放在世界坐标位置
+                        const worldPosition = new THREE.Vector3(
+                            vertex.x + solid.position.x,
+                            vertex.y + solid.position.y,
+                            vertex.z + solid.position.z
+                        );
 
                         // 创建顶点标记小球
                         const markerGeometry = new THREE.SphereGeometry(0.08, 8, 8);
@@ -2535,7 +2496,7 @@
                             opacity: isSelected ? 1 : 0.8
                         });
                         const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-                        marker.position.copy(vertex);
+                        marker.position.copy(worldPosition);
                         marker.userData.vertexIndex = i;
                         marker.scale.setScalar(isSelected ? 1.5 : 1); // 选中的顶点放大
 
@@ -2569,15 +2530,21 @@
                         const vertexCount = mesh ? mesh.geometry.attributes.position.count : 0;
                         document.getElementById('solidInfoVertices').textContent = vertexCount;
                         
-                        // 更新位置输入框
+                        // 启用位置输入框，显示当前值
                         document.getElementById('solidPosX').value = solid.position.x.toFixed(2);
                         document.getElementById('solidPosY').value = solid.position.y.toFixed(2);
                         document.getElementById('solidPosZ').value = solid.position.z.toFixed(2);
+                        document.getElementById('solidPosX').disabled = false;
+                        document.getElementById('solidPosY').disabled = false;
+                        document.getElementById('solidPosZ').disabled = false;
                         
-                        // 更新旋转输入框（转换为角度）
-                        document.getElementById('solidRotX').value = (solid.rotation.x * 180 / Math.PI).toFixed(1);
-                        document.getElementById('solidRotY').value = (solid.rotation.y * 180 / Math.PI).toFixed(1);
-                        document.getElementById('solidRotZ').value = (solid.rotation.z * 180 / Math.PI).toFixed(1);
+                        // 启用旋转输入框，显示当前值（角度）
+                        document.getElementById('solidRotX').value = THREE.MathUtils.radToDeg(solid.rotation.x).toFixed(1);
+                        document.getElementById('solidRotY').value = THREE.MathUtils.radToDeg(solid.rotation.y).toFixed(1);
+                        document.getElementById('solidRotZ').value = THREE.MathUtils.radToDeg(solid.rotation.z).toFixed(1);
+                        document.getElementById('solidRotX').disabled = false;
+                        document.getElementById('solidRotY').disabled = false;
+                        document.getElementById('solidRotZ').disabled = false;
                     }
                 } else {
                     document.getElementById('solidInfoName').textContent = '-';
@@ -2585,13 +2552,19 @@
                     document.getElementById('solidInfoPosition').textContent = '-';
                     document.getElementById('solidInfoVertices').textContent = '-';
                     
-                    // 清空位置和旋转输入框
+                    // 清空并禁用位置和旋转输入框
                     document.getElementById('solidPosX').value = '';
                     document.getElementById('solidPosY').value = '';
                     document.getElementById('solidPosZ').value = '';
                     document.getElementById('solidRotX').value = '';
                     document.getElementById('solidRotY').value = '';
                     document.getElementById('solidRotZ').value = '';
+                    document.getElementById('solidPosX').disabled = true;
+                    document.getElementById('solidPosY').disabled = true;
+                    document.getElementById('solidPosZ').disabled = true;
+                    document.getElementById('solidRotX').disabled = true;
+                    document.getElementById('solidRotY').disabled = true;
+                    document.getElementById('solidRotZ').disabled = true;
                 }
             }
 
@@ -2660,6 +2633,26 @@
                         `${intersectPoint.x.toFixed(1)}, ${intersectPoint.y.toFixed(1)}, ${displayZ.toFixed(1)}`;
                 }
 
+                // 处理体块拖拽移动
+                if (this.isDraggingSolid && this.dragSolidId) {
+                    const intersectPoint = new THREE.Vector3();
+                    this.raycaster.ray.intersectPlane(this.dragPlane, intersectPoint);
+                    if (intersectPoint) {
+                        // 计算新位置（考虑拖拽偏移）
+                        const newPosition = new THREE.Vector3().subVectors(intersectPoint, this.dragOffset);
+                        // 更新体块位置（只更新X和Z，Y保持不变）
+                        const solid = state.solids.find(s => s.id === this.dragSolidId);
+                        if (solid) {
+                            this.geometryManager.updateSolidPosition(this.dragSolidId, {
+                                x: newPosition.x,
+                                z: newPosition.z
+                            });
+                        }
+                    }
+                    event.preventDefault();
+                    return;
+                }
+
                 // 处理相机旋转
                 if (this.isRotatingCamera) {
                     const deltaX = event.clientX - this.dragStart.x;
@@ -2683,120 +2676,23 @@
                     return;
                 }
 
-                // 处理顶点拖拽
-                if (this.isDraggingVertex && this.dragSolidId !== null) {
-                    const deltaX = (event.clientX - this.dragStart.x) * 0.03;
-                    const deltaZ = -(event.clientY - this.dragStart.y) * 0.03;
-
-                    const mesh = this.solidMeshes.get(this.dragSolidId);
-                    if (mesh) {
-                        const positionAttribute = mesh.geometry.attributes.position;
-                        
-                        // 获取原始局部坐标
-                        const localVertex = new THREE.Vector3();
-                        localVertex.fromBufferAttribute(positionAttribute, this.dragVertexIndex);
-                        
-                        // 更新世界坐标
-                        const worldVertex = localVertex.clone().applyMatrix4(mesh.matrixWorld);
-                        worldVertex.x += deltaX;
-                        worldVertex.z += deltaZ;
-                        
-                        // 转换回局部坐标
-                        const inverseMatrix = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
-                        const newLocalVertex = worldVertex.applyMatrix4(inverseMatrix);
-                        
-                        // 更新顶点位置
-                        positionAttribute.setXYZ(this.dragVertexIndex, newLocalVertex.x, newLocalVertex.y, newLocalVertex.z);
-                        positionAttribute.needsUpdate = true;
-                        
-                        // 更新几何体
-                        mesh.geometry.computeVertexNormals();
-                        mesh.geometry.computeBoundingBox();
-                        mesh.geometry.computeBoundingSphere();
-                        
-                        // 更新顶点标记
-                        this.updateVertexMarkers();
-                        
-                        // 更新选中顶点信息
-                        const updatedWorldVertex = newLocalVertex.clone().applyMatrix4(mesh.matrixWorld);
-                        this.store.setState({
-                            selectedVertex: {
-                                ...state.selectedVertex,
-                                position: { x: updatedWorldVertex.x, y: updatedWorldVertex.y, z: updatedWorldVertex.z }
-                            }
-                        });
-                        this.updateVertexEditUI();
-                    }
-
-                    this.hasDragged = true;
-                    return;
-                }
-
-                // 处理体块整体拖拽
-                if (this.isDraggingSolid && this.dragSolidId !== null) {
-                    const deltaX = (event.clientX - this.dragStart.x) * 0.03;
-                    const deltaZ = -(event.clientY - this.dragStart.y) * 0.03;
-
-                    const newX = this.dragSolidStartPos.x + deltaX;
-                    const newZ = this.dragSolidStartPos.z + deltaZ;
-
-                    this.geometryManager.updateSolidPosition(this.dragSolidId, {
-                        x: newX,
-                        z: newZ
-                    });
-
-                    // 更新体块信息UI
-                    this.updateSolidInfoUI();
-                    this.updateVertexMarkers();
-
-                    this.hasDragged = true;
-                    return;
-                }
-
-                // 处理点拖拽
-                if (this.isDraggingPoint && state.selectedPointIds.length > 0) {
-                    const deltaX = (event.clientX - this.dragStart.x) * 0.03;
-                    const deltaY = -(event.clientY - this.dragStart.y) * 0.03;
-
-                    state.selectedPointIds.forEach(pointId => {
-                        const point = state.points.find(p => p.id === pointId);
-                        if (point) {
-                            const newX = this.dragPointStart.x + deltaX;
-                            const newZ = this.dragPointStart.z + deltaY;
-                            // 2D模式下Z坐标保持为0
-                            const finalZ = state.coordSystem === '2d' ? 0 : newZ;
-                            this.geometryManager.updatePoint(pointId, {
-                                x: newX,
-                                z: finalZ
-                            });
-                        }
-                    });
-
-                    this.hasDragged = true;
-                    return;
-                }
-
                 // 更新光标
                 const pointMeshes = Array.from(this.pointMeshes.values());
                 const intersects = this.raycaster.intersectObjects(pointMeshes, false);
-                this.canvas.style.cursor = intersects.length > 0 ? 'move' : 'pointer';
+                this.canvas.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
             }
 
             onCanvasMouseUp(event) {
-                // 标记拖拽发生过
-                if (this.isDraggingVertex || this.isDraggingEdge || this.isDraggingFace || this.isDraggingSolid || this.isDraggingPoint) {
-                    this.hasDragged = true;
-                }
-
-                // 重置所有拖拽状态
-                this.isDraggingVertex = false;
-                this.isDraggingEdge = false;
-                this.isDraggingFace = false;
-                this.isDraggingSolid = false;
-                this.isDraggingPoint = false;
+                // 重置相机旋转状态
                 this.isRotatingCamera = false;
-                this.dragVertexIndex = -1;
-                this.dragSolidId = null;
+
+                // 重置体块拖拽状态
+                if (this.isDraggingSolid) {
+                    this.isDraggingSolid = false;
+                    this.dragSolidId = null;
+                    this.dragPlane = null;
+                    // 拖拽结束时撤销栈已在每次位置更新时自动处理
+                }
             }
 
             // 重置体块创建按钮状态
@@ -2807,11 +2703,6 @@
             }
 
             onCanvasClick(event) {
-                if (this.hasDragged) {
-                    this.hasDragged = false;
-                    return;
-                }
-
                 const state = this.store.getState();
                 const rect = this.canvas.getBoundingClientRect();
                 this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -2870,6 +2761,38 @@
                     if (m === mesh) return pointId;
                 }
                 return null;
+            }
+
+            // 创建8个顶点的自定义立方体几何体
+            createCubeGeometry(size) {
+                const half = size / 2;
+                const vertices = new Float32Array([
+                    // 前面
+                    -half, -half,  half,
+                     half, -half,  half,
+                     half,  half,  half,
+                    -half,  half,  half,
+                    // 后面
+                    -half, -half, -half,
+                    -half,  half, -half,
+                     half,  half, -half,
+                     half, -half, -half,
+                ]);
+
+                const indices = [
+                    0, 1, 2,  0, 2, 3,  // 前面
+                    4, 5, 6,  4, 6, 7,  // 后面
+                    4, 0, 3,  4, 3, 5,  // 左面
+                    1, 7, 6,  1, 6, 2,  // 右面
+                    3, 2, 6,  3, 6, 5,  // 上面
+                    4, 7, 1,  4, 1, 0   // 下面
+                ];
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                geometry.setIndex(indices);
+                geometry.computeVertexNormals();
+                return geometry;
             }
 
             syncScene() {
@@ -2947,25 +2870,26 @@
                     }
                 }
 
-                // 同步立体
+                // 同步立体 - 使用局部坐标 + 整体偏移原则
                 state.solids.forEach(solid => {
                     if (!this.solidMeshes.has(solid.id)) {
                         let geometry;
                         switch (solid.type) {
                             case 'cube':
-                                geometry = new THREE.BoxGeometry(solid.scale.x, solid.scale.y, solid.scale.z);
+                                // 使用自定义8顶点几何体，确保每个顶点可独立编辑
+                                geometry = this.createCubeGeometry(2);
                                 break;
                             case 'cylinder':
-                                geometry = new THREE.CylinderGeometry(solid.scale.x / 2, solid.scale.x / 2, solid.scale.y, 32);
+                                geometry = new THREE.CylinderGeometry(1, 1, 2, 32);
                                 break;
                             case 'cone':
-                                geometry = new THREE.ConeGeometry(solid.scale.x / 2, solid.scale.y, 32);
+                                geometry = new THREE.ConeGeometry(1, 2, 32);
                                 break;
                             case 'sphere':
-                                geometry = new THREE.SphereGeometry(solid.scale.x / 2, 32, 32);
+                                geometry = new THREE.SphereGeometry(1, 32, 32);
                                 break;
                             default:
-                                geometry = new THREE.BoxGeometry(solid.scale.x, solid.scale.y, solid.scale.z);
+                                geometry = this.createCubeGeometry(2);
                         }
                         const material = new THREE.MeshPhongMaterial({
                             color: solid.color,
@@ -2979,9 +2903,10 @@
                         this.solidMeshes.set(solid.id, mesh);
                     }
                     const mesh = this.solidMeshes.get(solid.id);
+                    // 应用体块的位置和旋转 - 核心原则：局部坐标 + 整体偏移
                     mesh.position.set(solid.position.x, solid.position.y, solid.position.z);
-                    mesh.scale.set(solid.scale.x / 4, solid.scale.y / 4, solid.scale.z / 4);
                     mesh.rotation.set(solid.rotation.x, solid.rotation.y, solid.rotation.z);
+                    mesh.scale.set(solid.scale.x, solid.scale.y, solid.scale.z);
                     mesh.visible = solid.visible;
 
                     // 更新选中高亮
@@ -3808,17 +3733,19 @@
             const newY = parseFloat(document.getElementById('editVertexY').value) || 0;
             const newZ = parseFloat(document.getElementById('editVertexZ').value) || 0;
 
-            // 更新顶点位置
+            // 更新顶点位置 - 核心原则：局部坐标 = 世界坐标 - mesh.position
             const mesh = renderer3d.solidMeshes.get(state.selectedVertex.solidId);
-            if (mesh) {
+            const solid = state.solids.find(s => s.id === state.selectedVertex.solidId);
+            if (mesh && solid) {
                 store.pushUndoStack();
 
-                // 先获取世界坐标到局部坐标的逆变换
-                const worldToLocal = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
-                const localPos = new THREE.Vector3(newX, newY, newZ).applyMatrix4(worldToLocal);
+                // 计算局部坐标 = 用户输入的世界坐标 - 体块整体偏移
+                const localX = newX - solid.position.x;
+                const localY = newY - solid.position.y;
+                const localZ = newZ - solid.position.z;
 
                 const positionAttribute = mesh.geometry.attributes.position;
-                positionAttribute.setXYZ(state.selectedVertex.vertexIndex, localPos.x, localPos.y, localPos.z);
+                positionAttribute.setXYZ(state.selectedVertex.vertexIndex, localX, localY, localZ);
                 positionAttribute.needsUpdate = true;
 
                 // 更新几何体
@@ -3829,7 +3756,7 @@
                 // 更新顶点标记
                 renderer3d.updateVertexMarkers();
 
-                // 更新状态
+                // 更新状态（保持世界坐标）
                 store.setState({
                     selectedVertex: {
                         ...state.selectedVertex,
@@ -3837,6 +3764,53 @@
                     }
                 });
             }
+        });
+
+        // 体块位置应用按钮
+        document.getElementById('applySolidPositionBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.selectedSolidId) return;
+
+            const newX = parseFloat(document.getElementById('solidPosX').value) || 0;
+            const newY = parseFloat(document.getElementById('solidPosY').value) || 0;
+            const newZ = parseFloat(document.getElementById('solidPosZ').value) || 0;
+
+            store.pushUndoStack();
+            geometryManager.updateSolidPosition(state.selectedSolidId, { x: newX, y: newY, z: newZ });
+
+            // 如果有选中的顶点，更新其显示的世界坐标
+            if (state.selectedVertex && state.selectedVertex.solidId === state.selectedSolidId) {
+                const mesh = renderer3d.solidMeshes.get(state.selectedSolidId);
+                if (mesh) {
+                    const positionAttribute = mesh.geometry.attributes.position;
+                    const vertex = new THREE.Vector3();
+                    vertex.fromBufferAttribute(positionAttribute, state.selectedVertex.vertexIndex);
+                    store.setState({
+                        selectedVertex: {
+                            ...state.selectedVertex,
+                            position: {
+                                x: vertex.x + newX,
+                                y: vertex.y + newY,
+                                z: vertex.z + newZ
+                            }
+                        }
+                    });
+                    renderer3d.updateVertexEditUI();
+                }
+            }
+        });
+
+        // 体块旋转应用按钮
+        document.getElementById('applySolidRotationBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.selectedSolidId) return;
+
+            const newRotX = THREE.MathUtils.degToRad(parseFloat(document.getElementById('solidRotX').value) || 0);
+            const newRotY = THREE.MathUtils.degToRad(parseFloat(document.getElementById('solidRotY').value) || 0);
+            const newRotZ = THREE.MathUtils.degToRad(parseFloat(document.getElementById('solidRotZ').value) || 0);
+
+            store.pushUndoStack();
+            geometryManager.updateSolidRotation(state.selectedSolidId, { x: newRotX, y: newRotY, z: newRotZ });
         });
 
         // 切割面选择
@@ -4027,80 +4001,8 @@
         });
 
         // ============================================
-        // 体块位置和旋转控制
+        // 体块位置和旋转控制 - 支持移动和旋转
         // ============================================
-        
-        // 体块X位置
-        document.getElementById('solidPosX').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const newX = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidPosition(state.selectedSolidId, { x: newX });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
-
-        // 体块Y位置
-        document.getElementById('solidPosY').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const newY = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidPosition(state.selectedSolidId, { y: newY });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
-
-        // 体块Z位置
-        document.getElementById('solidPosZ').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const newZ = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidPosition(state.selectedSolidId, { z: newZ });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
-
-        // 体块绕X轴旋转
-        document.getElementById('solidRotX').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const angle = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidRotation(state.selectedSolidId, { x: angle * Math.PI / 180 });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
-
-        // 体块绕Y轴旋转
-        document.getElementById('solidRotY').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const angle = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidRotation(state.selectedSolidId, { y: angle * Math.PI / 180 });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
-
-        // 体块绕Z轴旋转
-        document.getElementById('solidRotZ').addEventListener('change', (e) => {
-            const state = store.getState();
-            if (state.selectedSolidId) {
-                store.pushUndoStack();
-                const angle = parseFloat(e.target.value) || 0;
-                geometryManager.updateSolidRotation(state.selectedSolidId, { z: angle * Math.PI / 180 });
-                renderer3d.updateSolidInfoUI();
-                renderer3d.updateVertexMarkers();
-            }
-        });
 
         // ============================================
         // 键盘快捷键支持
@@ -4125,38 +4027,48 @@
                     geometryManager.deletePoint(state.selectedPointIds[0]);
                 }
             }
-            
-            // 方向键移动选中体块
+
+            // 方向键移动体块（仅在体块模式下且有选中体块时生效）
             const state = store.getState();
-            if (state.selectedSolidId && state.selectionMode === 'solid') {
-                const moveStep = 0.1; // 每次移动0.1单位
+            if (state.selectionMode === 'solid' && state.selectedSolidId) {
+                const step = 0.1; // 每次移动0.1单位
                 const solid = state.solids.find(s => s.id === state.selectedSolidId);
                 if (solid) {
                     let moved = false;
-                    let newPosition = { ...solid.position };
-                    
-                    if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        newPosition.z += moveStep;
-                        moved = true;
-                    } else if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        newPosition.z -= moveStep;
-                        moved = true;
-                    } else if (e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        newPosition.x -= moveStep;
-                        moved = true;
-                    } else if (e.key === 'ArrowRight') {
-                        e.preventDefault();
-                        newPosition.x += moveStep;
-                        moved = true;
+                    const newPosition = { ...solid.position };
+
+                    switch (e.key) {
+                        case 'ArrowUp':
+                            // 按Shift键上下移动Y轴，否则移动Z轴
+                            if (e.shiftKey) {
+                                newPosition.y += step;
+                            } else {
+                                newPosition.z += step;
+                            }
+                            moved = true;
+                            break;
+                        case 'ArrowDown':
+                            if (e.shiftKey) {
+                                newPosition.y -= step;
+                            } else {
+                                newPosition.z -= step;
+                            }
+                            moved = true;
+                            break;
+                        case 'ArrowLeft':
+                            newPosition.x -= step;
+                            moved = true;
+                            break;
+                        case 'ArrowRight':
+                            newPosition.x += step;
+                            moved = true;
+                            break;
                     }
-                    
+
                     if (moved) {
+                        e.preventDefault();
+                        store.pushUndoStack();
                         geometryManager.updateSolidPosition(state.selectedSolidId, newPosition);
-                        renderer3d.updateSolidInfoUI();
-                        renderer3d.updateVertexMarkers();
                     }
                 }
             }
