@@ -620,6 +620,171 @@
             border-color: var(--accent-success);
         }
 
+        /* 剖面填充密度选择 */
+        .hatch-density-select {
+            margin: 10px 0;
+        }
+
+        .hatch-density-select label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .hatch-density-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .hatch-density-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .hatch-density-btn:hover {
+            background: var(--border-color);
+        }
+
+        .hatch-density-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* 显示模式切换 */
+        .display-mode-select {
+            margin: 10px 0;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .display-mode-select label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent-primary);
+        }
+
+        /* 剖面标注信息 */
+        .section-info-panel {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .section-info-panel h4 {
+            font-size: 12px;
+            color: var(--accent-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .section-info-item .label {
+            color: var(--text-secondary);
+        }
+
+        .section-info-item .value {
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+
+        /* 剖切符号显示开关 */
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 12px;
+        }
+
+        .toggle-switch .switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+        }
+
+        .toggle-switch .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-secondary);
+            transition: .4s;
+            border-radius: 22px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toggle-switch .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: var(--text-secondary);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .slider {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .toggle-switch input:checked + .slider:before {
+            transform: translateX(18px);
+            background-color: white;
+        }
+
         /* 底部状态栏 */
         .status-bar {
             grid-column: 1 / -1;
@@ -804,22 +969,22 @@
             </div>
 
             <div class="tool-section">
-                <h3>✂️ 立体切割工具</h3>
+                <h3>✂️ 剖面图生成</h3>
                 
-                <!-- 切割步骤引导 -->
+                <!-- 剖面图生成步骤引导 -->
                 <div class="cut-steps-guide">
-                    <h4>📝 切割操作步骤</h4>
+                    <h4>📝 剖面图生成步骤</h4>
                     <div class="cut-step" id="cutStep1">
                         <span class="cut-step-number">1</span>
                         <span>选择立体图形</span>
                     </div>
                     <div class="cut-step" id="cutStep2">
                         <span class="cut-step-number">2</span>
-                        <span>选择切割面类型</span>
+                        <span>选择剖切面类型</span>
                     </div>
                     <div class="cut-step" id="cutStep3">
                         <span class="cut-step-number">3</span>
-                        <span>拖动调整切割位置</span>
+                        <span>拖动调整剖切位置</span>
                     </div>
                 </div>
 
@@ -841,19 +1006,69 @@
                         球
                     </button>
                 </div>
-                <h4 style="font-size: 12px; color: var(--text-secondary); margin: 10px 0 6px;">切割面类型</h4>
+                <h4 style="font-size: 12px; color: var(--text-secondary); margin: 10px 0 6px;">剖切面类型</h4>
                 <div class="cut-plane-select">
                     <button class="cut-plane-btn" data-plane="horizontal">→ 水平面 (平行于XY)</button>
                     <button class="cut-plane-btn" data-plane="frontal">→ 正垂面 (垂直于V面)</button>
                     <button class="cut-plane-btn" data-plane="profile">→ 铅垂面 (垂直于H面)</button>
                 </div>
                 <div class="slider-container">
-                    <label>切割面位置: <span id="cutPositionValue">0</span></label>
+                    <label>剖切位置: <span id="cutPositionValue">0</span></label>
                     <input type="range" id="cutPositionSlider" min="-5" max="5" step="0.1" value="0">
                 </div>
-                <div style="display: flex; gap: 6px;">
-                    <button class="tool-btn btn-danger" id="resetCutBtn" style="flex: 1;">🔄 重置切割</button>
-                    <button class="tool-btn btn-success" id="confirmCutBtn" style="flex: 1;">✓ 确认切割</button>
+                
+                <!-- 剖面填充密度选择 -->
+                <div class="hatch-density-select">
+                    <label>🔲 剖面填充密度:</label>
+                    <div class="hatch-density-btns">
+                        <button class="hatch-density-btn" data-density="sparse">稀疏</button>
+                        <button class="hatch-density-btn active" data-density="medium">中等</button>
+                        <button class="hatch-density-btn" data-density="dense">密集</button>
+                    </div>
+                </div>
+                
+                <!-- 剖切符号显示开关 -->
+                <div class="toggle-switch">
+                    <span>📍 显示剖切符号</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggleSectionSymbol" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <!-- 显示模式切换 -->
+                <div class="display-mode-select">
+                    <label>🎯 显示模式:</label>
+                    <div class="radio-option">
+                        <input type="radio" name="displayMode" id="displayFull" value="full">
+                        <label for="displayFull">显示完整立体 (带剖面)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" name="displayMode" id="displaySectionOnly" value="sectionOnly" checked>
+                        <label for="displaySectionOnly">只显示剖面 (纯断面)</label>
+                    </div>
+                </div>
+                
+                <!-- 剖面信息面板 -->
+                <div class="section-info-panel" id="sectionInfoPanel" style="display: none;">
+                    <h4>📊 剖面信息</h4>
+                    <div class="section-info-item">
+                        <span class="label">剖切平面</span>
+                        <span class="value" id="sectionPlaneType">-</span>
+                    </div>
+                    <div class="section-info-item">
+                        <span class="label">剖切位置</span>
+                        <span class="value" id="sectionPosition">-</span>
+                    </div>
+                    <div class="section-info-item">
+                        <span class="label">剖面面积</span>
+                        <span class="value" id="sectionArea">-</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 6px; margin-top: 10px;">
+                    <button class="tool-btn btn-danger" id="resetCutBtn" style="flex: 1;">🔄 重置剖面</button>
+                    <button class="tool-btn btn-success" id="confirmCutBtn" style="flex: 1;">✓ 生成剖面图</button>
                 </div>
             </div>
 
@@ -975,7 +1190,7 @@
                 📐 坐标系: <span id="coordSystem">3D (XYZ)</span>
             </div>
             <div class="status-item">
-                ✂️ 切割面: <span id="cutPlane">无</span>
+                ✂️ 剖切面: <span id="cutPlane">无</span>
             </div>
             <div class="status-item">
                 📍 已选中: <span id="selectedCount">0</span> 个点
@@ -993,22 +1208,26 @@
         class Store {
             constructor() {
                 this.state = {
-                    points: [],           // 点集合
-                    lines: [],            // 线集合
-                    solids: [],           // 立体集合
-                    selectedPointIds: [], // 选中的点ID
-                    selectedSolidId: null, // 选中的立体ID
-                    activeTool: 'point',  // 当前工具: point, line, solid
-                    coordSystem: '3d',    // 坐标系: 2d, 3d
-                    axoType: 'iso',       // 轴测图类型
-                    showGrid: true,       // 显示网格
-                    showAxes: true,       // 显示坐标轴
-                    wireframeMode: false, // 线框模式
-                    cutPlane: null,       // 切割面
-                    cutPosition: 0,       // 切割位置
-                    cutPlaneType: null,   // 切割面类型
-                    undoStack: [],        // 撤销栈
-                    redoStack: []         // 重做栈
+                    points: [],                   // 点集合
+                    lines: [],                    // 线集合
+                    solids: [],                   // 立体集合
+                    selectedPointIds: [],         // 选中的点ID
+                    selectedSolidId: null,        // 选中的立体ID
+                    activeTool: 'point',          // 当前工具: point, line, solid
+                    coordSystem: '3d',            // 坐标系: 2d, 3d
+                    axoType: 'iso',               // 轴测图类型
+                    showGrid: true,               // 显示网格
+                    showAxes: true,               // 显示坐标轴
+                    wireframeMode: false,         // 线框模式
+                    cutPlane: null,               // 剖切面
+                    cutPosition: 0,               // 剖切位置
+                    cutPlaneType: null,           // 剖切面类型
+                    sectionConfirmed: false,      // 是否已确认生成剖面
+                    hatchDensity: 'medium',       // 剖面填充密度: sparse, medium, dense
+                    showSectionSymbol: true,      // 显示剖切符号
+                    displayMode: 'sectionOnly',   // 显示模式: full(完整), sectionOnly(仅剖面)
+                    undoStack: [],                // 撤销栈
+                    redoStack: []                 // 重做栈
                 };
                 this.listeners = [];
             }
@@ -1037,7 +1256,11 @@
                     solids: this.state.solids,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
-                    cutPlaneType: this.state.cutPlaneType
+                    cutPlaneType: this.state.cutPlaneType,
+                    sectionConfirmed: this.state.sectionConfirmed,
+                    hatchDensity: this.state.hatchDensity,
+                    showSectionSymbol: this.state.showSectionSymbol,
+                    displayMode: this.state.displayMode
                 }));
                 this.state.undoStack.push(snapshot);
                 if (this.state.undoStack.length > 50) {
@@ -1054,7 +1277,11 @@
                     solids: this.state.solids,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
-                    cutPlaneType: this.state.cutPlaneType
+                    cutPlaneType: this.state.cutPlaneType,
+                    sectionConfirmed: this.state.sectionConfirmed,
+                    hatchDensity: this.state.hatchDensity,
+                    showSectionSymbol: this.state.showSectionSymbol,
+                    displayMode: this.state.displayMode
                 }));
                 this.state.redoStack.push(currentSnapshot);
                 const previousState = this.state.undoStack.pop();
@@ -1069,7 +1296,11 @@
                     solids: this.state.solids,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
-                    cutPlaneType: this.state.cutPlaneType
+                    cutPlaneType: this.state.cutPlaneType,
+                    sectionConfirmed: this.state.sectionConfirmed,
+                    hatchDensity: this.state.hatchDensity,
+                    showSectionSymbol: this.state.showSectionSymbol,
+                    displayMode: this.state.displayMode
                 }));
                 this.state.undoStack.push(currentSnapshot);
                 const nextState = this.state.redoStack.pop();
@@ -1219,7 +1450,8 @@
                     selectedSolidId: null,
                     cutPlane: null,
                     cutPosition: 0,
-                    cutPlaneType: null
+                    cutPlaneType: null,
+                    sectionConfirmed: false
                 });
             }
         }
@@ -1245,6 +1477,11 @@
                 this.lineMeshes = new Map();
                 this.solidMeshes = new Map();
                 this.cutPlaneMesh = null;
+                
+                // 剖面相关渲染对象
+                this.sectionFillMesh = null;      // 剖面填充网格
+                this.sectionSymbolMeshes = [];    // 剖切符号
+                this.clippedSolidMeshes = new Map(); // 裁剪后的立体网格
 
                 // 拖拽相关
                 this.isDraggingPoint = false;
@@ -1283,13 +1520,14 @@
                 );
                 this.setAxonometricView('iso');
 
-                // 创建渲染器
+                // 创建渲染器 - 启用本地裁剪
                 this.renderer = new THREE.WebGLRenderer({
                     canvas: this.canvas,
                     antialias: true
                 });
                 this.renderer.setSize(width, height);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.localClippingEnabled = true; // 启用局部裁剪
 
                 // 添加环境光
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -1698,7 +1936,8 @@
                             color: solid.color,
                             transparent: true,
                             opacity: 0.7,
-                            side: THREE.DoubleSide
+                            side: THREE.DoubleSide,
+                            clippingPlanes: [] // 支持裁剪平面
                         });
                         const mesh = new THREE.Mesh(geometry, material);
                         this.scene.add(mesh);
@@ -1759,6 +1998,387 @@
                 this.updateUI();
             }
 
+            // 创建45度斜线填充纹理（建筑制图标准）
+            createHatchTexture(density) {
+                const size = 64;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // 背景透明
+                ctx.clearRect(0, 0, size, size);
+                
+                // 设置线条样式
+                ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
+                ctx.lineWidth = density === 'dense' ? 3 : (density === 'sparse' ? 1 : 2);
+                
+                // 计算线间距
+                const spacing = density === 'dense' ? 8 : (density === 'sparse' ? 20 : 12);
+                
+                // 绘制45度斜线
+                ctx.beginPath();
+                for (let i = -size; i < size * 2; i += spacing) {
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + size, size);
+                }
+                ctx.stroke();
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(4, 4);
+                return texture;
+            }
+
+            // 创建剖面填充
+            createSectionFill(solid, planeType, position) {
+                // 清除旧的填充
+                if (this.sectionFillMesh) {
+                    this.scene.remove(this.sectionFillMesh);
+                    this.sectionFillMesh = null;
+                }
+
+                const state = this.store.getState();
+                const hatchTexture = this.createHatchTexture(state.hatchDensity);
+
+                const fillMaterial = new THREE.MeshBasicMaterial({
+                    map: hatchTexture,
+                    transparent: true,
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
+                });
+
+                // 根据立体类型和剖切面类型创建填充形状
+                let fillGeometry;
+                const solidScale = solid.scale;
+                const solidPos = solid.position;
+
+                switch (planeType) {
+                    case 'horizontal': // 水平面（平行于XY）
+                        // 对于四棱柱，创建矩形填充
+                        if (solid.type === 'cube') {
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.z);
+                            fillGeometry.rotateX(Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        }
+                        // 对于圆柱，创建圆形填充
+                        else if (solid.type === 'cylinder') {
+                            const radius = solidScale.x / 2;
+                            fillGeometry = new THREE.CircleGeometry(radius, 32);
+                            fillGeometry.rotateX(Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        }
+                        // 对于球体，创建圆形填充
+                        else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.y) * (position - solidPos.y)));
+                            fillGeometry = new THREE.CircleGeometry(r, 32);
+                            fillGeometry.rotateX(Math.PI / 2);
+                            fillGeometry.translate(solidPos.x, position, solidPos.z);
+                        }
+                        break;
+                        
+                    case 'frontal': // 正垂面（垂直于V面）
+                        if (solid.type === 'cube') {
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.x, solidScale.y);
+                            fillGeometry.translate(solidPos.x, solidPos.y, position);
+                        } else if (solid.type === 'cylinder') {
+                            const radius = solidScale.x / 2;
+                            fillGeometry = new THREE.CircleGeometry(radius, 32);
+                            fillGeometry.translate(solidPos.x, solidPos.y, position);
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.z) * (position - solidPos.z)));
+                            fillGeometry = new THREE.CircleGeometry(r, 32);
+                            fillGeometry.translate(solidPos.x, solidPos.y, position);
+                        }
+                        break;
+                        
+                    case 'profile': // 铅垂面（垂直于H面）
+                        if (solid.type === 'cube') {
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.z, solidScale.y);
+                            fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.translate(position, solidPos.y, solidPos.z);
+                        } else if (solid.type === 'cylinder') {
+                            fillGeometry = new THREE.PlaneGeometry(solidScale.y, solidScale.y);
+                            fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.translate(position, solidPos.y, solidPos.z);
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const r = Math.sqrt(Math.max(0, radius * radius - (position - solidPos.x) * (position - solidPos.x)));
+                            fillGeometry = new THREE.CircleGeometry(r, 32);
+                            fillGeometry.rotateY(Math.PI / 2);
+                            fillGeometry.translate(position, solidPos.y, solidPos.z);
+                        }
+                        break;
+                }
+
+                if (fillGeometry) {
+                    this.sectionFillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
+                    this.scene.add(this.sectionFillMesh);
+                }
+            }
+
+            // 创建剖切符号（符合房屋建筑制图统一标准）
+            createSectionSymbol(planeType, position) {
+                // 清除旧符号
+                this.sectionSymbolMeshes.forEach(mesh => {
+                    this.scene.remove(mesh);
+                });
+                this.sectionSymbolMeshes = [];
+
+                const state = this.store.getState();
+                if (!state.showSectionSymbol) return;
+
+                const symbolMaterial = new THREE.LineBasicMaterial({
+                    color: 0xef4444, // 红色
+                    linewidth: 2
+                });
+
+                const textMaterial = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+                // 剖切位置线长度
+                const lineLength = 3;
+                const arrowLength = 0.5;
+
+                let positionLine1, positionLine2, directionArrow1, directionArrow2;
+
+                switch (planeType) {
+                    case 'horizontal': // 水平面剖切
+                        // 位置线1 - X轴方向
+                        positionLine1 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(-lineLength, position, -6),
+                            new THREE.Vector3(lineLength, position, -6)
+                        ]);
+                        // 位置线2
+                        positionLine2 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(-lineLength, position, 6),
+                            new THREE.Vector3(lineLength, position, 6)
+                        ]);
+                        // 方向箭头 - 指向Y轴正方向
+                        const arrowShape = new THREE.Shape();
+                        arrowShape.moveTo(0, 0);
+                        arrowShape.lineTo(-arrowLength/2, -arrowLength);
+                        arrowShape.lineTo(arrowLength/2, -arrowLength);
+                        arrowShape.lineTo(0, 0);
+                        const arrowGeom = new THREE.ShapeGeometry(arrowShape);
+                        
+                        directionArrow1 = new THREE.Mesh(arrowGeom, textMaterial);
+                        directionArrow1.position.set(lineLength + 0.5, position, -6);
+                        directionArrow1.rotation.z = -Math.PI / 2;
+                        
+                        directionArrow2 = new THREE.Mesh(arrowGeom.clone(), textMaterial);
+                        directionArrow2.position.set(lineLength + 0.5, position, 6);
+                        directionArrow2.rotation.z = -Math.PI / 2;
+                        break;
+
+                    case 'frontal': // 正垂面剖切
+                        positionLine1 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(-lineLength, -4, position),
+                            new THREE.Vector3(lineLength, -4, position)
+                        ]);
+                        positionLine2 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(-lineLength, 6, position),
+                            new THREE.Vector3(lineLength, 6, position)
+                        ]);
+                        break;
+
+                    case 'profile': // 铅垂面剖切
+                        positionLine1 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(position, -4, -lineLength),
+                            new THREE.Vector3(position, -4, lineLength)
+                        ]);
+                        positionLine2 = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(position, 6, -lineLength),
+                            new THREE.Vector3(position, 6, lineLength)
+                        ]);
+                        break;
+                }
+
+                if (positionLine1 && positionLine2) {
+                    const line1 = new THREE.Line(positionLine1, symbolMaterial);
+                    const line2 = new THREE.Line(positionLine2, symbolMaterial);
+                    this.sectionSymbolMeshes.push(line1, line2);
+                    this.scene.add(line1);
+                    this.scene.add(line2);
+                }
+
+                if (directionArrow1 && directionArrow2) {
+                    this.sectionSymbolMeshes.push(directionArrow1, directionArrow2);
+                    this.scene.add(directionArrow1);
+                    this.scene.add(directionArrow2);
+                }
+
+                // 添加剖切编号 "1-1"
+                const canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 32;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('1-1', 32, 24);
+                
+                const textTexture = new THREE.CanvasTexture(canvas);
+                const textGeom = new THREE.PlaneGeometry(1, 0.5);
+                const textMat = new THREE.MeshBasicMaterial({ map: textTexture, transparent: true });
+                const sectionLabel = new THREE.Mesh(textGeom, textMat);
+                
+                switch (planeType) {
+                    case 'horizontal':
+                        sectionLabel.position.set(lineLength + 1.5, position, 0);
+                        sectionLabel.rotation.y = Math.PI / 2;
+                        break;
+                    case 'frontal':
+                        sectionLabel.position.set(0, 6.5, position);
+                        break;
+                    case 'profile':
+                        sectionLabel.position.set(position, 6.5, 0);
+                        sectionLabel.rotation.y = Math.PI / 2;
+                        break;
+                }
+                this.sectionSymbolMeshes.push(sectionLabel);
+                this.scene.add(sectionLabel);
+            }
+
+            // 应用裁剪平面对立体进行剖切
+            applyClippingPlanes() {
+                const state = this.store.getState();
+                
+                if (!state.cutPlaneType) return;
+
+                // 创建裁剪平面
+                let clipPlane;
+                switch (state.cutPlaneType) {
+                    case 'horizontal':
+                        clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), state.cutPosition);
+                        break;
+                    case 'frontal':
+                        clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), state.cutPosition);
+                        break;
+                    case 'profile':
+                        clipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), state.cutPosition);
+                        break;
+                }
+
+                // 对所有立体应用裁剪
+                this.solidMeshes.forEach((mesh, solidId) => {
+                    if (state.displayMode === 'sectionOnly' && state.sectionConfirmed) {
+                        // 仅显示剖面模式：启用裁剪
+                        mesh.material.clippingPlanes = [clipPlane];
+                        mesh.material.clipShadows = true;
+                    } else {
+                        // 完整模式：禁用裁剪
+                        mesh.material.clippingPlanes = null;
+                    }
+                    mesh.material.needsUpdate = true;
+                });
+            }
+
+            // 计算剖面面积
+            calculateSectionArea(solid, planeType, position) {
+                const solidScale = solid.scale;
+                const solidPos = solid.position;
+
+                switch (planeType) {
+                    case 'horizontal':
+                        if (solid.type === 'cube') {
+                            return solidScale.x * solidScale.z;
+                        } else if (solid.type === 'cylinder') {
+                            const radius = solidScale.x / 2;
+                            return Math.PI * radius * radius;
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const dist = Math.abs(position - solidPos.y);
+                            if (dist > radius) return 0;
+                            const r = Math.sqrt(radius * radius - dist * dist);
+                            return Math.PI * r * r;
+                        } else if (solid.type === 'cone') {
+                            const radius = solidScale.x / 2;
+                            const height = solidScale.y;
+                            const relPos = (position - (solidPos.y - height/2)) / height;
+                            if (relPos < 0 || relPos > 1) return 0;
+                            const r = radius * (1 - relPos);
+                            return Math.PI * r * r;
+                        }
+                        break;
+
+                    case 'frontal':
+                        if (solid.type === 'cube') {
+                            return solidScale.x * solidScale.y;
+                        } else if (solid.type === 'cylinder') {
+                            const radius = solidScale.x / 2;
+                            return Math.PI * radius * radius;
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const dist = Math.abs(position - solidPos.z);
+                            if (dist > radius) return 0;
+                            const r = Math.sqrt(radius * radius - dist * dist);
+                            return Math.PI * r * r;
+                        }
+                        break;
+
+                    case 'profile':
+                        if (solid.type === 'cube') {
+                            return solidScale.z * solidScale.y;
+                        } else if (solid.type === 'cylinder') {
+                            return solidScale.y * solidScale.y;
+                        } else if (solid.type === 'sphere') {
+                            const radius = solidScale.x / 2;
+                            const dist = Math.abs(position - solidPos.x);
+                            if (dist > radius) return 0;
+                            const r = Math.sqrt(radius * radius - dist * dist);
+                            return Math.PI * r * r;
+                        }
+                        break;
+                }
+                return 0;
+            }
+
+            // 更新剖面信息面板
+            updateSectionInfoPanel() {
+                const state = this.store.getState();
+                const panel = document.getElementById('sectionInfoPanel');
+
+                if (!state.cutPlaneType) {
+                    panel.style.display = 'none';
+                    return;
+                }
+
+                panel.style.display = 'block';
+
+                const planeLabels = {
+                    'horizontal': '水平面 (XY)',
+                    'frontal': '正垂面 (V)',
+                    'profile': '铅垂面 (H)'
+                };
+
+                document.getElementById('sectionPlaneType').textContent = planeLabels[state.cutPlaneType] || '-';
+                
+                let posLabel = '';
+                switch (state.cutPlaneType) {
+                    case 'horizontal':
+                        posLabel = `Y = ${state.cutPosition.toFixed(2)}`;
+                        break;
+                    case 'frontal':
+                        posLabel = `Z = ${state.cutPosition.toFixed(2)}`;
+                        break;
+                    case 'profile':
+                        posLabel = `X = ${state.cutPosition.toFixed(2)}`;
+                        break;
+                }
+                document.getElementById('sectionPosition').textContent = posLabel;
+
+                // 计算并显示面积
+                if (state.solids.length > 0 && state.sectionConfirmed) {
+                    const area = this.calculateSectionArea(state.solids[0], state.cutPlaneType, state.cutPosition);
+                    document.getElementById('sectionArea').textContent = area.toFixed(2) + ' 平方单位';
+                } else {
+                    document.getElementById('sectionArea').textContent = state.sectionConfirmed ? '0.00 平方单位' : '点击生成剖面';
+                }
+            }
+
             syncCutPlane() {
                 const state = this.store.getState();
 
@@ -1768,8 +2388,8 @@
                     this.cutPlaneMesh = null;
                 }
 
-                // 创建新切割面
-                if (state.cutPlaneType) {
+                // 创建新切割面（仅在未确认剖面时显示预览）
+                if (state.cutPlaneType && !state.sectionConfirmed) {
                     const planeSize = 15;
                     const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
                     const material = new THREE.MeshBasicMaterial({
@@ -1797,6 +2417,32 @@
 
                     this.scene.add(this.cutPlaneMesh);
                 }
+
+                // 确认剖面后创建填充和符号
+                if (state.cutPlaneType && state.sectionConfirmed && state.solids.length > 0) {
+                    this.createSectionFill(state.solids[0], state.cutPlaneType, state.cutPosition);
+                    this.createSectionSymbol(state.cutPlaneType, state.cutPosition);
+                    this.applyClippingPlanes();
+                } else {
+                    // 清除剖面填充和符号
+                    if (this.sectionFillMesh) {
+                        this.scene.remove(this.sectionFillMesh);
+                        this.sectionFillMesh = null;
+                    }
+                    this.sectionSymbolMeshes.forEach(mesh => {
+                        this.scene.remove(mesh);
+                    });
+                    this.sectionSymbolMeshes = [];
+                    
+                    // 恢复立体显示
+                    this.solidMeshes.forEach(mesh => {
+                        mesh.material.clippingPlanes = null;
+                        mesh.material.needsUpdate = true;
+                    });
+                }
+
+                // 更新剖面信息面板
+                this.updateSectionInfoPanel();
             }
 
             updateUI() {
@@ -1877,7 +2523,7 @@
                     'profile': '铅垂面'
                 };
                 document.getElementById('cutPlane').textContent = state.cutPlaneType ?
-                    `${cutPlaneLabels[state.cutPlaneType]} (${state.cutPosition.toFixed(1)})` : '无';
+                    `${cutPlaneLabels[state.cutPlaneType]} (${state.cutPosition.toFixed(1)})${state.sectionConfirmed ? ' ✓' : ''}` : '无';
 
                 // 更新切割步骤引导状态
                 this.updateCutSteps(state);
@@ -2070,35 +2716,60 @@
             document.getElementById('cutPositionValue').textContent = value.toFixed(1);
         });
 
-        // 重置切割
+        // 重置剖面
         document.getElementById('resetCutBtn').addEventListener('click', () => {
             document.querySelectorAll('.cut-plane-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
             store.setState({
                 cutPlaneType: null,
-                cutPosition: 0
+                cutPosition: 0,
+                sectionConfirmed: false
             });
             document.getElementById('cutPositionSlider').value = 0;
             document.getElementById('cutPositionValue').textContent = '0';
         });
 
-        // 确认切割（显示提示）
+        // 剖面填充密度选择
+        document.querySelectorAll('.hatch-density-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.hatch-density-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                store.setState({ hatchDensity: btn.dataset.density });
+            });
+        });
+
+        // 剖切符号显示开关
+        document.getElementById('toggleSectionSymbol').addEventListener('change', (e) => {
+            store.setState({ showSectionSymbol: e.target.checked });
+        });
+
+        // 显示模式切换
+        document.querySelectorAll('input[name="displayMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                store.setState({ displayMode: e.target.value });
+            });
+        });
+
+        // 确认生成剖面图
         document.getElementById('confirmCutBtn').addEventListener('click', () => {
             const state = store.getState();
             if (!state.cutPlaneType) {
-                alert('请先选择切割面类型');
+                alert('请先选择剖切面类型');
                 return;
             }
             if (state.solids.length === 0) {
                 alert('请先创建立体图形');
                 return;
             }
+            store.setState({ sectionConfirmed: true });
+            
             const cutPlaneLabels = {
                 'horizontal': '水平面',
                 'frontal': '正垂面',
                 'profile': '铅垂面'
             };
-            alert(`✂️ 已确认切割！\n切割面类型: ${cutPlaneLabels[state.cutPlaneType]}\n切割位置: ${state.cutPosition.toFixed(1)}`);
+            const area = renderer3d.calculateSectionArea(state.solids[0], state.cutPlaneType, state.cutPosition);
+            alert(`✓ 剖面图已生成！\n剖切面类型: ${cutPlaneLabels[state.cutPlaneType]}\n剖切位置: ${state.cutPosition.toFixed(1)}\n剖面面积: ${area.toFixed(2)} 平方单位`);
         });
 
         // 显示网格切换
@@ -2136,6 +2807,8 @@
                 geometryManager.resetAll();
                 document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.cut-plane-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('cutPositionSlider').value = 0;
+                document.getElementById('cutPositionValue').textContent = '0';
             }
         });
 
