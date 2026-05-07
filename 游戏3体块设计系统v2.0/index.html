@@ -5386,7 +5386,7 @@
 
         function downloadGame3ReportHTML() {
             const reportHTML = generateGame3ReportHTML(store.getState());
-            const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体块设计报告</title><style>body{font-family:sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333;} table{width:100%;border-collapse:collapse;margin:10px 0;} th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;} th{background:#f5f5f5;} .score-bar{height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;} .score-fill{height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);border-radius:10px;} .dim-card{border:1px solid #eee;border-radius:8px;padding:15px;margin:10px 0;} .dim-title{font-weight:bold;font-size:1.1em;margin-bottom:8px;} h1{color:#2c3e50;} h2{color:#3498db;border-bottom:2px solid #3498db;padding-bottom:5px;}</style></head><body>' + reportHTML + '</body></html>';
+            const fullHTML = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体块设计报告</title><style>body{font-family:sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333;} table{width:100%;border-collapse:collapse;margin:10px 0;} th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;} th{background:#f5f5f5;} .score-bar{height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;} .score-fill{height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);border-radius:10px;} .dim-card{border:1px solid #eee;border-radius:8px;padding:15px;margin:10px 0;} .dim-title{font-weight:bold;font-size:1.1em;margin-bottom:8px;} h1{color:#2c3e50;} h2{color:#3498db;border-bottom:2px solid #3498db;padding-bottom:5px;}</style></head><body>' + reportHTML + '<script src="../feishu-game-data-collector.js"></script></body></html>';
             const blob = new Blob([fullHTML], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -5399,7 +5399,7 @@
         function printGame3Report() {
             const reportHTML = generateGame3ReportHTML(store.getState());
             const printWindow = window.open('', '_blank');
-            printWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体块设计报告</title><style>body{font-family:sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333;} table{width:100%;border-collapse:collapse;margin:10px 0;} th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;} th{background:#f5f5f5;} .score-bar{height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;} .score-fill{height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);border-radius:10px;} h1{color:#2c3e50;} h2{color:#3498db;border-bottom:2px solid #3498db;padding-bottom:5px;}</style></head><body>' + reportHTML + '</body></html>');
+            printWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>体块设计报告</title><style>body{font-family:sans-serif;max-width:800px;margin:0 auto;padding:20px;color:#333;} table{width:100%;border-collapse:collapse;margin:10px 0;} th,td{padding:8px 12px;border:1px solid #ddd;text-align:left;} th{background:#f5f5f5;} .score-bar{height:20px;background:#e0e0e0;border-radius:10px;overflow:hidden;} .score-fill{height:100%;background:linear-gradient(90deg,#2ecc71,#27ae60);border-radius:10px;} h1{color:#2c3e50;} h2{color:#3498db;border-bottom:2px solid #3498db;padding-bottom:5px;}</style></head><body>' + reportHTML + '<script src="../feishu-game-data-collector.js"></script></body></html>');
             printWindow.document.close();
             printWindow.print();
         }
@@ -5410,5 +5410,5 @@
             console.log('应用初始化完成，视角控制已就绪');
         });
     </script>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>

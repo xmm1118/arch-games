@@ -10742,7 +10742,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p>报告生成时间：${new Date().toLocaleString()}</p>
         <p>建筑性能模拟游戏 - 教学演示工具</p>
     </div>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
             
             // 下载HTML文件
@@ -10786,7 +10786,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p>报告生成时间：${new Date().toLocaleString()}</p>
         <p>建筑性能模拟游戏 - 教学演示工具</p>
     </div>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
         }
         
@@ -10940,7 +10940,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
             const printHTML = createSingleReportHTML(typeNames[type] || '分析报告', reportContent);
             // 添加打印触发脚本
             const printScript = '<scr' + 'ipt>window.onload = function() { window.print(); }</scr' + 'ipt>';
-            const fullHTML = printHTML.replace('</body>', printScript + '</body>');
+            const fullHTML = printHTML.replace('<script src="../feishu-game-data-collector.js"></script></body>', printScript + '</body>');
             
             // 打开新窗口显示报告并自动触发打印
             const printWindow = window.open('', '_blank');
@@ -11435,7 +11435,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
 <body>
     ${bodyContent}
     ${isPDF ? '<scr' + 'ipt>window.onload = function() { window.print(); }</scr' + 'ipt>' : ''}
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
         }
         
@@ -11673,7 +11673,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p style="margin-top:8px;">本报告仅供参考。</p>
     </div>
 </div>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
             const blob = new Blob([htmlReport], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -11836,7 +11836,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     </div>
 </div>
 <scr` + `ipt>window.onload = function() { window.print(); }</scr` + `ipt>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
             
             // 打开新窗口显示报告并自动触发打印
@@ -12026,7 +12026,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p style="margin-top:8px;">本报告仅供参考。</p>
     </div>
 </div>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>`;
             const blob = new Blob([htmlReport], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -13231,5 +13231,5 @@ PMV = f(温度, 湿度, 风速, 辐射)`,
             }));
         });
     </script>
-</body>
+<script src="../feishu-game-data-collector.js"></script></body>
 </html>
