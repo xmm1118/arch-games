@@ -855,18 +855,18 @@
                     <button class="tool-btn" style="flex:1; padding: 8px;" onclick="rotateSelectedBlock(45)">↻ 右旋体块</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0;">
-                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 1, 0)">⬆ 上移</button>
-                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, -1, 0)">⬇ 下移</button>
+                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 0, 1)">⬆ 升高</button>
+                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 0, -1)">⬇ 降低</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
-                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 0, -1)">⬅ 前</button>
+                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 1, 0)">⬅ 向前</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
-                    <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(-1, 0, 0)">左</button>
-                    <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(1, 0, 0)">右</button>
+                    <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(-1, 0, 0)">向左</button>
+                    <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(1, 0, 0)">向右</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
-                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 0, 1)">➡ 后</button>
+                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, -1, 0)">➡ 向后</button>
                 </div>
                 <p style="font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;">
                     💡 选中体块后用 <b>方向键</b> 水平移动，<b>PageUp/PageDown</b> 上下移动，<b>R</b> 旋转45°
@@ -1873,47 +1873,48 @@
 
             
             // 初始化三视图（四个立面 + 平面图）- Z轴向上坐标系
+            // 建筑学第一角投影约定：X-左右, Y-前后, Z-上下（垂直高度）
             initViewPanels() {
                 const frustumSize = 12;
                 
-                // 背视图相机（从后往前看，Y正方向）- 显示宽度×高度（Z轴向上）
+                // 背立面图相机（从后往前看，Y+方向）- 显示宽度×高度（X-Z平面）
                 this.backCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.backCamera.position.set(0, 30, 5);
-                this.backCamera.up.set(0, 0, 1);
+                this.backCamera.position.set(0, 30, 5);  // 从Y正方向看（从后往前）
+                this.backCamera.up.set(0, 0, 1);         // Z轴向上
                 this.backCamera.lookAt(0, 0, 5);
                 
-                // 左侧视图相机（从左往右看，X正方向）- 显示深度×高度（Z轴向上）
+                // 左侧立面图相机（从左往右看，X-方向）- 显示深度×高度（Y-Z平面）
                 this.leftCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.leftCamera.position.set(30, 0, 5);
-                this.leftCamera.up.set(0, 0, 1);
+                this.leftCamera.position.set(-30, 0, 5);  // 从X负方向看（从左往右）
+                this.leftCamera.up.set(0, 0, 1);          // Z轴向上
                 this.leftCamera.lookAt(0, 0, 5);
                 
-                // 正视图相机（从前往后看，Y负方向）- 显示宽度×高度（Z轴向上）
+                // 正立面图相机（从前往后看，Y-方向）- 显示宽度×高度（X-Z平面）
                 this.frontCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.frontCamera.position.set(0, -30, 5);
-                this.frontCamera.up.set(0, 0, 1);
+                this.frontCamera.position.set(0, -30, 5);  // 从Y负方向看（从前往后）
+                this.frontCamera.up.set(0, 0, 1);          // Z轴向上
                 this.frontCamera.lookAt(0, 0, 5);
                 
-                // 右侧视图相机（从右往左看，X负方向）- 显示深度×高度（Z轴向上）
+                // 右侧立面图相机（从右往左看，X+方向）- 显示深度×高度（Y-Z平面）
                 this.rightCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.rightCamera.position.set(-30, 0, 5);
-                this.rightCamera.up.set(0, 0, 1);
+                this.rightCamera.position.set(30, 0, 5);  // 从X正方向看（从右往左）
+                this.rightCamera.up.set(0, 0, 1);         // Z轴向上
                 this.rightCamera.lookAt(0, 0, 5);
                 
-                // 平面图相机（从上往下看，Z轴方向）- 显示宽度×深度（Z轴向上）
+                // 平面图（俯视图）相机（从上往下看，Z+方向）- 显示宽度×深度（X-Y平面）
                 this.topCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.topCamera.position.set(0, 0.01, 30);
-                this.topCamera.up.set(0, 0, 1);
+                this.topCamera.position.set(0, 0.01, 30);  // 从Z正方向看（从上往下）
+                this.topCamera.up.set(0, 0, 1);            // Z轴向上
                 this.topCamera.lookAt(0, 0, 0);
                 
                 // 五个视图渲染器
@@ -2285,19 +2286,21 @@
                     return;
                 }
 
-                // 处理体块移动
+                // 处理体块移动（在平面图中拖拽）
+                // X轴：水平左右，Y轴：水平前后（深度），Z轴：垂直高度
                 if (this.isDraggingNode && state.selectedNodeId) {
                     const deltaX = event.clientX - this.dragStart.x;
                     const deltaY = event.clientY - this.dragStart.y;
 
                     const moveSpeed = 0.05;
-                    const newX = this.dragNodeStart.x + deltaX * moveSpeed;
-                    const newZ = this.dragNodeStart.z + deltaY * moveSpeed;
+                    const newX = this.dragNodeStart.x + deltaX * moveSpeed;   // 横向拖拽 → X轴变化
+                    const newY = this.dragNodeStart.y - deltaY * moveSpeed;   // 纵向拖拽 → Y轴变化（屏幕向下对应Y+向前）
+                    const newZ = this.dragNodeStart.z;                        // 保持原有高度不变
 
                     this.nodeManager.updateNode(state.selectedNodeId, {
-                        position: { x: newX, y: 0, z: newZ }
+                        position: { x: newX, y: newY, z: newZ }
                     });
-                    console.log('体块移动中，新位置:', newX, newZ);
+                    console.log('体块移动中，新位置:', { x: newX, y: newY, z: newZ });
 
                     this.hasDragged = true;  // 标记为已拖拽
                     return;
@@ -4062,27 +4065,33 @@
                             
                             switch(e.key) {
                                 case 'ArrowUp':
-                                    newPos.z -= moveStep;
+                                    // ↑键：Y轴向前（Y+）- 平面图中向上对应Y轴正方向
+                                    newPos.y += moveStep;
                                     moved = true;
                                     break;
                                 case 'ArrowDown':
-                                    newPos.z += moveStep;
+                                    // ↓键：Y轴向后（Y-）- 平面图中向下对应Y轴负方向
+                                    newPos.y -= moveStep;
                                     moved = true;
                                     break;
                                 case 'ArrowLeft':
+                                    // ←键：X轴向左（X-）- 水平左右移动
                                     newPos.x -= moveStep;
                                     moved = true;
                                     break;
                                 case 'ArrowRight':
+                                    // →键：X轴向右（X+）- 水平左右移动
                                     newPos.x += moveStep;
                                     moved = true;
                                     break;
                                 case 'PageUp':
-                                    newPos.y += moveStep;
+                                    // PageUp：Z轴向上（Z+）- 垂直高度
+                                    newPos.z += moveStep;
                                     moved = true;
                                     break;
                                 case 'PageDown':
-                                    newPos.y = Math.max(0, newPos.y - moveStep);
+                                    // PageDown：Z轴向下（Z-）- 垂直高度，不能为负
+                                    newPos.z = Math.max(0, newPos.z - moveStep);
                                     moved = true;
                                     break;
                             }
@@ -4174,6 +4183,7 @@
         };
         
         // 全局体块移动函数
+        // 坐标系约定：X-水平左右, Y-水平前后, Z-垂直高度（向上）
         window.moveSelectedBlock = function(dx, dy, dz) {
             if (!_app || !_app.nodeManager) {
                 console.error('应用未初始化，请刷新页面');
@@ -4189,18 +4199,20 @@
             if (node) {
                 const newPos = {
                     x: node.position.x + dx,
-                    y: Math.max(0, node.position.y + dy), // Y不能为负
-                    z: node.position.z + dz
+                    y: node.position.y + dy,
+                    z: Math.max(0, node.position.z + dz) // Z不能为负（垂直高度）
                 };
                 _app.nodeManager.updateNode(state.selectedNodeId, { position: newPos });
                 console.log('体块移动到:', newPos);
                 
                 // 检测任务完成
                 if (_app.uiManager) {
-                    if (dy !== 0) {
+                    if (dz !== 0) {
+                        // 垂直移动（Z轴变化）
                         _app.uiManager.checkTask('moveUp');
                     }
-                    if (dx !== 0 || dz !== 0) {
+                    if (dx !== 0 || dy !== 0) {
+                        // 水平移动（X/Y轴变化）
                         _app.uiManager.checkTask('moveHorizontal');
                     }
                 }
