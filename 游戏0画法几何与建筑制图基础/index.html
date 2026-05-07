@@ -2488,12 +2488,14 @@
                         );
 
                         // 创建顶点标记小球
-                        const markerGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+                        const markerGeometry = new THREE.SphereGeometry(0.15, 8, 8);
                         const isSelected = state.selectedVertex && state.selectedVertex.vertexIndex === i;
                         const markerMaterial = new THREE.MeshBasicMaterial({
                             color: isSelected ? 0xef4444 : 0x3b82f6,
                             transparent: true,
-                            opacity: isSelected ? 1 : 0.8
+                            opacity: isSelected ? 1 : 0.8,
+                            depthTest: false,
+                            depthWrite: false
                         });
                         const marker = new THREE.Mesh(markerGeometry, markerMaterial);
                         marker.position.copy(worldPosition);
