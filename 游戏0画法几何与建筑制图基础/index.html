@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画法几何与建筑制图基础 - 游戏0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #06b6d4;
+            --accent-success: #22c55e;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #475569;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 240px 1fr 280px;
+            grid-template-rows: 60px 1fr 30px;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        /* 顶部导航 */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-danger {
+            background: var(--accent-danger);
+        }
+
+        .btn-success {
+            background: var(--accent-success);
+        }
+
+        /* 左侧工具栏 */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .sidebar h3 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tool-section:last-child {
+            border-bottom: none;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-btn:hover {
+            background: var(--border-color);
+            transform: translateX(3px);
+        }
+
+        .tool-btn.active {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-color: transparent;
+        }
+
+        .coord-input-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .coord-input {
+            width: 100%;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .coord-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .axis-toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .axis-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .axis-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* 中间3D画布区域 */
+        .canvas-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            position: relative;
+        }
+
+        .main-canvas-container {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        /* 新手引导提示面板 */
+        .guide-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 12px 16px;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 8px;
+            border: 1px solid var(--accent-primary);
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            max-width: 250px;
+        }
+
+        .guide-panel h4 {
+            color: var(--accent-primary);
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .guide-panel ul {
+            list-style: none;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .guide-panel li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 切割步骤引导 */
+        .cut-steps-guide {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--accent-warning);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cut-steps-guide h4 {
+            color: var(--accent-warning);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .cut-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            font-size: 11px;
+            transition: all 0.3s;
+        }
+
+        .cut-step.active {
+            background: var(--accent-warning);
+            color: white;
+        }
+
+        .cut-step.completed {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--accent-success);
+        }
+
+        .cut-step-number {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .cut-step.active .cut-step-number,
+        .cut-step.completed .cut-step-number {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 五视图面板 */
+        .view-panels {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            height: 120px;
+            min-height: 80px;
+        }
+
+        .view-panel {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .view-panel:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .view-panel canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .view-label {
+            position: absolute;
+            top: 5px;
+            left: 8px;
+            padding: 3px 8px;
+            background: rgba(59, 130, 246, 0.8);
+            border-radius: 4px;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* 右侧信息面板 */
+        .info-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-panel h3 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .info-card h4 {
+            font-size: 13px;
+            color: var(--accent-secondary);
+            margin-bottom: 8px;
+        }
+
+        .coord-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .coord-item {
+            text-align: center;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+        }
+
+        .coord-item .label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .coord-item .value {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .coord-item.x .value { color: #ef4444; }
+        .coord-item.y .value { color: #22c55e; }
+        .coord-item.z .value { color: #3b82f6; }
+
+        /* 可编辑坐标输入框 */
+        .coord-edit-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .coord-edit-item {
+            text-align: center;
+        }
+
+        .coord-edit-item label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .coord-edit-item input {
+            width: 100%;
+            padding: 6px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 13px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .coord-edit-item input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .coord-edit-item.x input { color: #ef4444; }
+        .coord-edit-item.y input { color: #22c55e; }
+        .coord-edit-item.z input { color: #3b82f6; }
+
+        .point-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .point-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .point-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .point-item.selected {
+            background: var(--accent-primary);
+        }
+
+        .point-item .delete {
+            color: var(--accent-danger);
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+
+        .solid-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .solid-btn {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .solid-btn:hover {
+            background: var(--border-color);
+        }
+
+        .solid-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .solid-btn .icon {
+            font-size: 20px;
+        }
+
+        .cut-plane-select {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .cut-plane-btn {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .cut-plane-btn:hover {
+            background: var(--border-color);
+        }
+
+        .cut-plane-btn.active {
+            background: var(--accent-warning);
+            border-color: var(--accent-warning);
+        }
+
+        .slider-container {
+            margin: 10px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .slider-container input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .axo-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .axo-btn {
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .axo-btn:hover {
+            background: var(--border-color);
+        }
+
+        .axo-btn.active {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+        }
+
+        /* 底部状态栏 */
+        .status-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+            gap: 30px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-item span {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* 响应式设计 - 移动端 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto auto;
+                gap: 6px;
+                padding: 6px;
+            }
+
+            .header {
+                padding: 10px 12px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .sidebar {
+                grid-row: 3;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .tool-section {
+                flex-shrink: 0;
+                width: 180px;
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                padding-right: 10px;
+            }
+
+            .tool-section:last-child {
+                border-right: none;
+            }
+
+            .info-panel {
+                grid-row: 4;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            .info-card {
+                flex-shrink: 0;
+                width: 200px;
+                margin-bottom: 0;
+            }
+
+            .view-panels {
+                grid-template-columns: repeat(3, 1fr);
+                height: 100px;
+            }
+
+            .view-panel:nth-child(n+4) {
+                display: none;
+            }
+
+            .btn {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .tool-btn {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+
+        /* 平板横屏 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                grid-template-columns: 200px 1fr 220px;
+            }
+
+            .view-panels {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .view-panel:nth-child(5) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <h1>📐 画法几何与建筑制图基础</h1>
+            <div class="controls">
+                <button class="btn btn-secondary" id="undoBtn">↶ 撤销</button>
+                <button class="btn btn-secondary" id="redoBtn">↷ 重做</button>
+                <button class="btn btn-secondary" id="resetBtn">🔄 重置</button>
+                <button class="btn" id="saveBtn">💾 保存</button>
+            </div>
+        </header>
+
+        <!-- 左侧工具栏 -->
+        <aside class="sidebar">
+            <div class="tool-section">
+                <h3>📍 坐标系统</h3>
+                <div class="axis-toggle">
+                    <button class="axis-btn active" data-axis="3d">3D (XYZ)</button>
+                    <button class="axis-btn" data-axis="2d">2D (XY)</button>
+                </div>
+                <div class="coord-input-group">
+                    <div>
+                        <input type="number" class="coord-input" id="coordX" value="0" step="0.1">
+                        <div class="coord-label" style="color: #ef4444;">X (红)</div>
+                    </div>
+                    <div>
+                        <input type="number" class="coord-input" id="coordY" value="0" step="0.1">
+                        <div class="coord-label" style="color: #22c55e;">Y (绿)</div>
+                    </div>
+                    <div id="coordZContainer">
+                        <input type="number" class="coord-input" id="coordZ" value="0" step="0.1">
+                        <div class="coord-label" style="color: #3b82f6;">Z (蓝)</div>
+                    </div>
+                </div>
+                <button class="tool-btn" id="createPointBtn">➕ 创建点</button>
+                <button class="tool-btn" id="createLineBtn">📏 创建连线</button>
+            </div>
+
+            <div class="tool-section">
+                <h3>🎨 轴测图类型</h3>
+                <div class="axo-select">
+                    <button class="axo-btn active" data-axo="iso">正等轴测</button>
+                    <button class="axo-btn" data-axo="dimetric">正二等轴测</button>
+                    <button class="axo-btn" data-axo="cabinet">正面斜二测</button>
+                    <button class="axo-btn" data-axo="horizontal">水平斜等测</button>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>✂️ 立体切割工具</h3>
+                
+                <!-- 切割步骤引导 -->
+                <div class="cut-steps-guide">
+                    <h4>📝 切割操作步骤</h4>
+                    <div class="cut-step" id="cutStep1">
+                        <span class="cut-step-number">1</span>
+                        <span>选择立体图形</span>
+                    </div>
+                    <div class="cut-step" id="cutStep2">
+                        <span class="cut-step-number">2</span>
+                        <span>选择切割面类型</span>
+                    </div>
+                    <div class="cut-step" id="cutStep3">
+                        <span class="cut-step-number">3</span>
+                        <span>拖动调整切割位置</span>
+                    </div>
+                </div>
+
+                <div class="solid-select">
+                    <button class="solid-btn" data-solid="cube">
+                        <span class="icon">⬜</span>
+                        四棱柱
+                    </button>
+                    <button class="solid-btn" data-solid="cylinder">
+                        <span class="icon">🔘</span>
+                        圆柱
+                    </button>
+                    <button class="solid-btn" data-solid="cone">
+                        <span class="icon">🔺</span>
+                        圆锥
+                    </button>
+                    <button class="solid-btn" data-solid="sphere">
+                        <span class="icon">⚪</span>
+                        球
+                    </button>
+                </div>
+                <h4 style="font-size: 12px; color: var(--text-secondary); margin: 10px 0 6px;">切割面类型</h4>
+                <div class="cut-plane-select">
+                    <button class="cut-plane-btn" data-plane="horizontal">→ 水平面 (平行于XY)</button>
+                    <button class="cut-plane-btn" data-plane="frontal">→ 正垂面 (垂直于V面)</button>
+                    <button class="cut-plane-btn" data-plane="profile">→ 铅垂面 (垂直于H面)</button>
+                </div>
+                <div class="slider-container">
+                    <label>切割面位置: <span id="cutPositionValue">0</span></label>
+                    <input type="range" id="cutPositionSlider" min="-5" max="5" step="0.1" value="0">
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="tool-btn btn-danger" id="resetCutBtn" style="flex: 1;">🔄 重置切割</button>
+                    <button class="tool-btn btn-success" id="confirmCutBtn" style="flex: 1;">✓ 确认切割</button>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>⚙️ 显示设置</h3>
+                <button class="tool-btn active" id="toggleGridBtn">📐 显示网格</button>
+                <button class="tool-btn active" id="toggleAxesBtn">🎯 显示坐标轴</button>
+                <button class="tool-btn" id="toggleWireframeBtn">🔲 线框模式</button>
+            </div>
+        </aside>
+
+        <!-- 中间3D画布 -->
+        <div class="canvas-area">
+            <div class="main-canvas-container">
+                <canvas id="canvas3d"></canvas>
+                <div class="canvas-overlay">
+                    <div>🎯 当前模式: <span id="currentMode">点编辑</span></div>
+                    <div>📍 鼠标位置: <span id="mousePosition">0.0, 0.0, 0.0</span></div>
+                </div>
+                
+                <!-- 新手引导面板 -->
+                <div class="guide-panel" id="guidePanel">
+                    <h4>💡 操作指南</h4>
+                    <ul>
+                        <li>🖱️ 左键点击画布创建点</li>
+                        <li>✋ 拖拽移动已选中的点</li>
+                        <li>🔄 右键拖拽旋转视图</li>
+                        <li>🔍 滚轮缩放视图大小</li>
+                        <li>⇧ 按住Shift多选创建线</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 五视图面板 -->
+            <div class="view-panels" id="viewPanels">
+                <div class="view-panel" data-view="top">
+                    <div class="view-label">平面图 (H)</div>
+                    <canvas id="canvasTop"></canvas>
+                </div>
+                <div class="view-panel" data-view="front">
+                    <div class="view-label">正立面 (V)</div>
+                    <canvas id="canvasFront"></canvas>
+                </div>
+                <div class="view-panel" data-view="left">
+                    <div class="view-label">左侧立面 (W左)</div>
+                    <canvas id="canvasLeft"></canvas>
+                </div>
+                <div class="view-panel" data-view="right">
+                    <div class="view-label">右侧立面 (W右)</div>
+                    <canvas id="canvasRight"></canvas>
+                </div>
+                <div class="view-panel" data-view="back">
+                    <div class="view-label">背立面 (V背)</div>
+                    <canvas id="canvasBack"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧信息面板 -->
+        <aside class="info-panel">
+            <div class="info-card">
+                <h4>📍 选中点坐标编辑</h4>
+                <div class="coord-edit-group" id="coordEditGroup">
+                    <div class="coord-edit-item x">
+                        <label>X (红)</label>
+                        <input type="number" id="editCoordX" step="0.1" disabled>
+                    </div>
+                    <div class="coord-edit-item y">
+                        <label>Y (绿)</label>
+                        <input type="number" id="editCoordY" step="0.1" disabled>
+                    </div>
+                    <div class="coord-edit-item z" id="editCoordZContainer">
+                        <label>Z (蓝)</label>
+                        <input type="number" id="editCoordZ" step="0.1" disabled>
+                    </div>
+                </div>
+                <button class="tool-btn btn-danger" id="deleteSelectedPointBtn" disabled>🗑️ 删除选中点</button>
+            </div>
+
+            <div class="info-card">
+                <h4>📋 点列表</h4>
+                <div class="point-list" id="pointList">
+                    <div style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px;">
+                        点击画布创建点
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h4>📊 统计信息</h4>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 2;">
+                    <div>🔴 X轴: 红色</div>
+                    <div>🟢 Y轴: 绿色</div>
+                    <div>🔵 Z轴: 蓝色</div>
+                    <hr style="margin: 8px 0; border-color: var(--border-color);">
+                    <div>点数: <span id="pointCount" style="color: var(--accent-primary);">0</span></div>
+                    <div>线数: <span id="lineCount" style="color: var(--accent-primary);">0</span></div>
+                    <div>立体数: <span id="solidCount" style="color: var(--accent-primary);">0</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h4>⌨️ 快捷键提示</h4>
+                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.8;">
+                    <div><kbd style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Ctrl+Z</kbd> 撤销操作</div>
+                    <div><kbd style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Ctrl+Y</kbd> 重做操作</div>
+                    <div><kbd style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Delete</kbd> 删除选中点</div>
+                    <div><kbd style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Shift+点击</kbd> 多选点</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+            <div class="status-item">
+                🎨 轴测图: <span id="axoType">正等轴测</span>
+            </div>
+            <div class="status-item">
+                📐 坐标系: <span id="coordSystem">3D (XYZ)</span>
+            </div>
+            <div class="status-item">
+                ✂️ 切割面: <span id="cutPlane">无</span>
+            </div>
+            <div class="status-item">
+                📍 已选中: <span id="selectedCount">0</span> 个点
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+
+    <script>
+        // ============================================
+        // 状态管理
+        // ============================================
+        class Store {
+            constructor() {
+                this.state = {
+                    points: [],           // 点集合
+                    lines: [],            // 线集合
+                    solids: [],           // 立体集合
+                    selectedPointIds: [], // 选中的点ID
+                    selectedSolidId: null, // 选中的立体ID
+                    activeTool: 'point',  // 当前工具: point, line, solid
+                    coordSystem: '3d',    // 坐标系: 2d, 3d
+                    axoType: 'iso',       // 轴测图类型
+                    showGrid: true,       // 显示网格
+                    showAxes: true,       // 显示坐标轴
+                    wireframeMode: false, // 线框模式
+                    cutPlane: null,       // 切割面
+                    cutPosition: 0,       // 切割位置
+                    cutPlaneType: null,   // 切割面类型
+                    undoStack: [],        // 撤销栈
+                    redoStack: []         // 重做栈
+                };
+                this.listeners = [];
+            }
+
+            getState() {
+                return this.state;
+            }
+
+            setState(newState) {
+                this.state = { ...this.state, ...newState };
+                this.notify();
+            }
+
+            subscribe(callback) {
+                this.listeners.push(callback);
+            }
+
+            notify() {
+                this.listeners.forEach(callback => callback(this.state));
+            }
+
+            pushUndoStack() {
+                const snapshot = JSON.parse(JSON.stringify({
+                    points: this.state.points,
+                    lines: this.state.lines,
+                    solids: this.state.solids,
+                    cutPlane: this.state.cutPlane,
+                    cutPosition: this.state.cutPosition,
+                    cutPlaneType: this.state.cutPlaneType
+                }));
+                this.state.undoStack.push(snapshot);
+                if (this.state.undoStack.length > 50) {
+                    this.state.undoStack.shift();
+                }
+                this.state.redoStack = [];
+            }
+
+            undo() {
+                if (this.state.undoStack.length === 0) return;
+                const currentSnapshot = JSON.parse(JSON.stringify({
+                    points: this.state.points,
+                    lines: this.state.lines,
+                    solids: this.state.solids,
+                    cutPlane: this.state.cutPlane,
+                    cutPosition: this.state.cutPosition,
+                    cutPlaneType: this.state.cutPlaneType
+                }));
+                this.state.redoStack.push(currentSnapshot);
+                const previousState = this.state.undoStack.pop();
+                this.setState(previousState);
+            }
+
+            redo() {
+                if (this.state.redoStack.length === 0) return;
+                const currentSnapshot = JSON.parse(JSON.stringify({
+                    points: this.state.points,
+                    lines: this.state.lines,
+                    solids: this.state.solids,
+                    cutPlane: this.state.cutPlane,
+                    cutPosition: this.state.cutPosition,
+                    cutPlaneType: this.state.cutPlaneType
+                }));
+                this.state.undoStack.push(currentSnapshot);
+                const nextState = this.state.redoStack.pop();
+                this.setState(nextState);
+            }
+        }
+
+        // ============================================
+        // 几何元素管理器
+        // ============================================
+        class GeometryManager {
+            constructor(store) {
+                this.store = store;
+                this.pointIdCounter = 0;
+                this.lineIdCounter = 0;
+                this.solidIdCounter = 0;
+            }
+
+            generatePointId() {
+                return 'point_' + (++this.pointIdCounter);
+            }
+
+            generateLineId() {
+                return 'line_' + (++this.lineIdCounter);
+            }
+
+            generateSolidId() {
+                return 'solid_' + (++this.solidIdCounter);
+            }
+
+            createPoint(x, y, z = 0) {
+                const state = this.store.getState();
+                // 2D模式下强制Z坐标为0
+                const finalZ = state.coordSystem === '2d' ? 0 : z;
+                const point = {
+                    id: this.generatePointId(),
+                    x: parseFloat(x.toFixed(1)),
+                    y: parseFloat(y.toFixed(1)),
+                    z: parseFloat(finalZ.toFixed(1)),
+                    color: 0x3b82f6
+                };
+                const newPoints = [...state.points, point];
+                this.store.setState({ points: newPoints });
+                return point;
+            }
+
+            deletePoint(pointId) {
+                const state = this.store.getState();
+                const newPoints = state.points.filter(p => p.id !== pointId);
+                const newLines = state.lines.filter(l => l.startId !== pointId && l.endId !== pointId);
+                const newSelectedIds = state.selectedPointIds.filter(id => id !== pointId);
+                this.store.setState({
+                    points: newPoints,
+                    lines: newLines,
+                    selectedPointIds: newSelectedIds
+                });
+            }
+
+            updatePoint(pointId, updates) {
+                const state = this.store.getState();
+                const newPoints = state.points.map(p => {
+                    if (p.id === pointId) {
+                        const updated = { ...p, ...updates };
+                        if (updates.x !== undefined) updated.x = parseFloat(updates.x.toFixed(1));
+                        if (updates.y !== undefined) updated.y = parseFloat(updates.y.toFixed(1));
+                        if (updates.z !== undefined) {
+                            // 2D模式下不允许修改Z坐标
+                            updated.z = state.coordSystem === '2d' ? 0 : parseFloat(updates.z.toFixed(1));
+                        }
+                        return updated;
+                    }
+                    return p;
+                });
+                this.store.setState({ points: newPoints });
+            }
+
+            selectPoint(pointId, addToSelection = false) {
+                const state = this.store.getState();
+                if (addToSelection) {
+                    if (state.selectedPointIds.includes(pointId)) {
+                        const newSelectedIds = state.selectedPointIds.filter(id => id !== pointId);
+                        this.store.setState({ selectedPointIds: newSelectedIds });
+                    } else {
+                        const newSelectedIds = [...state.selectedPointIds, pointId];
+                        this.store.setState({ selectedPointIds: newSelectedIds });
+                    }
+                } else {
+                    this.store.setState({ selectedPointIds: [pointId] });
+                }
+            }
+
+            createLine(startPointId, endPointId) {
+                const state = this.store.getState();
+                const startPoint = state.points.find(p => p.id === startPointId);
+                const endPoint = state.points.find(p => p.id === endPointId);
+
+                if (!startPoint || !endPoint) return null;
+
+                const line = {
+                    id: this.generateLineId(),
+                    startId: startPointId,
+                    endId: endPointId,
+                    color: 0x22c55e
+                };
+
+                const newLines = [...state.lines, line];
+                this.store.setState({ lines: newLines });
+                return line;
+            }
+
+            deleteLine(lineId) {
+                const state = this.store.getState();
+                const newLines = state.lines.filter(l => l.id !== lineId);
+                this.store.setState({ lines: newLines });
+            }
+
+            createSolid(type) {
+                const state = this.store.getState();
+                const solid = {
+                    id: this.generateSolidId(),
+                    type: type, // cube, cylinder, cone, sphere
+                    position: { x: 0, y: 2, z: 0 },
+                    scale: { x: 4, y: 4, z: 4 },
+                    color: 0x06b6d4,
+                    isCut: false
+                };
+                const newSolids = [...state.solids, solid];
+                this.store.setState({ solids: newSolids });
+                return solid;
+            }
+
+            deleteSolid(solidId) {
+                const state = this.store.getState();
+                const newSolids = state.solids.filter(s => s.id !== solidId);
+                this.store.setState({ solids: newSolids });
+            }
+
+            resetAll() {
+                this.pointIdCounter = 0;
+                this.lineIdCounter = 0;
+                this.solidIdCounter = 0;
+                this.store.setState({
+                    points: [],
+                    lines: [],
+                    solids: [],
+                    selectedPointIds: [],
+                    selectedSolidId: null,
+                    cutPlane: null,
+                    cutPosition: 0,
+                    cutPlaneType: null
+                });
+            }
+        }
+
+        // ============================================
+        // Three.js 3D渲染引擎
+        // ============================================
+        class Renderer3D {
+            constructor(canvasId, store, geometryManager) {
+                this.canvas = document.getElementById(canvasId);
+                this.store = store;
+                this.geometryManager = geometryManager;
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.raycaster = null;
+                this.mouse = null;
+                this.gridHelper = null;
+                this.axesHelper = null;
+
+                // 渲染对象映射
+                this.pointMeshes = new Map();
+                this.lineMeshes = new Map();
+                this.solidMeshes = new Map();
+                this.cutPlaneMesh = null;
+
+                // 拖拽相关
+                this.isDraggingPoint = false;
+                this.isRotatingCamera = false;
+                this.dragStart = { x: 0, y: 0 };
+                this.dragPointStart = { x: 0, y: 0, z: 0 };
+                this.hasDragged = false;
+
+                // 视图相机
+                this.viewCameras = {};
+                this.viewRenderers = {};
+
+                this.init();
+                this.setupEventListeners();
+                this.animate();
+            }
+
+            init() {
+                const width = this.canvas.clientWidth || 800;
+                const height = this.canvas.clientHeight || 600;
+
+                // 创建场景
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0f172a);
+
+                // 创建正交相机（轴测图使用正交相机）
+                const aspect = width / height;
+                const frustumSize = 12;
+                this.camera = new THREE.OrthographicCamera(
+                    frustumSize * aspect / -2,
+                    frustumSize * aspect / 2,
+                    frustumSize / 2,
+                    frustumSize / -2,
+                    0.1,
+                    1000
+                );
+                this.setAxonometricView('iso');
+
+                // 创建渲染器
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    antialias: true
+                });
+                this.renderer.setSize(width, height);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+                // 添加环境光
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                // 添加方向光
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 20, 10);
+                this.scene.add(directionalLight);
+
+                // 射线检测
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+
+                // 订阅状态变化
+                this.store.subscribe(() => this.syncScene());
+
+                // 初始化五视图
+                this.initViewPanels();
+
+                // 窗口大小调整
+                window.addEventListener('resize', () => this.onWindowResize());
+            }
+
+            setAxonometricView(type) {
+                const state = this.store.getState();
+                let position;
+
+                switch (type) {
+                    case 'iso': // 正等轴测
+                        position = new THREE.Vector3(10, 10, 10);
+                        break;
+                    case 'dimetric': // 正二等轴测 - Y轴压缩
+                        position = new THREE.Vector3(14, 10, 7);
+                        break;
+                    case 'cabinet': // 正面斜二测
+                        position = new THREE.Vector3(7, 7, 14);
+                        break;
+                    case 'horizontal': // 水平斜等测
+                        position = new THREE.Vector3(10, 14, 7);
+                        break;
+                    default:
+                        position = new THREE.Vector3(10, 10, 10);
+                }
+
+                this.camera.position.copy(position);
+                this.camera.lookAt(0, 0, 0);
+            }
+
+            initViewPanels() {
+                const frustumSize = 10;
+
+                // 平面图（俯视图，从上往下）
+                this.viewCameras.top = new THREE.OrthographicCamera(
+                    -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
+                );
+                this.viewCameras.top.position.set(0, 30, 0);
+                this.viewCameras.top.lookAt(0, 0, 0);
+
+                // 正立面（从前往后看）
+                this.viewCameras.front = new THREE.OrthographicCamera(
+                    -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
+                );
+                this.viewCameras.front.position.set(0, 0, 30);
+                this.viewCameras.front.lookAt(0, 0, 0);
+
+                // 左侧立面
+                this.viewCameras.left = new THREE.OrthographicCamera(
+                    -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
+                );
+                this.viewCameras.left.position.set(-30, 0, 0);
+                this.viewCameras.left.lookAt(0, 0, 0);
+
+                // 右侧立面
+                this.viewCameras.right = new THREE.OrthographicCamera(
+                    -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
+                );
+                this.viewCameras.right.position.set(30, 0, 0);
+                this.viewCameras.right.lookAt(0, 0, 0);
+
+                // 背立面
+                this.viewCameras.back = new THREE.OrthographicCamera(
+                    -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
+                );
+                this.viewCameras.back.position.set(0, 0, -30);
+                this.viewCameras.back.lookAt(0, 0, 0);
+
+                // 创建视图渲染器
+                const views = ['top', 'front', 'left', 'right', 'back'];
+                views.forEach(view => {
+                    const canvas = document.getElementById('canvas' + view.charAt(0).toUpperCase() + view.slice(1));
+                    if (canvas) {
+                        this.viewRenderers[view] = new THREE.WebGLRenderer({
+                            canvas: canvas,
+                            antialias: true
+                        });
+                        this.viewRenderers[view].setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                        this.viewRenderers[view].setClearColor(0x0f172a);
+                    }
+                });
+
+                this.updateViewPanelSizes();
+            }
+
+            updateViewPanelSizes() {
+                const views = ['top', 'front', 'left', 'right', 'back'];
+                views.forEach(view => {
+                    const canvas = document.getElementById('canvas' + view.charAt(0).toUpperCase() + view.slice(1));
+                    if (canvas && this.viewRenderers[view]) {
+                        const panel = canvas.parentElement;
+                        const width = panel.clientWidth || 150;
+                        const height = panel.clientHeight || 100;
+                        this.viewRenderers[view].setSize(width, height);
+
+                        const aspect = width / height;
+                        const frustumSize = 10;
+                        this.viewCameras[view].left = -frustumSize * aspect;
+                        this.viewCameras[view].right = frustumSize * aspect;
+                        this.viewCameras[view].updateProjectionMatrix();
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                this.canvas.addEventListener('click', (e) => this.onCanvasClick(e), true);
+                this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e), true);
+                this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e), true);
+                this.canvas.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e), true);
+                this.canvas.addEventListener('wheel', (e) => this.onCanvasWheel(e), true);
+                this.canvas.addEventListener('contextmenu', (e) => e.preventDefault(), true);
+            }
+
+            onCanvasMouseDown(event) {
+                const state = this.store.getState();
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                // 右键：相机旋转
+                if (event.button === 2) {
+                    this.isRotatingCamera = true;
+                    this.dragStart = { x: event.clientX, y: event.clientY };
+                    event.preventDefault();
+                    return;
+                }
+
+                // 左键：检查是否点击了点
+                if (event.button === 0) {
+                    const pointMeshes = Array.from(this.pointMeshes.values());
+                    const intersects = this.raycaster.intersectObjects(pointMeshes, false);
+
+                    if (intersects.length > 0) {
+                        const mesh = intersects[0].object;
+                        const pointId = this.findPointIdByMesh(mesh);
+                        if (pointId) {
+                            this.isDraggingPoint = true;
+                            this.dragStart = { x: event.clientX, y: event.clientY };
+                            const point = state.points.find(p => p.id === pointId);
+                            if (point) {
+                                this.dragPointStart = { x: point.x, y: point.y, z: point.z };
+                                this.geometryManager.selectPoint(pointId, event.shiftKey);
+                            }
+                            event.preventDefault();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            onCanvasMouseMove(event) {
+                const state = this.store.getState();
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                // 更新鼠标位置显示
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                const intersectPoint = new THREE.Vector3();
+                this.raycaster.ray.intersectPlane(plane, intersectPoint);
+                if (intersectPoint) {
+                    // 2D模式下Z坐标显示为0
+                    const displayZ = state.coordSystem === '2d' ? 0 : intersectPoint.z;
+                    document.getElementById('mousePosition').textContent =
+                        `${intersectPoint.x.toFixed(1)}, ${intersectPoint.y.toFixed(1)}, ${displayZ.toFixed(1)}`;
+                }
+
+                // 处理相机旋转
+                if (this.isRotatingCamera) {
+                    const deltaX = event.clientX - this.dragStart.x;
+                    const deltaY = event.clientY - this.dragStart.y;
+
+                    const speed = 0.01;
+                    const x = this.camera.position.x;
+                    const z = this.camera.position.z;
+
+                    // 水平旋转
+                    const cos = Math.cos(deltaX * speed);
+                    const sin = Math.sin(deltaX * speed);
+                    this.camera.position.x = x * cos - z * sin;
+                    this.camera.position.z = x * sin + z * cos;
+
+                    // 垂直移动
+                    this.camera.position.y += deltaY * speed * 5;
+
+                    this.camera.lookAt(0, 0, 0);
+                    this.dragStart = { x: event.clientX, y: event.clientY };
+                    return;
+                }
+
+                // 处理点拖拽
+                if (this.isDraggingPoint && state.selectedPointIds.length > 0) {
+                    const deltaX = (event.clientX - this.dragStart.x) * 0.03;
+                    const deltaY = -(event.clientY - this.dragStart.y) * 0.03;
+
+                    state.selectedPointIds.forEach(pointId => {
+                        const point = state.points.find(p => p.id === pointId);
+                        if (point) {
+                            const newX = this.dragPointStart.x + deltaX;
+                            const newZ = this.dragPointStart.z + deltaY;
+                            // 2D模式下Z坐标保持为0
+                            const finalZ = state.coordSystem === '2d' ? 0 : newZ;
+                            this.geometryManager.updatePoint(pointId, {
+                                x: newX,
+                                z: finalZ
+                            });
+                        }
+                    });
+
+                    this.hasDragged = true;
+                    return;
+                }
+
+                // 更新光标
+                const pointMeshes = Array.from(this.pointMeshes.values());
+                const intersects = this.raycaster.intersectObjects(pointMeshes, false);
+                this.canvas.style.cursor = intersects.length > 0 ? 'move' : 'crosshair';
+            }
+
+            onCanvasMouseUp(event) {
+                if (this.isDraggingPoint) {
+                    this.hasDragged = true;
+                }
+                this.isDraggingPoint = false;
+                this.isRotatingCamera = false;
+            }
+
+            onCanvasClick(event) {
+                if (this.hasDragged) {
+                    this.hasDragged = false;
+                    return;
+                }
+
+                const state = this.store.getState();
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+
+                // 检查是否点击了现有点
+                const pointMeshes = Array.from(this.pointMeshes.values());
+                const intersects = this.raycaster.intersectObjects(pointMeshes, false);
+
+                if (intersects.length > 0) {
+                    const mesh = intersects[0].object;
+                    const pointId = this.findPointIdByMesh(mesh);
+                    if (pointId) {
+                        this.geometryManager.selectPoint(pointId, event.shiftKey);
+                        return;
+                    }
+                }
+
+                // 在点击位置创建新点
+                const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                const intersectPoint = new THREE.Vector3();
+                this.raycaster.ray.intersectPlane(plane, intersectPoint);
+
+                if (intersectPoint) {
+                    this.store.pushUndoStack();
+                    // 2D模式下Z坐标强制为0
+                    const z = state.coordSystem === '2d' ? 0 : intersectPoint.z;
+                    const newPoint = this.geometryManager.createPoint(
+                        intersectPoint.x,
+                        intersectPoint.y,
+                        z
+                    );
+                    this.geometryManager.selectPoint(newPoint.id);
+                }
+            }
+
+            onCanvasWheel(event) {
+                event.preventDefault();
+                const zoomSpeed = 0.001;
+                const zoomFactor = 1 + event.deltaY * zoomSpeed;
+
+                this.camera.zoom = Math.max(0.1, Math.min(5, this.camera.zoom / zoomFactor));
+                this.camera.updateProjectionMatrix();
+            }
+
+            findPointIdByMesh(mesh) {
+                for (let [pointId, m] of this.pointMeshes.entries()) {
+                    if (m === mesh) return pointId;
+                }
+                return null;
+            }
+
+            syncScene() {
+                const state = this.store.getState();
+
+                // 同步点
+                state.points.forEach(point => {
+                    if (!this.pointMeshes.has(point.id)) {
+                        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+                        const material = new THREE.MeshBasicMaterial({ color: point.color });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        this.scene.add(mesh);
+                        this.pointMeshes.set(point.id, mesh);
+                    }
+                    const mesh = this.pointMeshes.get(point.id);
+                    mesh.position.set(point.x, point.y, point.z);
+
+                    // 更新选中状态 - 放大并变色
+                    if (state.selectedPointIds.includes(point.id)) {
+                        mesh.material.color.setHex(0xef4444);
+                        mesh.scale.setScalar(1.5); // 放大选中的点
+                    } else {
+                        mesh.material.color.setHex(point.color);
+                        mesh.scale.setScalar(1);
+                    }
+                });
+
+                // 移除已删除的点
+                for (let [pointId, mesh] of this.pointMeshes.entries()) {
+                    if (!state.points.find(p => p.id === pointId)) {
+                        this.scene.remove(mesh);
+                        mesh.geometry.dispose();
+                        mesh.material.dispose();
+                        this.pointMeshes.delete(pointId);
+                    }
+                }
+
+                // 同步线
+                state.lines.forEach(line => {
+                    const startPoint = state.points.find(p => p.id === line.startId);
+                    const endPoint = state.points.find(p => p.id === line.endId);
+
+                    if (startPoint && endPoint) {
+                        if (!this.lineMeshes.has(line.id)) {
+                            const points = [
+                                new THREE.Vector3(startPoint.x, startPoint.y, startPoint.z),
+                                new THREE.Vector3(endPoint.x, endPoint.y, endPoint.z)
+                            ];
+                            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                            const material = new THREE.LineBasicMaterial({ color: line.color, linewidth: 2 });
+                            const mesh = new THREE.Line(geometry, material);
+                            this.scene.add(mesh);
+                            this.lineMeshes.set(line.id, mesh);
+                        } else {
+                            const mesh = this.lineMeshes.get(line.id);
+                            const positions = mesh.geometry.attributes.position.array;
+                            positions[0] = startPoint.x;
+                            positions[1] = startPoint.y;
+                            positions[2] = startPoint.z;
+                            positions[3] = endPoint.x;
+                            positions[4] = endPoint.y;
+                            positions[5] = endPoint.z;
+                            mesh.geometry.attributes.position.needsUpdate = true;
+                        }
+                    }
+                });
+
+                // 移除已删除的线
+                for (let [lineId, mesh] of this.lineMeshes.entries()) {
+                    if (!state.lines.find(l => l.id === lineId)) {
+                        this.scene.remove(mesh);
+                        mesh.geometry.dispose();
+                        mesh.material.dispose();
+                        this.lineMeshes.delete(lineId);
+                    }
+                }
+
+                // 同步立体
+                state.solids.forEach(solid => {
+                    if (!this.solidMeshes.has(solid.id)) {
+                        let geometry;
+                        switch (solid.type) {
+                            case 'cube':
+                                geometry = new THREE.BoxGeometry(solid.scale.x, solid.scale.y, solid.scale.z);
+                                break;
+                            case 'cylinder':
+                                geometry = new THREE.CylinderGeometry(solid.scale.x / 2, solid.scale.x / 2, solid.scale.y, 32);
+                                break;
+                            case 'cone':
+                                geometry = new THREE.ConeGeometry(solid.scale.x / 2, solid.scale.y, 32);
+                                break;
+                            case 'sphere':
+                                geometry = new THREE.SphereGeometry(solid.scale.x / 2, 32, 32);
+                                break;
+                            default:
+                                geometry = new THREE.BoxGeometry(solid.scale.x, solid.scale.y, solid.scale.z);
+                        }
+                        const material = new THREE.MeshPhongMaterial({
+                            color: solid.color,
+                            transparent: true,
+                            opacity: 0.7,
+                            side: THREE.DoubleSide
+                        });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        this.scene.add(mesh);
+                        this.solidMeshes.set(solid.id, mesh);
+                    }
+                    const mesh = this.solidMeshes.get(solid.id);
+                    mesh.position.set(solid.position.x, solid.position.y, solid.position.z);
+                });
+
+                // 移除已删除的立体
+                for (let [solidId, mesh] of this.solidMeshes.entries()) {
+                    if (!state.solids.find(s => s.id === solidId)) {
+                        this.scene.remove(mesh);
+                        mesh.geometry.dispose();
+                        mesh.material.dispose();
+                        this.solidMeshes.delete(solidId);
+                    }
+                }
+
+                // 同步切割面
+                this.syncCutPlane();
+
+                // 同步网格
+                if (state.showGrid && !this.gridHelper) {
+                    this.gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+                    this.scene.add(this.gridHelper);
+                } else if (!state.showGrid && this.gridHelper) {
+                    this.scene.remove(this.gridHelper);
+                    this.gridHelper = null;
+                }
+
+                // 同步坐标轴 - 使用正确的颜色
+                if (state.showAxes && !this.axesHelper) {
+                    this.axesHelper = new THREE.AxesHelper(10);
+                    // 设置正确的坐标轴颜色：X-红, Y-绿, Z-蓝
+                    const colors = this.axesHelper.geometry.attributes.color;
+                    // X轴 - 红色
+                    colors.setXYZ(0, 1, 0, 0);
+                    colors.setXYZ(1, 1, 0, 0);
+                    // Y轴 - 绿色
+                    colors.setXYZ(2, 0, 1, 0);
+                    colors.setXYZ(3, 0, 1, 0);
+                    // Z轴 - 蓝色
+                    colors.setXYZ(4, 0, 0, 1);
+                    colors.setXYZ(5, 0, 0, 1);
+                    this.scene.add(this.axesHelper);
+                } else if (!state.showAxes && this.axesHelper) {
+                    this.scene.remove(this.axesHelper);
+                    this.axesHelper = null;
+                }
+
+                // 线框模式
+                this.solidMeshes.forEach(mesh => {
+                    mesh.material.wireframe = state.wireframeMode;
+                });
+
+                // 更新UI
+                this.updateUI();
+            }
+
+            syncCutPlane() {
+                const state = this.store.getState();
+
+                // 移除旧切割面
+                if (this.cutPlaneMesh) {
+                    this.scene.remove(this.cutPlaneMesh);
+                    this.cutPlaneMesh = null;
+                }
+
+                // 创建新切割面
+                if (state.cutPlaneType) {
+                    const planeSize = 15;
+                    const geometry = new THREE.PlaneGeometry(planeSize, planeSize);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: 0xf59e0b,
+                        transparent: true,
+                        opacity: 0.3,
+                        side: THREE.DoubleSide
+                    });
+                    this.cutPlaneMesh = new THREE.Mesh(geometry, material);
+
+                    switch (state.cutPlaneType) {
+                        case 'horizontal': // 水平面（平行于XY）
+                            this.cutPlaneMesh.rotation.x = Math.PI / 2;
+                            this.cutPlaneMesh.position.y = state.cutPosition;
+                            break;
+                        case 'frontal': // 正垂面（垂直于V面）
+                            this.cutPlaneMesh.rotation.y = Math.PI / 4;
+                            this.cutPlaneMesh.position.z = state.cutPosition;
+                            break;
+                        case 'profile': // 铅垂面（垂直于H面）
+                            this.cutPlaneMesh.rotation.z = Math.PI / 4;
+                            this.cutPlaneMesh.position.x = state.cutPosition;
+                            break;
+                    }
+
+                    this.scene.add(this.cutPlaneMesh);
+                }
+            }
+
+            updateUI() {
+                const state = this.store.getState();
+
+                // 更新选中点坐标编辑框
+                const editCoordX = document.getElementById('editCoordX');
+                const editCoordY = document.getElementById('editCoordY');
+                const editCoordZ = document.getElementById('editCoordZ');
+                const deleteBtn = document.getElementById('deleteSelectedPointBtn');
+
+                if (state.selectedPointIds.length > 0) {
+                    const point = state.points.find(p => p.id === state.selectedPointIds[0]);
+                    if (point) {
+                        editCoordX.value = point.x.toFixed(1);
+                        editCoordY.value = point.y.toFixed(1);
+                        editCoordZ.value = point.z.toFixed(1);
+                        editCoordX.disabled = false;
+                        editCoordY.disabled = false;
+                        // 2D模式下Z坐标编辑框禁用
+                        editCoordZ.disabled = state.coordSystem === '2d';
+                        deleteBtn.disabled = false;
+                    }
+                } else {
+                    editCoordX.value = '';
+                    editCoordY.value = '';
+                    editCoordZ.value = '';
+                    editCoordX.disabled = true;
+                    editCoordY.disabled = true;
+                    editCoordZ.disabled = true;
+                    deleteBtn.disabled = true;
+                }
+
+                // 更新点列表
+                const pointList = document.getElementById('pointList');
+                if (state.points.length === 0) {
+                    pointList.innerHTML = '<div style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px;">点击画布创建点</div>';
+                } else {
+                    pointList.innerHTML = state.points.map(point => {
+                        const isSelected = state.selectedPointIds.includes(point.id);
+                        return `
+                            <div class="point-item ${isSelected ? 'selected' : ''}" data-id="${point.id}">
+                                <span>📍 P${state.points.indexOf(point) + 1}: (${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})</span>
+                                <span class="delete" onclick="event.stopPropagation(); deletePoint('${point.id}')">✕</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    // 绑定点击事件
+                    pointList.querySelectorAll('.point-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (!e.target.classList.contains('delete')) {
+                                this.geometryManager.selectPoint(item.dataset.id, e.shiftKey);
+                            }
+                        });
+                    });
+                }
+
+                // 更新统计
+                document.getElementById('pointCount').textContent = state.points.length;
+                document.getElementById('lineCount').textContent = state.lines.length;
+                document.getElementById('solidCount').textContent = state.solids.length;
+                document.getElementById('selectedCount').textContent = state.selectedPointIds.length;
+
+                // 更新状态显示
+                const axoLabels = {
+                    'iso': '正等轴测',
+                    'dimetric': '正二等轴测',
+                    'cabinet': '正面斜二测',
+                    'horizontal': '水平斜等测'
+                };
+                document.getElementById('axoType').textContent = axoLabels[state.axoType] || '正等轴测';
+                document.getElementById('coordSystem').textContent = state.coordSystem === '2d' ? '2D (XY)' : '3D (XYZ)';
+
+                const cutPlaneLabels = {
+                    'horizontal': '水平面',
+                    'frontal': '正垂面',
+                    'profile': '铅垂面'
+                };
+                document.getElementById('cutPlane').textContent = state.cutPlaneType ?
+                    `${cutPlaneLabels[state.cutPlaneType]} (${state.cutPosition.toFixed(1)})` : '无';
+
+                // 更新切割步骤引导状态
+                this.updateCutSteps(state);
+            }
+
+            updateCutSteps(state) {
+                // 步骤1：选择立体
+                const step1 = document.getElementById('cutStep1');
+                if (state.solids.length > 0) {
+                    step1.classList.remove('active');
+                    step1.classList.add('completed');
+                } else {
+                    step1.classList.remove('completed');
+                    step1.classList.add('active');
+                }
+
+                // 步骤2：选择切割面
+                const step2 = document.getElementById('cutStep2');
+                if (state.cutPlaneType) {
+                    step2.classList.remove('active');
+                    step2.classList.add('completed');
+                } else if (state.solids.length > 0) {
+                    step2.classList.remove('completed');
+                    step2.classList.add('active');
+                } else {
+                    step2.classList.remove('active', 'completed');
+                }
+
+                // 步骤3：调整切割位置
+                const step3 = document.getElementById('cutStep3');
+                if (state.cutPlaneType && state.cutPosition !== 0) {
+                    step3.classList.remove('active');
+                    step3.classList.add('completed');
+                } else if (state.cutPlaneType) {
+                    step3.classList.remove('completed');
+                    step3.classList.add('active');
+                } else {
+                    step3.classList.remove('active', 'completed');
+                }
+            }
+
+            onWindowResize() {
+                const width = this.canvas.clientWidth;
+                const height = this.canvas.clientHeight;
+                const aspect = width / height;
+                const frustumSize = 12;
+
+                this.camera.left = frustumSize * aspect / -2;
+                this.camera.right = frustumSize * aspect / 2;
+                this.camera.top = frustumSize / 2;
+                this.camera.bottom = frustumSize / -2;
+                this.camera.updateProjectionMatrix();
+
+                this.renderer.setSize(width, height);
+                this.updateViewPanelSizes();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.renderer.render(this.scene, this.camera);
+
+                // 渲染五视图
+                Object.keys(this.viewRenderers).forEach(view => {
+                    if (this.viewRenderers[view] && this.viewCameras[view]) {
+                        this.viewRenderers[view].render(this.scene, this.viewCameras[view]);
+                    }
+                });
+            }
+        }
+
+        // ============================================
+        // 初始化应用
+        // ============================================
+        const store = new Store();
+        const geometryManager = new GeometryManager(store);
+        const renderer3d = new Renderer3D('canvas3d', store, geometryManager);
+
+        // 全局函数供HTML调用
+        function deletePoint(pointId) {
+            store.pushUndoStack();
+            geometryManager.deletePoint(pointId);
+        }
+
+        // ============================================
+        // UI事件绑定
+        // ============================================
+
+        // 坐标系切换
+        document.querySelectorAll('.axis-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const coordSystem = btn.dataset.axis === '2d' ? '2d' : '3d';
+                store.setState({ coordSystem: coordSystem });
+
+                // 隐藏/显示Z坐标输入框（左侧）
+                document.getElementById('coordZContainer').style.display =
+                    coordSystem === '2d' ? 'none' : 'block';
+
+                // 隐藏/显示Z坐标编辑框（右侧）
+                document.getElementById('editCoordZContainer').style.display =
+                    coordSystem === '2d' ? 'none' : 'block';
+
+                // 如果是2D模式，将所有现有点的Z坐标重置为0
+                if (coordSystem === '2d') {
+                    const state = store.getState();
+                    state.points.forEach(point => {
+                        if (point.z !== 0) {
+                            geometryManager.updatePoint(point.id, { z: 0 });
+                        }
+                    });
+                }
+            });
+        });
+
+        // 创建点按钮
+        document.getElementById('createPointBtn').addEventListener('click', () => {
+            store.pushUndoStack();
+            const x = parseFloat(document.getElementById('coordX').value) || 0;
+            const y = parseFloat(document.getElementById('coordY').value) || 0;
+            const z = parseFloat(document.getElementById('coordZ').value) || 0;
+            const point = geometryManager.createPoint(x, y, z);
+            geometryManager.selectPoint(point.id);
+        });
+
+        // 创建连线按钮
+        document.getElementById('createLineBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (state.selectedPointIds.length >= 2) {
+                store.pushUndoStack();
+                geometryManager.createLine(
+                    state.selectedPointIds[0],
+                    state.selectedPointIds[1]
+                );
+            } else {
+                alert('请先选中两个点（按住Shift多选）');
+            }
+        });
+
+        // 轴测图切换
+        document.querySelectorAll('.axo-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.axo-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const axoType = btn.dataset.axo;
+                store.setState({ axoType: axoType });
+                renderer3d.setAxonometricView(axoType);
+            });
+        });
+
+        // 立体创建
+        document.querySelectorAll('.solid-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const solidType = btn.dataset.solid;
+                store.pushUndoStack();
+                geometryManager.createSolid(solidType);
+            });
+        });
+
+        // 切割面选择
+        document.querySelectorAll('.cut-plane-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const isActive = btn.classList.contains('active');
+                document.querySelectorAll('.cut-plane-btn').forEach(b => b.classList.remove('active'));
+
+                if (!isActive) {
+                    btn.classList.add('active');
+                    const planeType = btn.dataset.plane;
+                    store.setState({
+                        cutPlaneType: planeType,
+                        cutPosition: 0
+                    });
+                    document.getElementById('cutPositionSlider').value = 0;
+                    document.getElementById('cutPositionValue').textContent = '0';
+                } else {
+                    store.setState({
+                        cutPlaneType: null,
+                        cutPosition: 0
+                    });
+                }
+            });
+        });
+
+        // 切割位置滑块
+        document.getElementById('cutPositionSlider').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            store.setState({ cutPosition: value });
+            document.getElementById('cutPositionValue').textContent = value.toFixed(1);
+        });
+
+        // 重置切割
+        document.getElementById('resetCutBtn').addEventListener('click', () => {
+            document.querySelectorAll('.cut-plane-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
+            store.setState({
+                cutPlaneType: null,
+                cutPosition: 0
+            });
+            document.getElementById('cutPositionSlider').value = 0;
+            document.getElementById('cutPositionValue').textContent = '0';
+        });
+
+        // 确认切割（显示提示）
+        document.getElementById('confirmCutBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.cutPlaneType) {
+                alert('请先选择切割面类型');
+                return;
+            }
+            if (state.solids.length === 0) {
+                alert('请先创建立体图形');
+                return;
+            }
+            const cutPlaneLabels = {
+                'horizontal': '水平面',
+                'frontal': '正垂面',
+                'profile': '铅垂面'
+            };
+            alert(`✂️ 已确认切割！\n切割面类型: ${cutPlaneLabels[state.cutPlaneType]}\n切割位置: ${state.cutPosition.toFixed(1)}`);
+        });
+
+        // 显示网格切换
+        document.getElementById('toggleGridBtn').addEventListener('click', function() {
+            this.classList.toggle('active');
+            store.setState({ showGrid: this.classList.contains('active') });
+        });
+
+        // 显示坐标轴切换
+        document.getElementById('toggleAxesBtn').addEventListener('click', function() {
+            this.classList.toggle('active');
+            store.setState({ showAxes: this.classList.contains('active') });
+        });
+
+        // 线框模式切换
+        document.getElementById('toggleWireframeBtn').addEventListener('click', function() {
+            this.classList.toggle('active');
+            store.setState({ wireframeMode: this.classList.contains('active') });
+        });
+
+        // 撤销
+        document.getElementById('undoBtn').addEventListener('click', () => {
+            store.undo();
+        });
+
+        // 重做
+        document.getElementById('redoBtn').addEventListener('click', () => {
+            store.redo();
+        });
+
+        // 重置
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('确定要重置所有内容吗？')) {
+                store.pushUndoStack();
+                geometryManager.resetAll();
+                document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.cut-plane-btn').forEach(b => b.classList.remove('active'));
+            }
+        });
+
+        // 保存
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const state = store.getState();
+            const data = {
+                points: state.points,
+                lines: state.lines,
+                solids: state.solids
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '画法几何数据_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // ============================================
+        // 坐标点编辑功能
+        // ============================================
+
+        // X坐标编辑
+        document.getElementById('editCoordX').addEventListener('change', (e) => {
+            const state = store.getState();
+            if (state.selectedPointIds.length > 0) {
+                store.pushUndoStack();
+                const newX = parseFloat(e.target.value) || 0;
+                geometryManager.updatePoint(state.selectedPointIds[0], { x: newX });
+            }
+        });
+
+        // Y坐标编辑
+        document.getElementById('editCoordY').addEventListener('change', (e) => {
+            const state = store.getState();
+            if (state.selectedPointIds.length > 0) {
+                store.pushUndoStack();
+                const newY = parseFloat(e.target.value) || 0;
+                geometryManager.updatePoint(state.selectedPointIds[0], { y: newY });
+            }
+        });
+
+        // Z坐标编辑
+        document.getElementById('editCoordZ').addEventListener('change', (e) => {
+            const state = store.getState();
+            if (state.selectedPointIds.length > 0 && state.coordSystem !== '2d') {
+                store.pushUndoStack();
+                const newZ = parseFloat(e.target.value) || 0;
+                geometryManager.updatePoint(state.selectedPointIds[0], { z: newZ });
+            }
+        });
+
+        // 删除选中点按钮
+        document.getElementById('deleteSelectedPointBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (state.selectedPointIds.length > 0) {
+                store.pushUndoStack();
+                geometryManager.deletePoint(state.selectedPointIds[0]);
+            }
+        });
+
+        // ============================================
+        // 键盘快捷键支持
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Z 撤销
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                store.undo();
+            }
+            // Ctrl+Y 重做
+            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                e.preventDefault();
+                store.redo();
+            }
+            // Delete 删除选中点
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const state = store.getState();
+                if (state.selectedPointIds.length > 0) {
+                    e.preventDefault();
+                    store.pushUndoStack();
+                    geometryManager.deletePoint(state.selectedPointIds[0]);
+                }
+            }
+        });
+
+        // 初始化同步
+        store.notify();
+
+        // 延迟调整视图大小
+        setTimeout(() => {
+            renderer3d.onWindowResize();
+        }, 100);
+    </script>
+</body>
+</html>
