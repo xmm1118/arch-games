@@ -502,6 +502,136 @@
             padding: 2px 6px;
         }
 
+        /* 体块列表样式 */
+        .solid-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .solid-item:hover {
+            background: var(--border-color);
+        }
+
+        .solid-item.selected {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .solid-item .solid-icon {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .solid-item .solid-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .solid-item .solid-name input {
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-size: 12px;
+            width: 100%;
+            outline: none;
+        }
+
+        .solid-item .solid-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .solid-item .action-btn {
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+        }
+
+        .solid-item .action-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .solid-item .action-btn.eye {
+            color: var(--accent-success);
+        }
+
+        .solid-item .action-btn.delete {
+            color: var(--accent-danger);
+        }
+
+        /* 顶点/边/面选择工具栏 */
+        .selection-mode-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .selection-mode-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .selection-mode-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .selection-mode-btn:hover {
+            background: var(--border-color);
+        }
+
+        .selection-mode-btn.active:hover {
+            background: var(--accent-primary);
+        }
+
+        /* 选中元素信息面板 */
+        .selection-info {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .selection-info h4 {
+            font-size: 12px;
+            color: var(--accent-secondary);
+            margin-bottom: 8px;
+        }
+
+        .selection-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+
+        .selection-info-item .label {
+            color: var(--text-secondary);
+        }
+
+        .selection-info-item .value {
+            font-family: 'Courier New', monospace;
+        }
+
         .solid-select {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -958,6 +1088,38 @@
                 <button class="tool-btn" id="createLineBtn">📏 创建连线</button>
             </div>
 
+            <!-- 体块创建工具 -->
+            <div class="tool-section">
+                <h3>📦 体块创建工具</h3>
+                <p style="color: var(--text-secondary); font-size: 11px; margin-bottom: 10px;">
+                    点击下方按钮后，在视图中拖拽创建体块
+                </p>
+                <div class="solid-create-buttons">
+                    <button class="tool-btn" data-create-solid="cube">
+                        ⬜ 长方体
+                    </button>
+                    <button class="tool-btn" data-create-solid="cylinder">
+                        🔘 圆柱
+                    </button>
+                    <button class="tool-btn" data-create-solid="cone">
+                        🔺 圆锥
+                    </button>
+                    <button class="tool-btn" data-create-solid="sphere">
+                        ⚪ 球体
+                    </button>
+                </div>
+            </div>
+
+            <!-- 体块列表管理 -->
+            <div class="tool-section">
+                <h3>📋 体块列表</h3>
+                <div class="solid-list" id="solidList">
+                    <div style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px;">
+                        尚未创建体块
+                    </div>
+                </div>
+            </div>
+
             <div class="tool-section">
                 <h3>🎨 轴测图类型</h3>
                 <div class="axo-select">
@@ -1093,6 +1255,9 @@
                 <div class="guide-panel" id="guidePanel">
                     <h4>💡 操作指南</h4>
                     <ul>
+                        <li>📦 点击左侧"体块创建工具"后在画布拖拽创建体块</li>
+                        <li>🔴 选择"顶点模式"后可点击体块顶点进行编辑</li>
+                        <li>📍 可在右侧面板修改选中顶点的X/Y/Z坐标</li>
                         <li>🖱️ 左键点击画布创建点</li>
                         <li>✋ 拖拽移动已选中的点</li>
                         <li>🔄 右键拖拽旋转视图</li>
@@ -1129,9 +1294,115 @@
 
         <!-- 右侧信息面板 -->
         <aside class="info-panel">
+            <!-- 选择模式工具栏 -->
             <div class="info-card">
-                <h4>📍 选中点坐标编辑</h4>
+                <h4>🎯 选择模式</h4>
+                <div class="selection-mode-bar">
+                    <button class="selection-mode-btn active" data-mode="solid">📦 体块</button>
+                    <button class="selection-mode-btn" data-mode="vertex">🔴 顶点</button>
+                    <button class="selection-mode-btn" data-mode="edge">📏 边</button>
+                    <button class="selection-mode-btn" data-mode="face">🔲 面</button>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 11px; margin-top: 8px;">
+                    选择模式后点击3D视图中的元素
+                </p>
+            </div>
+
+            <!-- 选中顶点坐标编辑 -->
+            <div class="info-card" id="vertexEditCard" style="display: none;">
+                <h4>🔴 顶点坐标编辑</h4>
+                <div class="selection-info" id="vertexInfo">
+                    <div class="selection-info-item">
+                        <span class="label">顶点索引:</span>
+                        <span class="value" id="vertexIndex">-</span>
+                    </div>
+                </div>
                 <div class="coord-edit-group" id="coordEditGroup">
+                    <div class="coord-edit-item x">
+                        <label>X (红)</label>
+                        <input type="number" id="editVertexX" step="0.1" disabled>
+                    </div>
+                    <div class="coord-edit-item y">
+                        <label>Y (绿)</label>
+                        <input type="number" id="editVertexY" step="0.1" disabled>
+                    </div>
+                    <div class="coord-edit-item z">
+                        <label>Z (蓝)</label>
+                        <input type="number" id="editVertexZ" step="0.1" disabled>
+                    </div>
+                </div>
+                <button class="tool-btn" id="applyVertexBtn" disabled>✓ 应用修改</button>
+            </div>
+
+            <!-- 选中边信息 -->
+            <div class="info-card" id="edgeInfoCard" style="display: none;">
+                <h4>📏 边线信息</h4>
+                <div class="selection-info">
+                    <div class="selection-info-item">
+                        <span class="label">边索引:</span>
+                        <span class="value" id="edgeIndex">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">边长:</span>
+                        <span class="value" id="edgeLength">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">起点坐标:</span>
+                        <span class="value" id="edgeStart">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">终点坐标:</span>
+                        <span class="value" id="edgeEnd">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 选中面信息 -->
+            <div class="info-card" id="faceInfoCard" style="display: none;">
+                <h4>🔲 面信息</h4>
+                <div class="selection-info">
+                    <div class="selection-info-item">
+                        <span class="label">面索引:</span>
+                        <span class="value" id="faceIndex">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">面积:</span>
+                        <span class="value" id="faceArea">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">法向量:</span>
+                        <span class="value" id="faceNormal">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 选中体块信息 -->
+            <div class="info-card" id="solidInfoCard">
+                <h4>📦 选中体块信息</h4>
+                <div class="selection-info" id="solidInfo">
+                    <div class="selection-info-item">
+                        <span class="label">名称:</span>
+                        <span class="value" id="solidInfoName">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">类型:</span>
+                        <span class="value" id="solidInfoType">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">位置:</span>
+                        <span class="value" id="solidInfoPosition">-</span>
+                    </div>
+                    <div class="selection-info-item">
+                        <span class="label">顶点数:</span>
+                        <span class="value" id="solidInfoVertices">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 原有选中点坐标编辑 (保留用于独立点) -->
+            <div class="info-card">
+                <h4>📍 选中独立点坐标编辑</h4>
+                <div class="coord-edit-group" id="pointCoordEditGroup">
                     <div class="coord-edit-item x">
                         <label>X (红)</label>
                         <input type="number" id="editCoordX" step="0.1" disabled>
@@ -1213,6 +1484,13 @@
                     solids: [],                   // 立体集合
                     selectedPointIds: [],         // 选中的点ID
                     selectedSolidId: null,        // 选中的立体ID
+                    selectedVertex: null,         // 选中的顶点 {solidId, vertexIndex, position}
+                    selectedEdge: null,           // 选中的边 {solidId, edgeIndex, start, end, length}
+                    selectedFace: null,           // 选中的面 {solidId, faceIndex, normal, area}
+                    selectionMode: 'solid',       // 选择模式: solid, vertex, edge, face
+                    createSolidMode: null,        // 正在创建的体块类型: cube, cylinder, cone, sphere
+                    isDraggingCreate: false,      // 是否正在拖拽创建
+                    dragStartPosition: null,      // 拖拽创建的起点
                     activeTool: 'point',          // 当前工具: point, line, solid
                     coordSystem: '3d',            // 坐标系: 2d, 3d
                     axoType: 'iso',               // 轴测图类型
@@ -1254,6 +1532,11 @@
                     points: this.state.points,
                     lines: this.state.lines,
                     solids: this.state.solids,
+                    selectedPointIds: this.state.selectedPointIds,
+                    selectedSolidId: this.state.selectedSolidId,
+                    selectedVertex: this.state.selectedVertex,
+                    selectedEdge: this.state.selectedEdge,
+                    selectedFace: this.state.selectedFace,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
                     cutPlaneType: this.state.cutPlaneType,
@@ -1275,6 +1558,11 @@
                     points: this.state.points,
                     lines: this.state.lines,
                     solids: this.state.solids,
+                    selectedPointIds: this.state.selectedPointIds,
+                    selectedSolidId: this.state.selectedSolidId,
+                    selectedVertex: this.state.selectedVertex,
+                    selectedEdge: this.state.selectedEdge,
+                    selectedFace: this.state.selectedFace,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
                     cutPlaneType: this.state.cutPlaneType,
@@ -1294,6 +1582,11 @@
                     points: this.state.points,
                     lines: this.state.lines,
                     solids: this.state.solids,
+                    selectedPointIds: this.state.selectedPointIds,
+                    selectedSolidId: this.state.selectedSolidId,
+                    selectedVertex: this.state.selectedVertex,
+                    selectedEdge: this.state.selectedEdge,
+                    selectedFace: this.state.selectedFace,
                     cutPlane: this.state.cutPlane,
                     cutPosition: this.state.cutPosition,
                     cutPlaneType: this.state.cutPlaneType,
@@ -1417,19 +1710,90 @@
                 this.store.setState({ lines: newLines });
             }
 
-            createSolid(type) {
+            createSolid(type, position = { x: 0, y: 2, z: 0 }, scale = { x: 4, y: 4, z: 4 }) {
                 const state = this.store.getState();
+                const solidIndex = state.solids.filter(s => s.type === type).length;
+                const typeNames = {
+                    cube: '长方体',
+                    cylinder: '圆柱',
+                    cone: '圆锥',
+                    sphere: '球体'
+                };
                 const solid = {
                     id: this.generateSolidId(),
                     type: type, // cube, cylinder, cone, sphere
-                    position: { x: 0, y: 2, z: 0 },
-                    scale: { x: 4, y: 4, z: 4 },
+                    name: `${typeNames[type]}${solidIndex + 1}`,
+                    position: { ...position },
+                    scale: { ...scale },
+                    rotation: { x: 0, y: 0, z: 0 },
                     color: 0x06b6d4,
-                    isCut: false
+                    visible: true,
+                    isCut: false,
+                    vertices: null, // 缓存顶点数据
+                    faces: null     // 缓存面数据
                 };
                 const newSolids = [...state.solids, solid];
                 this.store.setState({ solids: newSolids });
                 return solid;
+            }
+
+            // 选择体块
+            selectSolid(solidId) {
+                const state = this.store.getState();
+                this.store.setState({
+                    selectedSolidId: solidId,
+                    selectedVertex: null,
+                    selectedEdge: null,
+                    selectedFace: null
+                });
+            }
+
+            // 重命名体块
+            renameSolid(solidId, newName) {
+                const state = this.store.getState();
+                const newSolids = state.solids.map(s => {
+                    if (s.id === solidId) {
+                        return { ...s, name: newName };
+                    }
+                    return s;
+                });
+                this.store.setState({ solids: newSolids });
+            }
+
+            // 切换体块可见性
+            toggleSolidVisibility(solidId) {
+                const state = this.store.getState();
+                const newSolids = state.solids.map(s => {
+                    if (s.id === solidId) {
+                        return { ...s, visible: !s.visible };
+                    }
+                    return s;
+                });
+                this.store.setState({ solids: newSolids });
+            }
+
+            // 更新体块位置
+            updateSolidPosition(solidId, position) {
+                const state = this.store.getState();
+                const newSolids = state.solids.map(s => {
+                    if (s.id === solidId) {
+                        return { ...s, position: { ...s.position, ...position } };
+                    }
+                    return s;
+                });
+                this.store.setState({ solids: newSolids });
+            }
+
+            // 更新体块缩放
+            updateSolidScale(solidId, scale) {
+                const state = this.store.getState();
+                const newSolids = state.solids.map(s => {
+                    if (s.id === solidId) {
+                        return { ...s, scale: { ...s.scale, ...scale } };
+                    }
+                    return s;
+                });
+                this.store.setState({ solids: newSolids });
             }
 
             deleteSolid(solidId) {
@@ -1489,6 +1853,18 @@
                 this.dragStart = { x: 0, y: 0 };
                 this.dragPointStart = { x: 0, y: 0, z: 0 };
                 this.hasDragged = false;
+
+                // 体块创建拖拽相关
+                this.isDraggingCreateSolid = false;
+                this.createSolidStartPos = null;
+                this.createSolidPreviewMesh = null;
+
+                // 顶点/边/面相关
+                this.vertexMarkers = new Map(); // 顶点标记小球
+                this.edgeHighlights = new Map(); // 边高亮
+                this.faceHighlights = new Map(); // 面高亮
+                this.selectedVertexMarker = null; // 选中的顶点标记
+                this.raycasterVertices = null; // 顶点射线检测器
 
                 // 视图相机
                 this.viewCameras = {};
@@ -1676,11 +2052,96 @@
                     return;
                 }
 
-                // 左键：检查是否点击了点
+                // 左键
                 if (event.button === 0) {
+                    // 1. 体块拖拽创建模式
+                    if (state.createSolidMode) {
+                        this.isDraggingCreateSolid = true;
+                        this.dragStart = { x: event.clientX, y: event.clientY };
+
+                        // 计算拖拽起点在XY平面上的位置
+                        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+                        const intersectPoint = new THREE.Vector3();
+                        this.raycaster.ray.intersectPlane(plane, intersectPoint);
+
+                        if (intersectPoint) {
+                            this.createSolidStartPos = intersectPoint.clone();
+                            this.createSolidPreviewMesh = this.createSolidPreview(state.createSolidMode);
+                            this.scene.add(this.createSolidPreviewMesh);
+                        }
+                        event.preventDefault();
+                        return;
+                    }
+
+                    // 2. 顶点/边/面选择模式
+                    if ((state.selectionMode === 'vertex' || state.selectionMode === 'edge' || state.selectionMode === 'face') && state.selectedSolidId) {
+                        const mesh = this.solidMeshes.get(state.selectedSolidId);
+                        if (mesh) {
+                            const intersects = this.raycaster.intersectObject(mesh, false);
+                            if (intersects.length > 0) {
+                                const intersect = intersects[0];
+
+                                if (state.selectionMode === 'vertex') {
+                                    // 找到最近的顶点
+                                    const positionAttribute = mesh.geometry.attributes.position;
+                                    const vertex = new THREE.Vector3();
+                                    let closestIndex = -1;
+                                    let closestDistance = Infinity;
+
+                                    for (let i = 0; i < positionAttribute.count; i++) {
+                                        vertex.fromBufferAttribute(positionAttribute, i);
+                                        vertex.applyMatrix4(mesh.matrixWorld);
+                                        const distance = vertex.distanceTo(intersect.point);
+                                        if (distance < closestDistance && distance < 0.5) { // 阈值内
+                                            closestDistance = distance;
+                                            closestIndex = i;
+                                        }
+                                    }
+
+                                    if (closestIndex !== -1) {
+                                        this.selectVertex(state.selectedSolidId, closestIndex);
+                                        event.preventDefault();
+                                        return;
+                                    }
+                                } else if (state.selectionMode === 'edge') {
+                                    // 选择边
+                                    const faceIndex = intersect.faceIndex;
+                                    if (faceIndex !== undefined) {
+                                        this.selectEdge(state.selectedSolidId, faceIndex, intersect);
+                                        event.preventDefault();
+                                        return;
+                                    }
+                                } else if (state.selectionMode === 'face') {
+                                    // 选择面
+                                    const faceIndex = intersect.faceIndex;
+                                    if (faceIndex !== undefined) {
+                                        this.selectFace(state.selectedSolidId, faceIndex, intersect);
+                                        event.preventDefault();
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    } else if (state.selectionMode === 'solid') {
+                        // 体块选择模式
+                        const solidMeshes = Array.from(this.solidMeshes.values());
+                        const intersects = this.raycaster.intersectObjects(solidMeshes, false);
+                        if (intersects.length > 0) {
+                            const mesh = intersects[0].object;
+                            const solidId = this.findSolidIdByMesh(mesh);
+                            if (solidId) {
+                                this.geometryManager.selectSolid(solidId);
+                                // 高亮显示选中体块
+                                this.highlightSolid(solidId);
+                                event.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+
+                    // 3. 检查是否点击了独立点（原有功能）
                     const pointMeshes = Array.from(this.pointMeshes.values());
                     const intersects = this.raycaster.intersectObjects(pointMeshes, false);
-
                     if (intersects.length > 0) {
                         const mesh = intersects[0].object;
                         const pointId = this.findPointIdByMesh(mesh);
@@ -1699,6 +2160,382 @@
                 }
             }
 
+            // 创建体块预览
+            createSolidPreview(type) {
+                let geometry;
+                switch (type) {
+                    case 'cube':
+                        geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                        break;
+                    case 'cylinder':
+                        geometry = new THREE.CylinderGeometry(0.05, 0.05, 0.1, 32);
+                        break;
+                    case 'cone':
+                        geometry = new THREE.ConeGeometry(0.05, 0.1, 32);
+                        break;
+                    case 'sphere':
+                        geometry = new THREE.SphereGeometry(0.05, 32, 32);
+                        break;
+                    default:
+                        geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                }
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0x3b82f6,
+                    transparent: true,
+                    opacity: 0.5,
+                    wireframe: true
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(this.createSolidStartPos);
+                return mesh;
+            }
+
+            // 查找体块ID
+            findSolidIdByMesh(mesh) {
+                for (let [solidId, m] of this.solidMeshes.entries()) {
+                    if (m === mesh) return solidId;
+                }
+                return null;
+            }
+
+            // 高亮显示选中体块
+            highlightSolid(solidId) {
+                // 重置所有体块颜色
+                this.solidMeshes.forEach((mesh, id) => {
+                    mesh.material.emissive.setHex(0x000000);
+                });
+                // 高亮选中体块
+                if (solidId && this.solidMeshes.has(solidId)) {
+                    const mesh = this.solidMeshes.get(solidId);
+                    mesh.material.emissive.setHex(0x1a1a2e);
+                }
+            }
+
+            // 选择顶点
+            selectVertex(solidId, vertexIndex) {
+                const state = this.store.getState();
+                const solid = state.solids.find(s => s.id === solidId);
+                if (!solid) return;
+
+                // 获取顶点位置
+                const mesh = this.solidMeshes.get(solidId);
+                if (!mesh) return;
+
+                const positionAttribute = mesh.geometry.attributes.position;
+                if (vertexIndex >= positionAttribute.count) return;
+
+                const vertex = new THREE.Vector3();
+                vertex.fromBufferAttribute(positionAttribute, vertexIndex);
+
+                // 应用体块变换
+                vertex.applyMatrix4(mesh.matrix);
+
+                this.store.setState({
+                    selectedVertex: {
+                        solidId: solidId,
+                        vertexIndex: vertexIndex,
+                        position: { x: vertex.x, y: vertex.y, z: vertex.z }
+                    },
+                    selectedEdge: null,
+                    selectedFace: null
+                });
+
+                // 更新UI
+                this.updateVertexEditUI();
+            }
+
+            // 更新顶点编辑UI
+            updateVertexEditUI() {
+                const state = this.store.getState();
+                const vertexEditCard = document.getElementById('vertexEditCard');
+                const solidInfoCard = document.getElementById('solidInfoCard');
+                const edgeInfoCard = document.getElementById('edgeInfoCard');
+                const faceInfoCard = document.getElementById('faceInfoCard');
+
+                if (state.selectedVertex) {
+                    vertexEditCard.style.display = 'block';
+                    solidInfoCard.style.display = 'none';
+                    edgeInfoCard.style.display = 'none';
+                    faceInfoCard.style.display = 'none';
+
+                    document.getElementById('vertexIndex').textContent = state.selectedVertex.vertexIndex;
+                    document.getElementById('editVertexX').value = state.selectedVertex.position.x.toFixed(2);
+                    document.getElementById('editVertexY').value = state.selectedVertex.position.y.toFixed(2);
+                    document.getElementById('editVertexZ').value = state.selectedVertex.position.z.toFixed(2);
+                    document.getElementById('editVertexX').disabled = false;
+                    document.getElementById('editVertexY').disabled = false;
+                    document.getElementById('editVertexZ').disabled = false;
+                    document.getElementById('applyVertexBtn').disabled = false;
+                } else if (state.selectedEdge) {
+                    vertexEditCard.style.display = 'none';
+                    solidInfoCard.style.display = 'none';
+                    edgeInfoCard.style.display = 'block';
+                    faceInfoCard.style.display = 'none';
+
+                    document.getElementById('edgeIndex').textContent = state.selectedEdge.edgeIndex;
+                    document.getElementById('edgeLength').textContent = state.selectedEdge.length.toFixed(3);
+                    document.getElementById('edgeStart').textContent =
+                        `(${state.selectedEdge.start.x.toFixed(2)}, ${state.selectedEdge.start.y.toFixed(2)}, ${state.selectedEdge.start.z.toFixed(2)})`;
+                    document.getElementById('edgeEnd').textContent =
+                        `(${state.selectedEdge.end.x.toFixed(2)}, ${state.selectedEdge.end.y.toFixed(2)}, ${state.selectedEdge.end.z.toFixed(2)})`;
+                } else if (state.selectedFace) {
+                    vertexEditCard.style.display = 'none';
+                    solidInfoCard.style.display = 'none';
+                    edgeInfoCard.style.display = 'none';
+                    faceInfoCard.style.display = 'block';
+
+                    document.getElementById('faceIndex').textContent = state.selectedFace.faceIndex;
+                    document.getElementById('faceArea').textContent = state.selectedFace.area.toFixed(3);
+                    document.getElementById('faceNormal').textContent =
+                        `(${state.selectedFace.normal.x.toFixed(2)}, ${state.selectedFace.normal.y.toFixed(2)}, ${state.selectedFace.normal.z.toFixed(2)})`;
+                } else {
+                    vertexEditCard.style.display = 'none';
+                    edgeInfoCard.style.display = 'none';
+                    faceInfoCard.style.display = 'none';
+                    solidInfoCard.style.display = 'block';
+                }
+            }
+
+            // 选择边
+            selectEdge(solidId, faceIndex, intersect) {
+                const mesh = this.solidMeshes.get(solidId);
+                if (!mesh) return;
+
+                const positions = mesh.geometry.attributes.position;
+                const indices = mesh.geometry.index;
+
+                // 获取面的三个顶点索引
+                const a = indices.getX(faceIndex * 3);
+                const b = indices.getX(faceIndex * 3 + 1);
+                const c = indices.getX(faceIndex * 3 + 2);
+
+                // 获取三个顶点位置
+                const vA = new THREE.Vector3().fromBufferAttribute(positions, a).applyMatrix4(mesh.matrixWorld);
+                const vB = new THREE.Vector3().fromBufferAttribute(positions, b).applyMatrix4(mesh.matrixWorld);
+                const vC = new THREE.Vector3().fromBufferAttribute(positions, c).applyMatrix4(mesh.matrixWorld);
+
+                // 找出交点最近的边
+                const edges = [
+                    { start: vA, end: vB, index: 0 },
+                    { start: vB, end: vC, index: 1 },
+                    { start: vC, end: vA, index: 2 }
+                ];
+
+                let closestEdge = null;
+                let closestDist = Infinity;
+
+                edges.forEach(edge => {
+                    const dist = this.pointToLineDistance(intersect.point, edge.start, edge.end);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestEdge = edge;
+                    }
+                });
+
+                if (closestEdge) {
+                    const length = closestEdge.start.distanceTo(closestEdge.end);
+                    this.store.setState({
+                        selectedEdge: {
+                            solidId: solidId,
+                            edgeIndex: faceIndex * 3 + closestEdge.index,
+                            start: { x: closestEdge.start.x, y: closestEdge.start.y, z: closestEdge.start.z },
+                            end: { x: closestEdge.end.x, y: closestEdge.end.y, z: closestEdge.end.z },
+                            length: length
+                        },
+                        selectedVertex: null,
+                        selectedFace: null
+                    });
+                    this.updateVertexEditUI();
+                }
+            }
+
+            // 计算点到线段的距离
+            pointToLineDistance(point, lineStart, lineEnd) {
+                const lineDir = new THREE.Vector3().subVectors(lineEnd, lineStart).normalize();
+                const v = new THREE.Vector3().subVectors(point, lineStart);
+                const d = v.dot(lineDir);
+
+                if (d <= 0) {
+                    return point.distanceTo(lineStart);
+                }
+                if (d >= lineStart.distanceTo(lineEnd)) {
+                    return point.distanceTo(lineEnd);
+                }
+
+                const projection = new THREE.Vector3().addVectors(
+                    lineStart,
+                    lineDir.multiplyScalar(d)
+                );
+                return point.distanceTo(projection);
+            }
+
+            // 选择面
+            selectFace(solidId, faceIndex, intersect) {
+                const mesh = this.solidMeshes.get(solidId);
+                if (!mesh) return;
+
+                const positions = mesh.geometry.attributes.position;
+                const indices = mesh.geometry.index;
+
+                // 获取面的三个顶点
+                const a = indices.getX(faceIndex * 3);
+                const b = indices.getX(faceIndex * 3 + 1);
+                const c = indices.getX(faceIndex * 3 + 2);
+
+                const vA = new THREE.Vector3().fromBufferAttribute(positions, a).applyMatrix4(mesh.matrixWorld);
+                const vB = new THREE.Vector3().fromBufferAttribute(positions, b).applyMatrix4(mesh.matrixWorld);
+                const vC = new THREE.Vector3().fromBufferAttribute(positions, c).applyMatrix4(mesh.matrixWorld);
+
+                // 计算面面积
+                const area = this.calculateTriangleArea(vA, vB, vC);
+
+                // 获取法向量
+                const normal = intersect.face.normal.clone().transformDirection(mesh.matrixWorld);
+
+                this.store.setState({
+                    selectedFace: {
+                        solidId: solidId,
+                        faceIndex: faceIndex,
+                        area: area,
+                        normal: { x: normal.x, y: normal.y, z: normal.z }
+                    },
+                    selectedVertex: null,
+                    selectedEdge: null
+                });
+                this.updateVertexEditUI();
+            }
+
+            // 计算三角形面积
+            calculateTriangleArea(vA, vB, vC) {
+                const vAB = new THREE.Vector3().subVectors(vB, vA);
+                const vAC = new THREE.Vector3().subVectors(vC, vA);
+                const cross = new THREE.Vector3().crossVectors(vAB, vAC);
+                return cross.length() * 0.5;
+            }
+
+            // 更新顶点标记
+            updateVertexMarkers() {
+                const state = this.store.getState();
+
+                // 清除旧的顶点标记
+                this.vertexMarkers.forEach(marker => {
+                    this.scene.remove(marker);
+                    marker.geometry.dispose();
+                    marker.material.dispose();
+                });
+                this.vertexMarkers.clear();
+
+                // 如果选中了体块且在顶点选择模式，显示顶点标记
+                if (state.selectedSolidId && (state.selectionMode === 'vertex' || state.selectionMode === 'edge')) {
+                    const mesh = this.solidMeshes.get(state.selectedSolidId);
+                    if (!mesh) return;
+
+                    const positionAttribute = mesh.geometry.attributes.position;
+                    const vertexCount = positionAttribute.count;
+
+                    for (let i = 0; i < vertexCount; i++) {
+                        const vertex = new THREE.Vector3();
+                        vertex.fromBufferAttribute(positionAttribute, i);
+                        vertex.applyMatrix4(mesh.matrix);
+
+                        // 创建顶点标记小球
+                        const markerGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+                        const isSelected = state.selectedVertex && state.selectedVertex.vertexIndex === i;
+                        const markerMaterial = new THREE.MeshBasicMaterial({
+                            color: isSelected ? 0xef4444 : 0x3b82f6,
+                            transparent: true,
+                            opacity: isSelected ? 1 : 0.8
+                        });
+                        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                        marker.position.copy(vertex);
+                        marker.userData.vertexIndex = i;
+                        marker.scale.setScalar(isSelected ? 1.5 : 1); // 选中的顶点放大
+
+                        this.scene.add(marker);
+                        this.vertexMarkers.set(i, marker);
+                    }
+                }
+
+                // 更新体块信息面板
+                this.updateSolidInfoUI();
+            }
+
+            // 更新体块信息UI
+            updateSolidInfoUI() {
+                const state = this.store.getState();
+                if (state.selectedSolidId) {
+                    const solid = state.solids.find(s => s.id === state.selectedSolidId);
+                    if (solid) {
+                        const typeNames = {
+                            cube: '长方体',
+                            cylinder: '圆柱',
+                            cone: '圆锥',
+                            sphere: '球体'
+                        };
+                        document.getElementById('solidInfoName').textContent = solid.name;
+                        document.getElementById('solidInfoType').textContent = typeNames[solid.type] || solid.type;
+                        document.getElementById('solidInfoPosition').textContent =
+                            `(${solid.position.x.toFixed(2)}, ${solid.position.y.toFixed(2)}, ${solid.position.z.toFixed(2)})`;
+
+                        const mesh = this.solidMeshes.get(state.selectedSolidId);
+                        const vertexCount = mesh ? mesh.geometry.attributes.position.count : 0;
+                        document.getElementById('solidInfoVertices').textContent = vertexCount;
+                    }
+                } else {
+                    document.getElementById('solidInfoName').textContent = '-';
+                    document.getElementById('solidInfoType').textContent = '-';
+                    document.getElementById('solidInfoPosition').textContent = '-';
+                    document.getElementById('solidInfoVertices').textContent = '-';
+                }
+            }
+
+            // 更新体块列表UI
+            updateSolidListUI() {
+                const state = this.store.getState();
+                const solidList = document.getElementById('solidList');
+
+                if (state.solids.length === 0) {
+                    solidList.innerHTML = '<div style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px;">尚未创建体块</div>';
+                    return;
+                }
+
+                const typeIcons = {
+                    cube: '⬜',
+                    cylinder: '🔘',
+                    cone: '🔺',
+                    sphere: '⚪'
+                };
+
+                solidList.innerHTML = state.solids.map(solid => {
+                    const isSelected = solid.id === state.selectedSolidId;
+                    return `
+                        <div class="solid-item ${isSelected ? 'selected' : ''}" data-id="${solid.id}">
+                            <span class="solid-icon">${typeIcons[solid.type] || '📦'}</span>
+                            <div class="solid-name">
+                                <input type="text" value="${solid.name}" 
+                                    onchange="event.stopPropagation(); renameSolid('${solid.id}', this.value)">
+                            </div>
+                            <div class="solid-actions">
+                                <span class="action-btn eye" onclick="event.stopPropagation(); toggleSolidVisibility('${solid.id}')">
+                                    ${solid.visible ? '👁️' : '👁️‍🗨️'}
+                                </span>
+                                <span class="action-btn delete" onclick="event.stopPropagation(); deleteSolid('${solid.id}')">
+                                    🗑️
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // 绑定点击事件
+                solidList.querySelectorAll('.solid-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const solidId = item.dataset.id;
+                        this.geometryManager.selectSolid(solidId);
+                    });
+                });
+            }
+
             onCanvasMouseMove(event) {
                 const state = this.store.getState();
                 const rect = this.canvas.getBoundingClientRect();
@@ -1715,6 +2552,44 @@
                     const displayZ = state.coordSystem === '2d' ? 0 : intersectPoint.z;
                     document.getElementById('mousePosition').textContent =
                         `${intersectPoint.x.toFixed(1)}, ${intersectPoint.y.toFixed(1)}, ${displayZ.toFixed(1)}`;
+                }
+
+                // 处理体块创建拖拽
+                if (this.isDraggingCreateSolid && this.createSolidPreviewMesh && this.createSolidStartPos) {
+                    const currentIntersectPoint = new THREE.Vector3();
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    this.raycaster.ray.intersectPlane(plane, currentIntersectPoint);
+
+                    if (currentIntersectPoint) {
+                        // 计算拖拽的宽高深
+                        const width = Math.abs(currentIntersectPoint.x - this.createSolidStartPos.x) || 0.1;
+                        const depth = Math.abs(currentIntersectPoint.z - this.createSolidStartPos.z) || 0.1;
+                        const height = Math.abs(currentIntersectPoint.y - this.createSolidStartPos.y) || 0.1;
+
+                        // 计算中心点
+                        const centerX = (currentIntersectPoint.x + this.createSolidStartPos.x) / 2;
+                        const centerY = (currentIntersectPoint.y + this.createSolidStartPos.y) / 2;
+                        const centerZ = (currentIntersectPoint.z + this.createSolidStartPos.z) / 2;
+
+                        // 更新预览体块
+                        if (state.createSolidMode === 'cube') {
+                            this.createSolidPreviewMesh.scale.set(width, height, depth);
+                            this.createSolidPreviewMesh.position.set(centerX, centerY, centerZ);
+                        } else if (state.createSolidMode === 'sphere') {
+                            const radius = Math.max(width, height, depth);
+                            this.createSolidPreviewMesh.scale.setScalar(radius);
+                            this.createSolidPreviewMesh.position.set(centerX, centerY, centerZ);
+                        } else {
+                            // 圆柱和圆锥
+                            const radius = Math.max(width, depth) / 2;
+                            this.createSolidPreviewMesh.scale.set(radius * 2, height, radius * 2);
+                            this.createSolidPreviewMesh.position.set(centerX, centerY, centerZ);
+                        }
+
+                        // 存储当前尺寸用于最终创建
+                        this.currentDragSize = { width, height, depth };
+                    }
+                    return;
                 }
 
                 // 处理相机旋转
@@ -1764,17 +2639,66 @@
                 }
 
                 // 更新光标
-                const pointMeshes = Array.from(this.pointMeshes.values());
-                const intersects = this.raycaster.intersectObjects(pointMeshes, false);
-                this.canvas.style.cursor = intersects.length > 0 ? 'move' : 'crosshair';
+                if (state.createSolidMode) {
+                    this.canvas.style.cursor = 'crosshair';
+                } else {
+                    const pointMeshes = Array.from(this.pointMeshes.values());
+                    const intersects = this.raycaster.intersectObjects(pointMeshes, false);
+                    this.canvas.style.cursor = intersects.length > 0 ? 'move' : 'pointer';
+                }
             }
 
             onCanvasMouseUp(event) {
+                const state = this.store.getState();
+
+                // 体块创建拖拽结束
+                if (this.isDraggingCreateSolid && this.createSolidStartPos && state.createSolidMode) {
+                    const size = this.currentDragSize || { width: 2, height: 2, depth: 2 };
+
+                    // 计算最终位置和大小
+                    const width = Math.max(size.width, 0.5);
+                    const height = Math.max(size.height, 0.5);
+                    const depth = Math.max(size.depth, 0.5);
+
+                    // 创建真实体块
+                    this.store.pushUndoStack();
+                    const newSolid = this.geometryManager.createSolid(
+                        state.createSolidMode,
+                        { x: this.createSolidPreviewMesh.position.x, y: this.createSolidPreviewMesh.position.y, z: this.createSolidPreviewMesh.position.z },
+                        { x: width, y: height, z: depth }
+                    );
+
+                    // 选中新创建的体块
+                    this.geometryManager.selectSolid(newSolid.id);
+
+                    // 清理预览
+                    if (this.createSolidPreviewMesh) {
+                        this.scene.remove(this.createSolidPreviewMesh);
+                        this.createSolidPreviewMesh.geometry.dispose();
+                        this.createSolidPreviewMesh.material.dispose();
+                        this.createSolidPreviewMesh = null;
+                    }
+
+                    // 重置创建模式
+                    this.store.setState({ createSolidMode: null });
+                    this.resetCreateSolidButtons();
+
+                    this.isDraggingCreateSolid = false;
+                    this.createSolidStartPos = null;
+                }
+
                 if (this.isDraggingPoint) {
                     this.hasDragged = true;
                 }
                 this.isDraggingPoint = false;
                 this.isRotatingCamera = false;
+            }
+
+            // 重置体块创建按钮状态
+            resetCreateSolidButtons() {
+                document.querySelectorAll('[data-create-solid]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
             }
 
             onCanvasClick(event) {
@@ -1945,7 +2869,23 @@
                     }
                     const mesh = this.solidMeshes.get(solid.id);
                     mesh.position.set(solid.position.x, solid.position.y, solid.position.z);
+                    mesh.scale.set(solid.scale.x / 4, solid.scale.y / 4, solid.scale.z / 4);
+                    mesh.rotation.set(solid.rotation.x, solid.rotation.y, solid.rotation.z);
+                    mesh.visible = solid.visible;
+
+                    // 更新选中高亮
+                    if (solid.id === state.selectedSolidId) {
+                        mesh.material.emissive.setHex(0x1a1a2e);
+                    } else {
+                        mesh.material.emissive.setHex(0x000000);
+                    }
                 });
+
+                // 更新选中体块的顶点标记
+                this.updateVertexMarkers();
+
+                // 更新体块列表UI
+                this.updateSolidListUI();
 
                 // 移除已删除的立体
                 for (let [solidId, mesh] of this.solidMeshes.entries()) {
@@ -2607,6 +3547,25 @@
             geometryManager.deletePoint(pointId);
         }
 
+        // 重命名体块
+        function renameSolid(solidId, newName) {
+            store.pushUndoStack();
+            geometryManager.renameSolid(solidId, newName);
+        }
+
+        // 切换体块可见性
+        function toggleSolidVisibility(solidId) {
+            geometryManager.toggleSolidVisibility(solidId);
+        }
+
+        // 删除体块
+        function deleteSolid(solidId) {
+            if (confirm('确定要删除这个体块吗？')) {
+                store.pushUndoStack();
+                geometryManager.deleteSolid(solidId);
+            }
+        }
+
         // ============================================
         // UI事件绑定
         // ============================================
@@ -2674,7 +3633,7 @@
             });
         });
 
-        // 立体创建
+        // 立体创建（原有快速创建按钮）
         document.querySelectorAll('.solid-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.solid-btn').forEach(b => b.classList.remove('active'));
@@ -2683,6 +3642,89 @@
                 store.pushUndoStack();
                 geometryManager.createSolid(solidType);
             });
+        });
+
+        // 体块拖拽创建按钮
+        document.querySelectorAll('[data-create-solid]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const solidType = btn.dataset.createSolid;
+                const isActive = btn.classList.contains('active');
+
+                // 先重置所有创建按钮状态
+                document.querySelectorAll('[data-create-solid]').forEach(b => {
+                    b.classList.remove('active');
+                });
+
+                if (!isActive) {
+                    btn.classList.add('active');
+                    store.setState({ createSolidMode: solidType });
+                } else {
+                    store.setState({ createSolidMode: null });
+                }
+            });
+        });
+
+        // 选择模式切换
+        document.querySelectorAll('.selection-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.selection-mode-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                const mode = btn.dataset.mode;
+                store.setState({
+                    selectionMode: mode,
+                    selectedVertex: null,
+                    selectedEdge: null,
+                    selectedFace: null
+                });
+
+                // 更新UI面板显示
+                document.getElementById('vertexEditCard').style.display = 'none';
+                document.getElementById('edgeInfoCard').style.display = 'none';
+                document.getElementById('faceInfoCard').style.display = 'none';
+                document.getElementById('solidInfoCard').style.display = 'block';
+            });
+        });
+
+        // 顶点坐标编辑应用按钮
+        document.getElementById('applyVertexBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.selectedVertex) return;
+
+            const newX = parseFloat(document.getElementById('editVertexX').value) || 0;
+            const newY = parseFloat(document.getElementById('editVertexY').value) || 0;
+            const newZ = parseFloat(document.getElementById('editVertexZ').value) || 0;
+
+            // 更新顶点位置
+            const mesh = renderer3d.solidMeshes.get(state.selectedVertex.solidId);
+            if (mesh) {
+                store.pushUndoStack();
+
+                // 先获取世界坐标到局部坐标的逆变换
+                const worldToLocal = new THREE.Matrix4().copy(mesh.matrixWorld).invert();
+                const localPos = new THREE.Vector3(newX, newY, newZ).applyMatrix4(worldToLocal);
+
+                const positionAttribute = mesh.geometry.attributes.position;
+                positionAttribute.setXYZ(state.selectedVertex.vertexIndex, localPos.x, localPos.y, localPos.z);
+                positionAttribute.needsUpdate = true;
+
+                // 更新几何体
+                mesh.geometry.computeVertexNormals();
+                mesh.geometry.computeBoundingBox();
+                mesh.geometry.computeBoundingSphere();
+
+                // 更新顶点标记
+                renderer3d.updateVertexMarkers();
+
+                // 更新状态
+                store.setState({
+                    selectedVertex: {
+                        ...state.selectedVertex,
+                        position: { x: newX, y: newY, z: newZ }
+                    }
+                });
+            }
         });
 
         // 切割面选择
