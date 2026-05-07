@@ -958,78 +958,209 @@
             background: var(--accent-primary);
         }
 
-        /* 响应式设计 - 移动端 */
+        /* 响应式设计 - 移动端竖屏 */
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto auto;
+                grid-template-rows: auto 1fr auto;
                 gap: 6px;
                 padding: 6px;
+                height: 100dvh;
             }
 
             .header {
-                padding: 10px 12px;
+                padding: 8px 10px;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 6px;
             }
 
             .header h1 {
-                font-size: 16px;
+                font-size: 15px;
             }
 
-            .sidebar {
-                grid-row: 3;
-                display: flex;
-                overflow-x: auto;
-                padding: 10px;
-                gap: 10px;
+            .header .controls {
+                gap: 6px;
             }
 
-            .tool-section {
-                flex-shrink: 0;
-                width: 180px;
-                margin-bottom: 0;
-                padding-bottom: 0;
-                border-bottom: none;
-                border-right: 1px solid var(--border-color);
-                padding-right: 10px;
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 36px;
             }
 
-            .tool-section:last-child {
-                border-right: none;
+            /* 3D画布区域 - 占主要空间 */
+            .canvas-area {
+                grid-row: 2;
+                min-height: 0;
+                height: 100%;
             }
 
-            .info-panel {
-                grid-row: 4;
-                display: flex;
-                overflow-x: auto;
-                padding: 10px;
-                gap: 10px;
+            .main-canvas-container {
+                flex: 1;
+                min-height: 200px;
             }
 
-            .info-card {
-                flex-shrink: 0;
-                width: 200px;
-                margin-bottom: 0;
+            .canvas-overlay {
+                top: 8px;
+                left: 8px;
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+
+            .guide-panel {
+                top: 8px;
+                right: 8px;
+                padding: 8px 10px;
+                font-size: 10px;
+                max-width: 180px;
             }
 
             .view-panels {
                 grid-template-columns: repeat(3, 1fr);
-                height: 100px;
+                height: 70px;
+                min-height: 60px;
             }
 
             .view-panel:nth-child(n+4) {
                 display: none;
             }
 
-            .btn {
-                padding: 10px 14px;
-                font-size: 14px;
+            .view-label {
+                font-size: 9px;
+                padding: 2px 4px;
+            }
+
+            /* 底部面板区域 - 合并左右面板为标签页 */
+            .sidebar, .info-panel {
+                grid-row: 3;
+                max-height: 30vh;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 10px;
+            }
+
+            /* 移动端标签页导航 */
+            .mobile-tabs {
+                display: flex;
+                gap: 4px;
+                margin-bottom: 10px;
+                position: sticky;
+                top: 0;
+                background: var(--bg-secondary);
+                padding: 4px;
+                z-index: 10;
+            }
+
+            .mobile-tab-btn {
+                flex: 1;
+                padding: 8px 10px;
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                color: var(--text-secondary);
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .mobile-tab-btn.active {
+                background: var(--accent-primary);
+                border-color: var(--accent-primary);
+                color: white;
+            }
+
+            .sidebar .tool-section,
+            .info-panel .info-card {
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--border-color);
+                border-right: none;
+                padding-right: 0;
+                width: auto;
+                flex-shrink: 1;
+            }
+
+            .sidebar .tool-section:last-child,
+            .info-panel .info-card:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .sidebar h3,
+            .info-panel h4 {
+                font-size: 13px;
+                margin-bottom: 8px;
             }
 
             .tool-btn {
-                padding: 12px 14px;
-                font-size: 14px;
+                padding: 10px 12px;
+                font-size: 13px;
+                min-height: 44px;
+            }
+
+            .coord-input,
+            .coord-edit-item input,
+            .coord-edit-group input,
+            .solid-btn,
+            .cut-plane-btn,
+            .axo-btn,
+            .hatch-density-btn,
+            .selection-mode-btn,
+            .axis-btn {
+                min-height: 44px;
+                font-size: 13px;
+            }
+
+            .coord-label,
+            .coord-edit-item label,
+            .slider-container label {
+                font-size: 11px;
+            }
+
+            .status-bar {
+                display: none;
+            }
+
+            /* 优化滑动体验 */
+            .sidebar, .info-panel {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* 移动端横屏 */
+        @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+            .container {
+                grid-template-columns: 200px 1fr 220px;
+                height: 100dvh;
+            }
+
+            .view-panels {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .view-panel:nth-child(5) {
+                display: none;
+            }
+
+            .sidebar, .info-panel {
+                max-height: 100%;
+                overflow-y: auto;
+            }
+        }
+
+        /* 平板横屏优化 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                grid-template-columns: 200px 1fr 220px;
+            }
+
+            .view-panels {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .view-panel:nth-child(5) {
+                display: none;
             }
         }
 
@@ -4093,6 +4224,79 @@
         setTimeout(() => {
             renderer3d.onWindowResize();
         }, 100);
+
+        // ============================================
+        // 移动端标签页功能
+        // ============================================
+        function initMobileTabs() {
+            const isMobile = window.innerWidth <= 768;
+            if (!isMobile) return;
+
+            const sidebar = document.querySelector('.sidebar');
+            const infoPanel = document.querySelector('.info-panel');
+
+            // 为左侧工具栏添加标签页
+            if (sidebar && !sidebar.querySelector('.mobile-tabs')) {
+                const tabsHtml = `
+                    <div class="mobile-tabs">
+                        <button class="mobile-tab-btn active" data-target="sidebar">🎨 工具</button>
+                        <button class="mobile-tab-btn" data-target="info">📋 属性</button>
+                    </div>
+                `;
+                sidebar.insertAdjacentHTML('afterbegin', tabsHtml);
+            }
+
+            // 默认隐藏右侧面板，只显示左侧工具栏
+            if (infoPanel) {
+                infoPanel.style.display = 'none';
+            }
+
+            // 绑定标签页切换事件
+            document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 切换激活状态
+                    document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const target = btn.dataset.target;
+                    if (target === 'sidebar') {
+                        sidebar.style.display = 'block';
+                        if (infoPanel) infoPanel.style.display = 'none';
+                    } else if (target === 'info') {
+                        sidebar.style.display = 'none';
+                        if (infoPanel) infoPanel.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        // 初始化移动端标签页
+        initMobileTabs();
+
+        // 监听窗口大小变化，在移动端和桌面端之间切换时重新初始化
+        let previousWidth = window.innerWidth;
+        window.addEventListener('resize', () => {
+            const currentWidth = window.innerWidth;
+            // 只有在跨768px边界时才重新初始化
+            if ((previousWidth <= 768 && currentWidth > 768) || 
+                (previousWidth > 768 && currentWidth <= 768)) {
+                // 刷新页面重新布局，或重新初始化标签页
+                const sidebar = document.querySelector('.sidebar');
+                const infoPanel = document.querySelector('.info-panel');
+                
+                if (currentWidth <= 768) {
+                    // 切换到移动端
+                    setTimeout(initMobileTabs, 100);
+                } else {
+                    // 切换到桌面端，恢复原始样式
+                    const tabs = sidebar.querySelector('.mobile-tabs');
+                    if (tabs) tabs.remove();
+                    sidebar.style.display = '';
+                    if (infoPanel) infoPanel.style.display = '';
+                }
+            }
+            previousWidth = currentWidth;
+        });
     </script>
 </body>
 </html>
