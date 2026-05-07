@@ -1649,9 +1649,10 @@
                     points: [],                   // 点集合
                     lines: [],                    // 线集合
                     solids: [],                   // 立体集合
-                    selectedPointIds: [],         // 选中的点ID
+                    selectedPointIds: [],         // 选中的点ID（独立点）
+                    selectedVertices: [],         // 选中的体块顶点数组 [{solidId, vertexIndex, position}]
                     selectedSolidId: null,        // 选中的立体ID
-                    selectedVertex: null,         // 选中的顶点 {solidId, vertexIndex, position}
+                    selectedVertex: null,         // 选中的顶点 {solidId, vertexIndex, position} - 保留用于兼容
                     selectedEdge: null,           // 选中的边 {solidId, edgeIndex, start, end, length}
                     selectedFace: null,           // 选中的面 {solidId, faceIndex, normal, area}
                     selectionMode: 'solid',       // 选择模式: solid, vertex, edge, face
@@ -1848,8 +1849,91 @@
                         this.store.setState({ selectedPointIds: newSelectedIds });
                     }
                 } else {
-                    this.store.setState({ selectedPointIds: [pointId] });
+                    // 选中独立点时，清空体块顶点选择
+                    this.store.setState({ 
+                        selectedPointIds: [pointId],
+                        selectedVertices: []
+                    });
                 }
+            }
+
+            // 选中体块顶点（支持多选）
+            selectVertexPoint(solidId, vertexIndex, position, addToSelection = false) {
+                const state = this.store.getState();
+                const newVertex = { solidId, vertexIndex, position };
+                
+                if (addToSelection) {
+                    // 检查是否已选中
+                    const existingIndex = state.selectedVertices.findIndex(
+                        v => v.solidId === solidId && v.vertexIndex === vertexIndex
+                    );
+                    
+                    if (existingIndex !== -1) {
+                        // 取消选中
+                        const newSelected = state.selectedVertices.filter(
+                            (_, i) => i !== existingIndex
+                        );
+                        this.store.setState({ selectedVertices: newSelected });
+                    } else {
+                        // 添加选中
+                        const newSelected = [...state.selectedVertices, newVertex];
+                        this.store.setState({ selectedVertices: newSelected });
+                    }
+                } else {
+                    // 选中顶点时，清空独立点选择
+                    this.store.setState({ 
+                        selectedVertices: [newVertex],
+                        selectedPointIds: []
+                    });
+                }
+                
+                // 保持向后兼容 - 设置第一个选中的顶点为 selectedVertex
+                const currentState = this.store.getState();
+                if (currentState.selectedVertices.length > 0) {
+                    this.store.setState({ selectedVertex: currentState.selectedVertices[0] });
+                } else {
+                    this.store.setState({ selectedVertex: null });
+                }
+            }
+
+            // 清空所有点选择
+            clearAllPointSelection() {
+                this.store.setState({
+                    selectedPointIds: [],
+                    selectedVertices: [],
+                    selectedVertex: null
+                });
+            }
+
+            // 获取所有选中的点（包括独立点和体块顶点）
+            getAllSelectedPoints() {
+                const state = this.store.getState();
+                const allPoints = [];
+                
+                // 添加独立点
+                state.selectedPointIds.forEach(pointId => {
+                    const point = state.points.find(p => p.id === pointId);
+                    if (point) {
+                        allPoints.push({
+                            type: 'independent',
+                            id: pointId,
+                            position: { x: point.x, y: point.y, z: point.z }
+                        });
+                    }
+                });
+                
+                // 添加体块顶点
+                state.selectedVertices.forEach(vertex => {
+                    allPoints.push({
+                        type: 'vertex',
+                        id: `${vertex.solidId}_v${vertex.vertexIndex}`,
+                        solidId: vertex.solidId,
+                        vertexIndex: vertex.vertexIndex,
+                        position: vertex.position
+                    });
+                });
+                
+                return allPoints;
             }
 
             createLine(startPointId, endPointId) {
@@ -1863,6 +1947,31 @@
                     id: this.generateLineId(),
                     startId: startPointId,
                     endId: endPointId,
+                    color: 0x22c55e
+                };
+
+                const newLines = [...state.lines, line];
+                this.store.setState({ lines: newLines });
+                return line;
+            }
+
+            // 创建任意两点之间的连线（支持独立点和体块顶点的混合）
+            createLineBetweenPoints(point1, point2) {
+                const state = this.store.getState();
+
+                // 如果两个都是独立点，使用原有方法
+                if (point1.type === 'independent' && point2.type === 'independent') {
+                    return this.createLine(point1.id, point2.id);
+                }
+
+                // 对于包含体块顶点的连线，使用坐标直接创建
+                const line = {
+                    id: this.generateLineId(),
+                    startId: point1.id,
+                    endId: point2.id,
+                    startPosition: point1.position,
+                    endPosition: point2.position,
+                    isMixedType: true, // 标记为混合类型连线
                     color: 0x22c55e
                 };
 
@@ -1909,6 +2018,7 @@
                 const state = this.store.getState();
                 this.store.setState({
                     selectedSolidId: solidId,
+                    selectedVertices: [], // 清空体块顶点选择
                     selectedVertex: null,
                     selectedEdge: null,
                     selectedFace: null
@@ -1978,7 +2088,18 @@
             deleteSolid(solidId) {
                 const state = this.store.getState();
                 const newSolids = state.solids.filter(s => s.id !== solidId);
-                this.store.setState({ solids: newSolids });
+                
+                // 如果删除的是当前选中的体块，清空选中状态
+                const newState = { solids: newSolids };
+                if (state.selectedSolidId === solidId) {
+                    newState.selectedSolidId = null;
+                    newState.selectedVertex = null;
+                    newState.selectedEdge = null;
+                    newState.selectedFace = null;
+                    newState.selectedVertices = [];
+                }
+                
+                this.store.setState(newState);
             }
 
             resetAll() {
@@ -2296,7 +2417,7 @@
                                     }
 
                                     if (closestIndex !== -1) {
-                                        this.selectVertex(state.selectedSolidId, closestIndex);
+                                        this.selectVertex(state.selectedSolidId, closestIndex, event.shiftKey);
                                         event.preventDefault();
                                         return;
                                     }
@@ -2388,7 +2509,7 @@
             }
 
             // 选择顶点
-            selectVertex(solidId, vertexIndex) {
+            selectVertex(solidId, vertexIndex, addToSelection = false) {
                 const state = this.store.getState();
                 const solid = state.solids.find(s => s.id === solidId);
                 if (!solid) return;
@@ -2409,12 +2530,15 @@
                 const worldY = vertex.y + solid.position.y;
                 const worldZ = vertex.z + solid.position.z;
 
+                // 使用新的统一选择方法
+                geometryManager.selectVertexPoint(
+                    solidId, 
+                    vertexIndex, 
+                    { x: worldX, y: worldY, z: worldZ },
+                    addToSelection
+                );
+
                 this.store.setState({
-                    selectedVertex: {
-                        solidId: solidId,
-                        vertexIndex: vertexIndex,
-                        position: { x: worldX, y: worldY, z: worldZ }
-                    },
                     selectedEdge: null,
                     selectedFace: null
                 });
@@ -2514,6 +2638,8 @@
                 if (closestEdge) {
                     const length = closestEdge.start.distanceTo(closestEdge.end);
                     this.store.setState({
+                        selectedVertices: [], // 清空顶点选择
+                        selectedVertex: null,
                         selectedEdge: {
                             solidId: solidId,
                             edgeIndex: faceIndex * 3 + closestEdge.index,
@@ -2521,7 +2647,6 @@
                             end: { x: closestEdge.end.x, y: closestEdge.end.y, z: closestEdge.end.z },
                             length: length
                         },
-                        selectedVertex: null,
                         selectedFace: null
                     });
                     this.updateVertexEditUI();
@@ -2572,13 +2697,14 @@
                 const normal = intersect.face.normal.clone().transformDirection(mesh.matrixWorld);
 
                 this.store.setState({
+                    selectedVertices: [], // 清空顶点选择
+                    selectedVertex: null,
                     selectedFace: {
                         solidId: solidId,
                         faceIndex: faceIndex,
                         area: area,
                         normal: { x: normal.x, y: normal.y, z: normal.z }
                     },
-                    selectedVertex: null,
                     selectedEdge: null
                 });
                 this.updateVertexEditUI();
@@ -2626,7 +2752,10 @@
 
                         // 创建顶点标记小球
                         const markerGeometry = new THREE.SphereGeometry(0.15, 8, 8);
-                        const isSelected = state.selectedVertex && state.selectedVertex.vertexIndex === i;
+                        // 检查当前顶点是否在选中列表中
+                        const isSelected = state.selectedVertices && state.selectedVertices.some(
+                            v => v.solidId === state.selectedSolidId && v.vertexIndex === i
+                        );
                         const markerMaterial = new THREE.MeshBasicMaterial({
                             color: isSelected ? 0xef4444 : 0x3b82f6,
                             transparent: true,
@@ -2865,7 +2994,16 @@
                 // 修复选择模式bug：在顶点/边/面/体块模式下，点击空白区域不生成新点
                 if (state.selectionMode === 'vertex' || state.selectionMode === 'edge' || 
                     state.selectionMode === 'face' || state.selectionMode === 'solid') {
+                    // 在顶点模式下点击空白区域，如果不是Shift多选，则清空选择
+                    if (!event.shiftKey) {
+                        this.geometryManager.clearAllPointSelection();
+                    }
                     return;
+                }
+
+                // 点击空白区域创建新点时，如果不是Shift多选，则清空选择
+                if (!event.shiftKey) {
+                    this.geometryManager.clearAllPointSelection();
                 }
 
                 // 在点击位置创建新点（仅在非编辑模式下）
@@ -2898,6 +3036,14 @@
             findPointIdByMesh(mesh) {
                 for (let [pointId, m] of this.pointMeshes.entries()) {
                     if (m === mesh) return pointId;
+                }
+                return null;
+            }
+
+            // 通过mesh查找体块ID
+            findSolidIdByMesh(mesh) {
+                for (let [solidId, m] of this.solidMeshes.entries()) {
+                    if (m === mesh) return solidId;
                 }
                 return null;
             }
@@ -2974,7 +3120,31 @@
                     const startPoint = state.points.find(p => p.id === line.startId);
                     const endPoint = state.points.find(p => p.id === line.endId);
 
-                    if (startPoint && endPoint) {
+                    // 对于混合类型连线（包含体块顶点），直接使用存储的坐标
+                    if (line.isMixedType) {
+                        if (!this.lineMeshes.has(line.id)) {
+                            const points = [
+                                new THREE.Vector3(line.startPosition.x, line.startPosition.y, line.startPosition.z),
+                                new THREE.Vector3(line.endPosition.x, line.endPosition.y, line.endPosition.z)
+                            ];
+                            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                            const material = new THREE.LineBasicMaterial({ color: line.color, linewidth: 2 });
+                            const mesh = new THREE.Line(geometry, material);
+                            this.scene.add(mesh);
+                            this.lineMeshes.set(line.id, mesh);
+                        } else {
+                            const mesh = this.lineMeshes.get(line.id);
+                            const positions = mesh.geometry.attributes.position.array;
+                            positions[0] = line.startPosition.x;
+                            positions[1] = line.startPosition.y;
+                            positions[2] = line.startPosition.z;
+                            positions[3] = line.endPosition.x;
+                            positions[4] = line.endPosition.y;
+                            positions[5] = line.endPosition.z;
+                            mesh.geometry.attributes.position.needsUpdate = true;
+                        }
+                    } else if (startPoint && endPoint) {
+                        // 两个都是独立点
                         if (!this.lineMeshes.has(line.id)) {
                             const points = [
                                 new THREE.Vector3(startPoint.x, startPoint.y, startPoint.z),
@@ -3038,6 +3208,10 @@
                             clippingPlanes: [] // 支持裁剪平面
                         });
                         const mesh = new THREE.Mesh(geometry, material);
+                        // 设置userData标记，方便识别和管理体块
+                        mesh.userData.isBlock = true;
+                        mesh.userData.solidId = solid.id;
+                        mesh.userData.solidType = solid.type;
                         this.scene.add(mesh);
                         this.solidMeshes.set(solid.id, mesh);
                     }
@@ -3639,7 +3813,9 @@
                 document.getElementById('pointCount').textContent = state.points.length;
                 document.getElementById('lineCount').textContent = state.lines.length;
                 document.getElementById('solidCount').textContent = state.solids.length;
-                document.getElementById('selectedCount').textContent = state.selectedPointIds.length;
+                // 显示所有选中点的数量（包括独立点和体块顶点）
+                const totalSelected = state.selectedPointIds.length + (state.selectedVertices ? state.selectedVertices.length : 0);
+                document.getElementById('selectedCount').textContent = totalSelected;
 
                 // 更新状态显示
                 const axoLabels = {
@@ -3815,15 +3991,17 @@
 
         // 创建连线按钮
         document.getElementById('createLineBtn').addEventListener('click', () => {
-            const state = store.getState();
-            if (state.selectedPointIds.length >= 2) {
+            const allSelected = geometryManager.getAllSelectedPoints();
+            if (allSelected.length >= 2) {
                 store.pushUndoStack();
-                geometryManager.createLine(
-                    state.selectedPointIds[0],
-                    state.selectedPointIds[1]
+                geometryManager.createLineBetweenPoints(
+                    allSelected[0],
+                    allSelected[1]
                 );
+                // 创建连线后清空选择
+                geometryManager.clearAllPointSelection();
             } else {
-                alert('请先选中两个点（按住Shift多选）');
+                alert('请先选中两个点（按住Shift多选，支持独立点和体块顶点混合选择）');
             }
         });
 
