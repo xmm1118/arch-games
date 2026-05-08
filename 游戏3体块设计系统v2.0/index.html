@@ -505,37 +505,7 @@
             }
         }
 
-        /* 仅在移动端竖屏时切换到单列布局 */
-        @media (max-width: 1px) {
-            .container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto;
-                gap: 6px;
-                padding: 6px;
-                height: 100dvh;
-            }
-            .toolbar, .info-panel {
-                display: none;
-            }
-            .header {
-                padding: 8px 10px;
-                flex-wrap: wrap;
-                gap: 6px;
-            }
-            .header h1 {
-                font-size: 15px;
-            }
-        }
-
-        /* 平板横屏：保持三列布局，只调整宽度 */
-        @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
-            .container {
-                grid-template-columns: 150px 1fr 180px;
-            }
-            .view-panels {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
+        /* 移动端响应式已禁用 - 游戏仅在桌面端使用 */
 
         /* 滚动条样式 */
         ::-webkit-scrollbar {
