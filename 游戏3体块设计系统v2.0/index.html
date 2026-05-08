@@ -19,7 +19,7 @@
             height: 100vh;
         }
 
-        .container {
+        .game-container {
             display: grid;
             grid-template-columns: 200px 1fr 280px;
             grid-template-rows: 50px 1fr 40px;
@@ -465,7 +465,7 @@
 
         /* 响应式调整 - 桌面端小窗口 */
         @media (max-width: 1400px) {
-            .container {
+            .game-container {
                 grid-template-columns: 170px 1fr 230px;
                 gap: 6px;
                 padding: 6px;
@@ -481,7 +481,7 @@
         }
 
         @media (max-width: 1100px) {
-            .container {
+            .game-container {
                 grid-template-columns: 160px 1fr 200px;
                 gap: 5px;
                 padding: 5px;
@@ -823,7 +823,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="game-container">
         <!-- 顶部导航 -->
         <header class="header">
             <h1>🎮 游戏3体块设计系统 v2.0</h1>
