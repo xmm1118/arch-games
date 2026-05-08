@@ -698,6 +698,126 @@
             margin: 10px 0;
         }
 
+        /* 体块移动按钮样式 */
+        .move-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin: 10px 0;
+        }
+
+        .move-btn {
+            padding: 10px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 40px;
+        }
+
+        .move-btn:hover {
+            background: var(--border-color);
+            transform: translateY(-1px);
+        }
+
+        .move-btn:active {
+            transform: translateY(0);
+        }
+
+        .move-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .move-btn.move-x {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .move-btn.move-x:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .move-btn.move-y {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .move-btn.move-y:hover {
+            background: rgba(34, 197, 94, 0.25);
+        }
+
+        .move-btn.move-z {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .move-btn.move-z:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        /* 步长选择器 */
+        .step-selector {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .step-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .step-btn:hover {
+            background: var(--border-color);
+        }
+
+        .step-btn.active {
+            background: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            color: white;
+        }
+
+        /* 重置位置按钮 */
+        .reset-position-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 6px;
+            color: var(--accent-warning);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .reset-position-btn:hover {
+            background: rgba(245, 158, 11, 0.25);
+        }
+
+        .reset-position-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .slider-container label {
             display: block;
             font-size: 12px;
@@ -1499,6 +1619,44 @@
                 
                 <!-- 体块位置控制 -->
                 <h4 style="font-size: 12px; color: var(--accent-secondary); margin: 10px 0 8px 0;">📍 位置控制</h4>
+                
+                <!-- 移动步长选择器 -->
+                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">移动步长:</div>
+                <div class="step-selector">
+                    <button class="step-btn" data-step="0.1">0.1</button>
+                    <button class="step-btn active" data-step="0.5">0.5</button>
+                    <button class="step-btn" data-step="1.0">1.0</button>
+                </div>
+
+                <!-- Z轴移动 (上下) -->
+                <div class="move-buttons-grid">
+                    <div></div>
+                    <button class="move-btn move-z" data-move="z" data-value="1">▲ 上移</button>
+                    <div></div>
+                </div>
+
+                <!-- X轴移动 (左右) 和 Y轴移动 (前后) -->
+                <div class="move-buttons-grid">
+                    <button class="move-btn move-x" data-move="x" data-value="-1">◀ 左移</button>
+                    <button class="move-btn move-z" data-move="z" data-value="-1">▼ 下移</button>
+                    <button class="move-btn move-x" data-move="x" data-value="1">右移 ▶</button>
+                </div>
+
+                <div class="move-buttons-grid">
+                    <div></div>
+                    <button class="move-btn move-y" data-move="y" data-value="1">△ 前移</button>
+                    <div></div>
+                </div>
+
+                <div class="move-buttons-grid">
+                    <div></div>
+                    <button class="move-btn move-y" data-move="y" data-value="-1">▽ 后移</button>
+                    <div></div>
+                </div>
+
+                <!-- 重置位置按钮 -->
+                <button class="reset-position-btn" id="resetSolidPositionBtn">🔄 重置到原点</button>
+
                 <div class="coord-edit-group">
                     <div class="coord-edit-item x">
                         <label>X</label>
@@ -3805,6 +3963,22 @@
                 document.getElementById('cutPlane').textContent = state.cutPlaneType ?
                     `${cutPlaneLabels[state.cutPlaneType]} (${state.cutPosition.toFixed(1)})${state.sectionConfirmed ? ' ✓' : ''}` : '无';
 
+                // 更新移动按钮状态
+                const hasSelectedSolid = state.selectedSolidId !== null;
+                document.querySelectorAll('.move-btn').forEach(btn => {
+                    btn.disabled = !hasSelectedSolid;
+                    btn.style.opacity = hasSelectedSolid ? '1' : '0.5';
+                    btn.style.cursor = hasSelectedSolid ? 'pointer' : 'not-allowed';
+                });
+                
+                // 更新重置位置按钮状态
+                const resetBtn = document.getElementById('resetSolidPositionBtn');
+                if (resetBtn) {
+                    resetBtn.disabled = !hasSelectedSolid;
+                    resetBtn.style.opacity = hasSelectedSolid ? '1' : '0.5';
+                    resetBtn.style.cursor = hasSelectedSolid ? 'pointer' : 'not-allowed';
+                }
+
                 // 更新切割步骤引导状态
                 this.updateCutSteps(state);
             }
@@ -4128,6 +4302,115 @@
 
             store.pushUndoStack();
             geometryManager.updateSolidRotation(state.selectedSolidId, { x: newRotX, y: newRotY, z: newRotZ });
+        });
+
+        // ============================================
+        // 体块移动按钮功能
+        // ============================================
+        let currentMoveStep = 0.5; // 默认步长
+
+        // 步长选择器
+        document.querySelectorAll('.step-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMoveStep = parseFloat(btn.dataset.step);
+            });
+        });
+
+        // 移动按钮事件处理
+        document.querySelectorAll('.move-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const state = store.getState();
+                if (!state.selectedSolidId) {
+                    alert('请先选中一个体块');
+                    return;
+                }
+
+                const moveAxis = btn.dataset.move;
+                const moveValue = parseFloat(btn.dataset.value);
+                const solid = state.solids.find(s => s.id === state.selectedSolidId);
+                if (!solid) return;
+
+                store.pushUndoStack();
+
+                // 计算新位置
+                const newPosition = {
+                    x: solid.position.x,
+                    y: solid.position.y,
+                    z: solid.position.z
+                };
+                newPosition[moveAxis] += moveValue * currentMoveStep;
+
+                // 更新体块位置
+                geometryManager.updateSolidPosition(state.selectedSolidId, newPosition);
+
+                // 更新位置输入框显示
+                document.getElementById('solidPosX').value = newPosition.x.toFixed(1);
+                document.getElementById('solidPosY').value = newPosition.y.toFixed(1);
+                document.getElementById('solidPosZ').value = newPosition.z.toFixed(1);
+
+                // 如果有选中的顶点，更新其显示的世界坐标
+                if (state.selectedVertex && state.selectedVertex.solidId === state.selectedSolidId) {
+                    const mesh = renderer3d.solidMeshes.get(state.selectedSolidId);
+                    if (mesh) {
+                        const positionAttribute = mesh.geometry.attributes.position;
+                        const vertex = new THREE.Vector3();
+                        vertex.fromBufferAttribute(positionAttribute, state.selectedVertex.vertexIndex);
+                        store.setState({
+                            selectedVertex: {
+                                ...state.selectedVertex,
+                                position: {
+                                    x: vertex.x + newPosition.x,
+                                    y: vertex.y + newPosition.y,
+                                    z: vertex.z + newPosition.z
+                                }
+                            }
+                        });
+                        renderer3d.updateVertexEditUI();
+                    }
+                }
+            });
+        });
+
+        // 重置位置按钮
+        document.getElementById('resetSolidPositionBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.selectedSolidId) {
+                alert('请先选中一个体块');
+                return;
+            }
+
+            if (confirm('确定要将体块移动到原点 (0, 0, 0) 吗？')) {
+                store.pushUndoStack();
+                geometryManager.updateSolidPosition(state.selectedSolidId, { x: 0, y: 0, z: 0 });
+
+                // 更新位置输入框显示
+                document.getElementById('solidPosX').value = '0';
+                document.getElementById('solidPosY').value = '0';
+                document.getElementById('solidPosZ').value = '0';
+
+                // 如果有选中的顶点，更新其显示的世界坐标
+                if (state.selectedVertex && state.selectedVertex.solidId === state.selectedSolidId) {
+                    const mesh = renderer3d.solidMeshes.get(state.selectedSolidId);
+                    if (mesh) {
+                        const positionAttribute = mesh.geometry.attributes.position;
+                        const vertex = new THREE.Vector3();
+                        vertex.fromBufferAttribute(positionAttribute, state.selectedVertex.vertexIndex);
+                        store.setState({
+                            selectedVertex: {
+                                ...state.selectedVertex,
+                                position: {
+                                    x: vertex.x,
+                                    y: vertex.y,
+                                    z: vertex.z
+                                }
+                            }
+                        });
+                        renderer3d.updateVertexEditUI();
+                    }
+                }
+            }
         });
 
         // 切割面选择
