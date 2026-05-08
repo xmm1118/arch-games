@@ -1329,13 +1329,7 @@
                         ⚪ 球体
                     </button>
                     <button class="tool-btn" data-create-solid="prismVertical">
-                        🔷 垂直三棱柱
-                    </button>
-                    <button class="tool-btn" data-create-solid="prismX">
-                        ➡️ 水平三棱柱(X轴)
-                    </button>
-                    <button class="tool-btn" data-create-solid="prismY">
-                        ⬆️ 水平三棱柱(Y轴)
+                        🔷 三棱柱
                     </button>
                     <button class="tool-btn" data-create-solid="tetrahedron">
                         🔺 三棱锥(四面体)
@@ -2156,22 +2150,27 @@
                     cylinder: '圆柱',
                     cone: '圆锥',
                     sphere: '球体',
-                    prismVertical: '垂直三棱柱',
-                    prismX: '水平三棱柱(X轴)',
-                    prismY: '水平三棱柱(Y轴)',
+                    prismVertical: '三棱柱',
                     tetrahedron: '三棱锥(四面体)',
                     pyramid: '四棱锥'
                 };
                 
+                // 长方体颜色池 - 随机选择
+                const BOX_COLORS = [
+                    0x3b82f6,  // 蓝色
+                    0x64748b,  // 深灰
+                    0xec4899,  // 粉色
+                    0x06b6d4,  // 青色
+                    0x6366f1   // 靛蓝
+                ];
+                
                 // 按体块类型分配不同颜色
                 const typeColors = {
-                    cube: 0x3b82f6,        // 蓝色系 - 长方体
+                    cube: BOX_COLORS[Math.floor(Math.random() * BOX_COLORS.length)],  // 长方体 - 随机颜色
                     cylinder: 0x22c55e,    // 绿色系 - 圆柱
                     cone: 0xf59e0b,        // 黄色系 - 圆锥
                     sphere: 0xef4444,      // 红色系 - 球体
-                    prismVertical: 0x8b5cf6,  // 紫色系 - 垂直三棱柱
-                    prismX: 0xec4899,      // 粉色系 - 水平三棱柱X
-                    prismY: 0x06b6d4,      // 青色系 - 水平三棱柱Y
+                    prismVertical: 0x8b5cf6,  // 紫色系 - 三棱柱
                     tetrahedron: 0xf97316, // 橙色系 - 三棱锥
                     pyramid: 0x14b8a6      // 蓝绿系 - 四棱锥
                 };
@@ -2969,9 +2968,7 @@
                             cylinder: '圆柱',
                             cone: '圆锥',
                             sphere: '球体',
-                            prismVertical: '垂直三棱柱',
-                            prismX: '水平三棱柱(X轴)',
-                            prismY: '水平三棱柱(Y轴)',
+                            prismVertical: '三棱柱',
                             tetrahedron: '三棱锥(四面体)',
                             pyramid: '四棱锥'
                         };
@@ -3052,8 +3049,6 @@
                     cone: '🔺',
                     sphere: '⚪',
                     prismVertical: '🔷',
-                    prismX: '➡️',
-                    prismY: '⬆️',
                     tetrahedron: '🔺',
                     pyramid: '🔻'
                 };
@@ -3403,19 +3398,8 @@
                                 geometry = new THREE.SphereGeometry(1, 32, 32);
                                 break;
                             case 'prismVertical':
-                                // 垂直三棱柱 - 三角形底面在XY平面，高度沿Z轴
+                                // 三棱柱 - 三角形底面在XY平面，高度沿Z轴
                                 geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
-                                break;
-                            case 'prismX':
-                                // 水平三棱柱(X轴方向) - 三角形底面在YZ平面
-                                geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
-                                geometry.rotateZ(Math.PI / 2);
-                                geometry.rotateX(Math.PI / 2);
-                                break;
-                            case 'prismY':
-                                // 水平三棱柱(Y轴方向) - 三角形底面在XZ平面
-                                geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
-                                geometry.rotateX(Math.PI / 2);
                                 break;
                             case 'tetrahedron':
                                 // 三棱锥(四面体)
