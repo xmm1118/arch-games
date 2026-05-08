@@ -1149,8 +1149,7 @@
             }
         }
 
-        /* 仅在真正的移动端竖屏时才切换到单列布局 */
-        @media (DISABLED - max-width: 1px) {
+        @media (max-width: 992px) {
             .main-container {
                 grid-template-columns: 1fr;
             }
@@ -1160,13 +1159,6 @@
             .header {
                 flex-wrap: wrap;
                 gap: 12px;
-            }
-        }
-
-        /* 平板横屏：保持三列布局，只调整宽度 */
-        @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
-            .main-container {
-                grid-template-columns: 240px 1fr 240px;
             }
         }
 
@@ -6299,8 +6291,7 @@
                     
                 // ========== 碳排放参数 ==========
                 case 'structureType':
-                    // 优先使用导入的结构类型，其次手动输入，最后默认
-                    return buildingData.structureType || buildingData.manualStructureType || '框架结构';
+                    return buildingData.manualStructureType || 'concrete';
                 case 'electricityCarbonFactor':
                     return buildingData.manualElectricityCarbonFactor || 0.5279;
                 case 'buildingLifespan':
@@ -6367,85 +6358,6 @@
             }
         };
         
-        // ========== 结构类型热工参数映射 ==========
-        // 不同结构类型的热工特性
-        const StructuralTypeThermalParams = {
-            // 砌体墙承重：外墙传热系数偏高（热桥效应大），保温性能一般
-            '砌体结构': {
-                thermalBridgeFactor: 1.3,  // 热桥系数，传热系数乘数
-                baseUValue: 0.05,          // 基础传热系数调整
-                insulationEfficiency: 0.85 // 保温效率
-            },
-            '砖混结构': {
-                thermalBridgeFactor: 1.25,
-                baseUValue: 0.04,
-                insulationEfficiency: 0.85
-            },
-            // 框架结构：热桥较少，保温性能较好
-            '框架结构': {
-                thermalBridgeFactor: 1.0,
-                baseUValue: 0,
-                insulationEfficiency: 1.0
-            },
-            '框架剪力墙结构': {
-                thermalBridgeFactor: 1.05,
-                baseUValue: 0,
-                insulationEfficiency: 0.98
-            },
-            // 木结构：保温性能最好，传热系数最低
-            '木结构': {
-                thermalBridgeFactor: 0.7,
-                baseUValue: -0.1,
-                insulationEfficiency: 1.2
-            },
-            '轻木结构': {
-                thermalBridgeFactor: 0.65,
-                baseUValue: -0.15,
-                insulationEfficiency: 1.25
-            },
-            // 钢结构：热桥效应最大，需要额外保温处理
-            '钢结构': {
-                thermalBridgeFactor: 1.5,
-                baseUValue: 0.1,
-                insulationEfficiency: 0.7
-            },
-            '门式刚架结构': {
-                thermalBridgeFactor: 1.45,
-                baseUValue: 0.08,
-                insulationEfficiency: 0.72
-            },
-            // 装配式结构：保温性能较好（工厂预制保温层）
-            '装配式混凝土结构': {
-                thermalBridgeFactor: 0.85,
-                baseUValue: -0.05,
-                insulationEfficiency: 1.1
-            },
-            'PC结构': {
-                thermalBridgeFactor: 0.8,
-                baseUValue: -0.08,
-                insulationEfficiency: 1.15
-            }
-        };
-        
-        // 获取结构类型的热工参数
-        function getStructureThermalParams() {
-            const structureType = GameState.buildingData.structureType;
-            if (structureType) {
-                // 精确匹配
-                if (StructuralTypeThermalParams[structureType]) {
-                    return StructuralTypeThermalParams[structureType];
-                }
-                // 模糊匹配
-                for (const key in StructuralTypeThermalParams) {
-                    if (structureType.includes(key) || key.includes(structureType)) {
-                        return StructuralTypeThermalParams[key];
-                    }
-                }
-            }
-            // 默认框架结构
-            return StructuralTypeThermalParams['框架结构'];
-        }
-        
         // ========== 计算外墙传热系数 ==========
         function calculateWallUValue() {
             const wallThickness = getBuildingParam('wallThickness', 0.24);
@@ -6468,27 +6380,8 @@
             // 总热阻
             const RTotal = Rsi + RWall + RInsulation + Rse;
             
-            // 基础传热系数
-            let baseUValue = 1 / RTotal;
-            
-            // ========== 考虑结构类型的影响 ==========
-            const thermalParams = getStructureThermalParams();
-            const structureType = GameState.buildingData.structureType;
-            
-            if (structureType) {
-                // 热桥效应调整：承重墙位置导致的热桥增加
-                const thermalBridgeFactor = thermalParams.thermalBridgeFactor || 1.0;
-                baseUValue *= thermalBridgeFactor;
-                
-                // 基础传热系数调整
-                baseUValue += thermalParams.baseUValue || 0;
-                
-                // 确保传热系数不为负
-                baseUValue = Math.max(0.3, baseUValue);
-            }
-            
             // 传热系数
-            return baseUValue;
+            return 1 / RTotal;
         }
         
         // ========== 计算窗户传热系数 ==========
@@ -8543,15 +8436,6 @@
                 result.rooms = data.rooms;
             }
             
-            // ========== 保存结构数据（从游戏2关卡4导入时可能有）==========
-            const hasStructureData = data.structureType && data.structureType !== null;
-            if (hasStructureData) {
-                result.structureType = data.structureType;
-                result.structuralElements = data.structuralElements || null;
-                result.structuralScore = data.structuralScore || null;
-                console.log('检测到结构数据:', data.structureType);
-            }
-            
             console.log('🎯 游戏2数据已转换:', result);
             return result;
         }
@@ -9447,8 +9331,7 @@ DGP = 5.87×10⁻⁵ × ${Math.round(avgIllum * 1.2)} + 0.091 × log(1 + ${Math.
                     </table>
                     <h5 style="margin-top:12px;color:var(--accent-secondary);font-size:13px;">🧱 围护结构参数</h5>
                     <table class="report-table">
-                        ${(GameState.buildingData.structureType) ? `<tr><td>结构类型</td><td>${GameState.buildingData.structureType} 【游戏2导入】</td></tr>` : ''}
-                        <tr><td>外墙传热系数</td><td>${calculateWallUValue().toFixed(2)} W/(m²·K) 【${(GameState.buildingData.structureType) ? '含结构类型修正' : '计算值'}】</td></tr>
+                        <tr><td>外墙传热系数</td><td>${calculateWallUValue().toFixed(2)} W/(m²·K) 【计算值】</td></tr>
                         <tr><td>窗户传热系数</td><td>${calculateWindowUValue().toFixed(1)} W/(m²·K) 【材料系数】</td></tr>
                         <tr><td>综合窗墙比</td><td>${windowRatio} 【${GameState.importedData.facade ? '用户输入' : '默认值'}】</td></tr>
                         <tr><td>窗户遮阳系数</td><td>${GameState.buildingData.manualShadingCoeff || 0.6} 【用户输入】</td></tr>
@@ -9636,46 +9519,6 @@ Q总 = ${heating} + ${cooling} + ${lighting} + ${equipment} = ${total} kWh/m²·
                         <li>安装智能能源管理系统，优化运行策略</li>
                     </ul>
                 </div>
-                
-                ${(GameState.buildingData.structureType) ? `
-                <div class="report-section" style="background:rgba(16, 185, 129, 0.05);border:1px solid rgba(16, 185, 129, 0.2);border-radius:12px;padding:16px;">
-                    <h4 style="color:var(--accent-success);">🏗️ 结构性能分析（来自游戏2导入）</h4>
-                    <table class="report-table" style="margin-top:12px;">
-                        <tr><td>结构类型</td><td><strong>${GameState.buildingData.structureType}</strong></td></tr>
-                        <tr><td>外墙传热系数</td><td>${calculateWallUValue().toFixed(2)} W/(m²·K)【含结构类型修正】</td></tr>
-                        <tr><td>结构热桥系数</td><td>× ${getStructureThermalParams().thermalBridgeFactor.toFixed(2)}【${getStructureThermalParams().thermalBridgeFactor < 1 ? '保温性能优良' : getStructureThermalParams().thermalBridgeFactor > 1.2 ? '热桥效应较大' : '保温性能一般'}】</td></tr>
-                    </table>
-                    ${GameState.buildingData.structuralElements ? `
-                    <h5 style="margin-top:16px;color:var(--accent-secondary);font-size:13px;">📦 主要结构构件</h5>
-                    <table class="report-table">
-                        ${GameState.buildingData.structuralElements.columns ? `<tr><td>框架柱</td><td>${GameState.buildingData.structuralElements.columns.length} 根</td></tr>` : ''}
-                        ${GameState.buildingData.structuralElements.beams ? `<tr><td>框架梁</td><td>${GameState.buildingData.structuralElements.beams.length} 根</td></tr>` : ''}
-                        ${GameState.buildingData.structuralElements.slabs ? `<tr><td>楼板</td><td>${GameState.buildingData.structuralElements.slabs.length} 块</td></tr>` : ''}
-                        ${GameState.buildingData.structuralElements.bearingWalls ? `<tr><td>承重墙</td><td>${GameState.buildingData.structuralElements.bearingWalls.length} 段</td></tr>` : ''}
-                    </table>
-                    ` : ''}
-                    ${GameState.buildingData.structuralScore ? `
-                    <div style="margin-top:12px;padding:10px;background:rgba(16, 185, 129, 0.1);border-radius:8px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="color:var(--accent-success);">结构设计评分</span>
-                            <span style="font-weight:bold;color:var(--accent-success);font-size:1.2em;">${GameState.buildingData.structuralScore.total || 'N/A'}分</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                    <h5 style="margin-top:16px;color:var(--accent-secondary);font-size:13px;">💡 结构保温建议</h5>
-                    <ul class="suggestion-list" style="margin-top:8px;">
-                        ${GameState.buildingData.structureType.includes('砌体') || GameState.buildingData.structureType.includes('砖混') ? '<li>砌体结构热桥效应较大，建议在外墙增加保温层厚度</li>' : ''}
-                        ${GameState.buildingData.structureType.includes('钢') ? '<li>钢结构节点部位热桥效应最大，需特别加强保温处理</li>' : ''}
-                        ${GameState.buildingData.structureType.includes('木') ? '<li>木结构保温性能优良，可适当减少保温层厚度以降低成本</li>' : ''}
-                        ${GameState.buildingData.structureType.includes('装配式') || GameState.buildingData.structureType.includes('PC') ? '<li>装配式结构节点处需做好保温密封处理</li>' : ''}
-                        ${!GameState.buildingData.structureType.includes('砌体') && !GameState.buildingData.structureType.includes('钢') && !GameState.buildingData.structureType.includes('木') ? '<li>框架结构保温设计需注意梁柱节点的热桥处理</li>' : ''}
-                    </ul>
-                </div>
-                ` : `
-                <div class="report-section" style="padding:12px;background:rgba(100, 116, 139, 0.05);border:1px dashed rgba(100, 116, 139, 0.3);border-radius:8px;text-align:center;margin-top:16px;">
-                    <span style="color:var(--text-muted);font-size:0.9rem;">📋 未包含结构设计数据（从游戏2关卡3导入），使用默认框架结构参数</span>
-                </div>
-                `}
             `;
         }
         
@@ -10742,7 +10585,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p>报告生成时间：${new Date().toLocaleString()}</p>
         <p>建筑性能模拟游戏 - 教学演示工具</p>
     </div>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
             
             // 下载HTML文件
@@ -10786,7 +10629,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p>报告生成时间：${new Date().toLocaleString()}</p>
         <p>建筑性能模拟游戏 - 教学演示工具</p>
     </div>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
         }
         
@@ -10940,7 +10783,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
             const printHTML = createSingleReportHTML(typeNames[type] || '分析报告', reportContent);
             // 添加打印触发脚本
             const printScript = '<scr' + 'ipt>window.onload = function() { window.print(); }</scr' + 'ipt>';
-            const fullHTML = printHTML.replace('<script src="../feishu-game-data-collector.js"></script></body>', printScript + '</body>');
+            const fullHTML = printHTML.replace('</body>', printScript + '</body>');
             
             // 打开新窗口显示报告并自动触发打印
             const printWindow = window.open('', '_blank');
@@ -11280,7 +11123,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
             const commonStyles = `
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f4f8; color: #1a365d; }
-        .game-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .cover { background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; padding: 60px 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .cover h1 { font-size: 36px; margin-bottom: 20px; }
         .cover .subtitle { font-size: 18px; opacity: 0.9; margin-bottom: 30px; }
@@ -11340,7 +11183,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
             `;
             
             const bodyContent = `
-<div class="game-container">
+<div class="container">
     <div class="cover">
         <h1>🏗️ 建筑性能综合评估报告</h1>
         <p class="subtitle">Comprehensive Building Performance Assessment Report</p>
@@ -11435,7 +11278,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
 <body>
     ${bodyContent}
     ${isPDF ? '<scr' + 'ipt>window.onload = function() { window.print(); }</scr' + 'ipt>' : ''}
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
         }
         
@@ -11530,7 +11373,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f4f8; color: #1a365d; }
-        .game-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .cover { background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; padding: 60px 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .cover h1 { font-size: 36px; margin-bottom: 20px; }
         .cover .subtitle { font-size: 18px; opacity: 0.9; margin-bottom: 30px; }
@@ -11588,7 +11431,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     </style>
 </head>
 <body>
-<div class="game-container">
+<div class="container">
     <div class="cover">
         <h1>🏗️ 建筑性能综合评估报告</h1>
         <p class="subtitle">Comprehensive Building Performance Assessment Report</p>
@@ -11673,7 +11516,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p style="margin-top:8px;">本报告仅供参考。</p>
     </div>
 </div>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
             const blob = new Blob([htmlReport], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -11719,7 +11562,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f4f8; color: #1a365d; }
-        .game-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .cover { background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; padding: 60px 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .cover h1 { font-size: 36px; margin-bottom: 20px; }
         .cover .subtitle { font-size: 18px; opacity: 0.9; margin-bottom: 30px; }
@@ -11760,7 +11603,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     </style>
 </head>
 <body>
-<div class="game-container">
+<div class="container">
     <div class="cover">
         <h1>🏗️ 建筑性能综合评估报告</h1>
         <p class="subtitle">Comprehensive Building Performance Assessment Report</p>
@@ -11836,7 +11679,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     </div>
 </div>
 <scr` + `ipt>window.onload = function() { window.print(); }</scr` + `ipt>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
             
             // 打开新窗口显示报告并自动触发打印
@@ -11883,7 +11726,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: #f0f4f8; color: #1a365d; }
-        .game-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
         .cover { background: linear-gradient(135deg, #1e3a5f, #2d5a87); color: white; padding: 60px 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .cover h1 { font-size: 36px; margin-bottom: 20px; }
         .cover .subtitle { font-size: 18px; opacity: 0.9; margin-bottom: 30px; }
@@ -11941,7 +11784,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
     </style>
 </head>
 <body>
-<div class="game-container">
+<div class="container">
     <div class="cover">
         <h1>🏗️ 建筑性能综合评估报告</h1>
         <p class="subtitle">Comprehensive Building Performance Assessment Report</p>
@@ -12026,7 +11869,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
         <p style="margin-top:8px;">本报告仅供参考。</p>
     </div>
 </div>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>`;
             const blob = new Blob([htmlReport], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -13176,8 +13019,18 @@ PMV = f(温度, 湿度, 风速, 辐射)`,
         document.addEventListener('DOMContentLoaded', () => {
             initCanvas();
             
-            // 初始化关卡1（示范模式）- 确保案例建筑和分析功能正常显示
-            selectLevel(1);
+            // 初始化模式标识（默认为示范模式）
+            GameState.isDemoMode = true;
+            GameState.buildingData = { ...SampleBuilding };
+            
+            // 渲染分析类型卡片
+            renderAnalysisTypeCards();
+            
+            // 设置当前分析类型为第一个
+            const config = LevelConfig[1];
+            if (config.analysisTypes && config.analysisTypes.length > 0) {
+                GameState.currentAnalysisType = config.analysisTypes[0];
+            }
             
             updateModeIndicator();
             
@@ -13231,5 +13084,5 @@ PMV = f(温度, 湿度, 风速, 辐射)`,
             }));
         });
     </script>
-<script src="../feishu-game-data-collector.js"></script></body>
+</body>
 </html>
