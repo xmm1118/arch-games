@@ -1328,6 +1328,21 @@
                     <button class="tool-btn" data-create-solid="sphere">
                         ⚪ 球体
                     </button>
+                    <button class="tool-btn" data-create-solid="prismVertical">
+                        🔷 垂直三棱柱
+                    </button>
+                    <button class="tool-btn" data-create-solid="prismX">
+                        ➡️ 水平三棱柱(X轴)
+                    </button>
+                    <button class="tool-btn" data-create-solid="prismY">
+                        ⬆️ 水平三棱柱(Y轴)
+                    </button>
+                    <button class="tool-btn" data-create-solid="tetrahedron">
+                        🔺 三棱锥(四面体)
+                    </button>
+                    <button class="tool-btn" data-create-solid="pyramid">
+                        🔻 四棱锥
+                    </button>
                 </div>
             </div>
 
@@ -1673,6 +1688,25 @@
                 </div>
                 <button class="tool-btn" id="applySolidPositionBtn" style="margin-bottom: 10px;">✓ 应用位置</button>
                 <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">体块模式下可拖拽移动，或用方向键微调(每次0.1单位)</p>
+                
+                <!-- 体块尺寸编辑 -->
+                <h4 style="font-size: 12px; color: var(--accent-secondary); margin: 10px 0 8px 0;">📐 尺寸控制</h4>
+                <div class="coord-edit-group">
+                    <div class="coord-edit-item x">
+                        <label>宽(X)</label>
+                        <input type="number" id="solidScaleX" step="0.1" value="2" min="0.1">
+                    </div>
+                    <div class="coord-edit-item y">
+                        <label>深(Y)</label>
+                        <input type="number" id="solidScaleY" step="0.1" value="2" min="0.1">
+                    </div>
+                    <div class="coord-edit-item z">
+                        <label>高(Z)</label>
+                        <input type="number" id="solidScaleZ" step="0.1" value="2" min="0.1">
+                    </div>
+                </div>
+                <button class="tool-btn" id="applySolidScaleBtn" style="margin-bottom: 10px;">✓ 应用尺寸</button>
+                <p style="color: var(--text-secondary); font-size: 10px; margin: 5px 0;">修改体块长宽高尺寸，保持中心位置不变</p>
                 
                 <!-- 体块旋转控制 -->
                 <h4 style="font-size: 12px; color: var(--accent-secondary); margin: 10px 0 8px 0;">🔄 旋转控制</h4>
@@ -2114,27 +2148,46 @@
                 this.store.setState({ lines: newLines });
             }
 
-            createSolid(type, position = { x: 0, y: 2, z: 0 }, scale = { x: 4, y: 4, z: 4 }) {
+            createSolid(type, position = { x: 0, y: 0, z: 0 }, scale = { x: 2, y: 2, z: 2 }) {
                 const state = this.store.getState();
                 const solidIndex = state.solids.filter(s => s.type === type).length;
                 const typeNames = {
                     cube: '长方体',
                     cylinder: '圆柱',
                     cone: '圆锥',
-                    sphere: '球体'
+                    sphere: '球体',
+                    prismVertical: '垂直三棱柱',
+                    prismX: '水平三棱柱(X轴)',
+                    prismY: '水平三棱柱(Y轴)',
+                    tetrahedron: '三棱锥(四面体)',
+                    pyramid: '四棱锥'
                 };
+                
+                // 按体块类型分配不同颜色
+                const typeColors = {
+                    cube: 0x3b82f6,        // 蓝色系 - 长方体
+                    cylinder: 0x22c55e,    // 绿色系 - 圆柱
+                    cone: 0xf59e0b,        // 黄色系 - 圆锥
+                    sphere: 0xef4444,      // 红色系 - 球体
+                    prismVertical: 0x8b5cf6,  // 紫色系 - 垂直三棱柱
+                    prismX: 0xec4899,      // 粉色系 - 水平三棱柱X
+                    prismY: 0x06b6d4,      // 青色系 - 水平三棱柱Y
+                    tetrahedron: 0xf97316, // 橙色系 - 三棱锥
+                    pyramid: 0x14b8a6      // 蓝绿系 - 四棱锥
+                };
+                
                 const solid = {
                     id: this.generateSolidId(),
-                    type: type, // cube, cylinder, cone, sphere
+                    type: type,
                     name: `${typeNames[type]}${solidIndex + 1}`,
                     position: { ...position },
                     scale: { ...scale },
                     rotation: { x: 0, y: 0, z: 0 },
-                    color: 0x06b6d4,
+                    color: typeColors[type] || 0x06b6d4,
                     visible: true,
                     isCut: false,
-                    vertices: null, // 缓存顶点数据
-                    faces: null     // 缓存面数据
+                    vertices: null,
+                    faces: null
                 };
                 const newSolids = [...state.solids, solid];
                 this.store.setState({ solids: newSolids });
@@ -2915,10 +2968,23 @@
                             cube: '长方体',
                             cylinder: '圆柱',
                             cone: '圆锥',
-                            sphere: '球体'
+                            sphere: '球体',
+                            prismVertical: '垂直三棱柱',
+                            prismX: '水平三棱柱(X轴)',
+                            prismY: '水平三棱柱(Y轴)',
+                            tetrahedron: '三棱锥(四面体)',
+                            pyramid: '四棱锥'
                         };
                         document.getElementById('solidInfoName').textContent = solid.name;
                         document.getElementById('solidInfoType').textContent = typeNames[solid.type] || solid.type;
+                        
+                        // 更新尺寸编辑输入框
+                        document.getElementById('solidScaleX').value = solid.scale.x.toFixed(2);
+                        document.getElementById('solidScaleY').value = solid.scale.y.toFixed(2);
+                        document.getElementById('solidScaleZ').value = solid.scale.z.toFixed(2);
+                        document.getElementById('solidScaleX').disabled = false;
+                        document.getElementById('solidScaleY').disabled = false;
+                        document.getElementById('solidScaleZ').disabled = false;
                         document.getElementById('solidInfoPosition').textContent =
                             `(${solid.position.x.toFixed(2)}, ${solid.position.y.toFixed(2)}, ${solid.position.z.toFixed(2)})`;
 
@@ -2948,16 +3014,22 @@
                     document.getElementById('solidInfoPosition').textContent = '-';
                     document.getElementById('solidInfoVertices').textContent = '-';
                     
-                    // 清空并禁用位置和旋转输入框
+                    // 清空并禁用位置、尺寸和旋转输入框
                     document.getElementById('solidPosX').value = '';
                     document.getElementById('solidPosY').value = '';
                     document.getElementById('solidPosZ').value = '';
+                    document.getElementById('solidScaleX').value = '';
+                    document.getElementById('solidScaleY').value = '';
+                    document.getElementById('solidScaleZ').value = '';
                     document.getElementById('solidRotX').value = '';
                     document.getElementById('solidRotY').value = '';
                     document.getElementById('solidRotZ').value = '';
                     document.getElementById('solidPosX').disabled = true;
                     document.getElementById('solidPosY').disabled = true;
                     document.getElementById('solidPosZ').disabled = true;
+                    document.getElementById('solidScaleX').disabled = true;
+                    document.getElementById('solidScaleY').disabled = true;
+                    document.getElementById('solidScaleZ').disabled = true;
                     document.getElementById('solidRotX').disabled = true;
                     document.getElementById('solidRotY').disabled = true;
                     document.getElementById('solidRotZ').disabled = true;
@@ -2978,7 +3050,12 @@
                     cube: '⬜',
                     cylinder: '🔘',
                     cone: '🔺',
-                    sphere: '⚪'
+                    sphere: '⚪',
+                    prismVertical: '🔷',
+                    prismX: '➡️',
+                    prismY: '⬆️',
+                    tetrahedron: '🔺',
+                    pyramid: '🔻'
                 };
 
                 solidList.innerHTML = state.solids.map(solid => {
@@ -3325,6 +3402,29 @@
                             case 'sphere':
                                 geometry = new THREE.SphereGeometry(1, 32, 32);
                                 break;
+                            case 'prismVertical':
+                                // 垂直三棱柱 - 三角形底面在XY平面，高度沿Z轴
+                                geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
+                                break;
+                            case 'prismX':
+                                // 水平三棱柱(X轴方向) - 三角形底面在YZ平面
+                                geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
+                                geometry.rotateZ(Math.PI / 2);
+                                geometry.rotateX(Math.PI / 2);
+                                break;
+                            case 'prismY':
+                                // 水平三棱柱(Y轴方向) - 三角形底面在XZ平面
+                                geometry = new THREE.CylinderGeometry(1, 1, 2, 3);
+                                geometry.rotateX(Math.PI / 2);
+                                break;
+                            case 'tetrahedron':
+                                // 三棱锥(四面体)
+                                geometry = new THREE.TetrahedronGeometry(1.5);
+                                break;
+                            case 'pyramid':
+                                // 四棱锥 - 四边形底面
+                                geometry = new THREE.ConeGeometry(1, 2, 4);
+                                break;
                             default:
                                 geometry = this.createCubeGeometry(2);
                         }
@@ -3379,7 +3479,7 @@
 
                 // 同步网格 - Z轴向上坐标系（X-Y平面）
                 if (state.showGrid && !this.gridHelper) {
-                    this.gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+                    this.gridHelper = new THREE.GridHelper(30, 30, 0x334155, 0x1e293b);
                     this.gridHelper.rotation.x = Math.PI / 2; // 旋转90度使网格在X-Y平面（Z轴向上）
                     this.scene.add(this.gridHelper);
                 } else if (!state.showGrid && this.gridHelper) {
@@ -4302,6 +4402,41 @@
 
             store.pushUndoStack();
             geometryManager.updateSolidRotation(state.selectedSolidId, { x: newRotX, y: newRotY, z: newRotZ });
+        });
+
+        // 体块尺寸应用按钮
+        document.getElementById('applySolidScaleBtn').addEventListener('click', () => {
+            const state = store.getState();
+            if (!state.selectedSolidId) return;
+
+            const newScaleX = Math.max(0.1, parseFloat(document.getElementById('solidScaleX').value) || 2);
+            const newScaleY = Math.max(0.1, parseFloat(document.getElementById('solidScaleY').value) || 2);
+            const newScaleZ = Math.max(0.1, parseFloat(document.getElementById('solidScaleZ').value) || 2);
+
+            store.pushUndoStack();
+            geometryManager.updateSolidScale(state.selectedSolidId, { x: newScaleX, y: newScaleY, z: newScaleZ });
+
+            // 如果有选中的顶点，更新其显示的世界坐标
+            if (state.selectedVertex && state.selectedVertex.solidId === state.selectedSolidId) {
+                const mesh = renderer3d.solidMeshes.get(state.selectedSolidId);
+                if (mesh) {
+                    const solid = state.solids.find(s => s.id === state.selectedSolidId);
+                    const positionAttribute = mesh.geometry.attributes.position;
+                    const vertex = new THREE.Vector3();
+                    vertex.fromBufferAttribute(positionAttribute, state.selectedVertex.vertexIndex);
+                    store.setState({
+                        selectedVertex: {
+                            ...state.selectedVertex,
+                            position: {
+                                x: vertex.x * newScaleX / solid.scale.x + solid.position.x,
+                                y: vertex.y * newScaleY / solid.scale.y + solid.position.y,
+                                z: vertex.z * newScaleZ / solid.scale.z + solid.position.z
+                            }
+                        }
+                    });
+                    renderer3d.updateVertexEditUI();
+                }
+            }
         });
 
         // ============================================
