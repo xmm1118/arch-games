@@ -506,7 +506,7 @@
         }
 
         /* 仅在移动端竖屏时切换到单列布局 */
-        @media (max-width: 768px) {
+        @media (max-width: 1px) {
             .container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr auto;
@@ -528,7 +528,7 @@
         }
 
         /* 平板横屏：保持三列布局，只调整宽度 */
-        @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+        @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
             .container {
                 grid-template-columns: 150px 1fr 180px;
             }

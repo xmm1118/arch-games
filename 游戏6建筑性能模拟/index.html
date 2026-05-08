@@ -1150,7 +1150,7 @@
         }
 
         /* 仅在真正的移动端竖屏时才切换到单列布局 */
-        @media (max-width: 768px) {
+        @media (max-width: 1px) {
             .main-container {
                 grid-template-columns: 1fr;
             }
@@ -1164,7 +1164,7 @@
         }
 
         /* 平板横屏：保持三列布局，只调整宽度 */
-        @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+        @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
             .main-container {
                 grid-template-columns: 240px 1fr 240px;
             }
