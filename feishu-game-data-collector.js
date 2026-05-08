@@ -54,7 +54,7 @@ window.addEventListener('message', function(event) {
 function requestFileImport(accept = '.json,.txt') {
     const requestId = Date.now().toString();
 
-    window.parent.postMessage({
+    window.top.postMessage({
         type: 'FEISHU_FILE_IMPORT_REQUEST',
         requestId: requestId,
         accept: accept
@@ -98,7 +98,7 @@ function submitToFeishu() {
     };
 
     // 发送给妙搭
-    window.parent.postMessage(gameData, '*');
+    window.top.postMessage(gameData, '*');
     console.log('📤 成绩已提交:', gameData);
     
     // 按钮反馈
@@ -186,3 +186,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ 飞书妙搭数据收集模块已加载');
+console.log('📌 可用函数: requestFileImport(accept), submitToFeishu()');
+console.log('📌 可用事件: document.addEventListener("feishuFileImported", function(e) { console.log(e.detail); })');
