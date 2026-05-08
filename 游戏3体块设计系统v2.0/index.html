@@ -132,7 +132,7 @@
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            min-height: 400px;
+            min-height: 300px;
         }
 
         #canvas3d {
@@ -153,13 +153,14 @@
             font-size: 14px;
         }
 
-        /* 三视图区域 */
+        /* 三视图区域 - 1行并列布局：左立面 | 正立面 | 平面图 */
         .view-panels {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            height: 40vh;
-            min-height: 80px;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: 1fr;
+            gap: 10px;
+            height: 33vh;
+            min-height: 300px;
         }
 
         .view-panel {
@@ -464,7 +465,36 @@
         }
 
         /* 响应式调整 */
+        
+            .tool-section {
+                margin-bottom: 8px;
+            }
+            .view-panels {
+                height: 100px;
+                min-height: 70px;
+            }
+        }
 
+        
+            .toolbar {
+                padding: 10px;
+                gap: 6px;
+            }
+            .tool-btn {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            .view-panels {
+                height: 80px;
+                min-height: 60px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .info-panel {
+                padding: 10px;
+            }
+        }
 
         /* 滚动条样式 */
         ::-webkit-scrollbar {
@@ -722,18 +752,18 @@
                     <button class="tool-btn" style="flex:1; padding: 8px;" onclick="rotateSelectedBlock(45)">↻ 右旋体块</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0;">
-                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 1, 0)">⬆ 上移</button>
-                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, -1, 0)">⬇ 下移</button>
+                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 0, 1)">⬆ 上移</button>
+                    <button class="tool-btn" style="flex:1; padding: 8px;" onclick="moveSelectedBlock(0, 0, -1)">⬇ 下移</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
-                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 0, -1)">⬅ 前</button>
+                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 1, 0)">⬅ 前</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
                     <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(-1, 0, 0)">左</button>
                     <button class="tool-btn" style="padding: 8px 16px;" onclick="moveSelectedBlock(1, 0, 0)">右</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin: 5px 0; justify-content: center;">
-                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, 0, 1)">➡ 后</button>
+                    <button class="tool-btn" style="padding: 8px;" onclick="moveSelectedBlock(0, -1, 0)">➡ 后</button>
                 </div>
                 <p style="font-size: 11px; color: #888; margin-top: 8px; line-height: 1.4;">
                     💡 选中体块后用 <b>方向键</b> 水平移动，<b>PageUp/PageDown</b> 上下移动，<b>R</b> 旋转45°
@@ -800,32 +830,32 @@
             <!-- 三视图 -->
             <div class="view-toggle">
                 <span style="font-size: 11px; color: #b0b0b0; margin-right: 5px;">显示视图：</span>
-                <button class="view-toggle-btn active" data-view="back" onclick="toggleView('back')">背立面</button>
+                <button class="view-toggle-btn" data-view="back" onclick="toggleView('back')">背立面</button>
                 <button class="view-toggle-btn active" data-view="left" onclick="toggleView('left')">左侧立面</button>
-                <button class="view-toggle-btn" data-view="front" onclick="toggleView('front')">正立面</button>
+                <button class="view-toggle-btn active" data-view="front" onclick="toggleView('front')">正立面</button>
                 <button class="view-toggle-btn" data-view="right" onclick="toggleView('right')">右侧立面</button>
                 <button class="view-toggle-btn active" data-view="top" onclick="toggleView('top')">平面图</button>
             </div>
             <div class="view-panels" id="viewPanels">
-                <div class="view-panel" id="viewBack">
-                    <canvas id="canvasBack"></canvas>
-                    <div class="view-label">📐 背立面</div>
-                </div>
                 <div class="view-panel" id="viewLeft">
                     <canvas id="canvasLeft"></canvas>
                     <div class="view-label">📐 左侧立面</div>
                 </div>
-                <div class="view-panel hidden" id="viewFront">
+                <div class="view-panel" id="viewFront">
                     <canvas id="canvasFront"></canvas>
                     <div class="view-label">📐 正立面</div>
+                </div>
+                <div class="view-panel plan-view" id="viewTop">
+                    <canvas id="canvasTop"></canvas>
+                    <div class="view-label">📐 平面图</div>
+                </div>
+                <div class="view-panel hidden" id="viewBack">
+                    <canvas id="canvasBack"></canvas>
+                    <div class="view-label">📐 背立面</div>
                 </div>
                 <div class="view-panel hidden" id="viewRight">
                     <canvas id="canvasRight"></canvas>
                     <div class="view-label">📐 右侧立面</div>
-                </div>
-                <div class="view-panel" id="viewTop">
-                    <canvas id="canvasTop"></canvas>
-                    <div class="view-label">📐 平面图</div>
                 </div>
             </div>
         </main>
@@ -958,8 +988,107 @@
                 <div class="property-item">
                     <label>宽度(m)</label>
                     <input type="number" id="openingWidth" step="0.1" value="1.0" min="0.3" max="5" onchange="updateSelectedOpeningProperty('width', parseFloat(this.value))">
-    <script>
-console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
+                </div>
+                <div class="property-item">
+                    <label>高度(m)</label>
+                    <input type="number" id="openingHeight" step="0.1" value="2.1" min="0.3" max="4" onchange="updateSelectedOpeningProperty('height', parseFloat(this.value))">
+                </div>
+                <div class="property-item">
+                    <label>左偏移</label>
+                    <input type="number" id="openingOffsetX" step="0.1" value="0.5" min="0" max="1" onchange="updateSelectedOpeningProperty('offsetX', parseFloat(this.value))">
+                </div>
+                <div class="property-item">
+                    <label>距地面高度(m)</label>
+                    <input type="number" id="openingOffsetY" step="0.1" value="0.0" min="0" max="10" onchange="updateSelectedOpeningProperty('offsetY', parseFloat(this.value))">
+                </div>
+                <div class="property-item">
+                    <span>面积</span>
+                    <span id="openingAreaDisplay">-</span>
+                </div>
+                <div class="property-item">
+                    <span>开洞比</span>
+                    <span id="openingRatioDisplay">-</span>
+                </div>
+                <div class="io-buttons">
+                    <button class="io-btn" onclick="deleteSelectedOpening()">🗑️ 删除</button>
+                </div>
+            </div>
+
+            <div class="node-list">
+                <h4>📦 体块列表</h4>
+                <div id="nodeListContent"></div>
+            </div>
+
+            <!-- 导入导出按钮 -->
+            <div class="io-buttons">
+                <input type="file" id="importInput" accept=".json">
+                <button class="io-btn" onclick="importDesign()">📥 导入</button>
+                <button class="io-btn" onclick="importGame2Data()" id="importGame2Btn">📥📐 导入平面</button>
+                <div class="export-dropdown" style="flex:1;">
+                    <button class="io-btn" style="width:100%;">📤 导出</button>
+                    <div class="export-dropdown-content">
+                        <button onclick="exportDesign('json')">JSON 设计文件</button>
+                        <button onclick="exportDesign('obj')">OBJ 3D模型</button>
+                        <button onclick="exportDesign('stl')">STL 3D打印</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 设计报告按钮 -->
+            <div class="io-buttons" style="margin-top:10px;">
+                <button class="io-btn" onclick="showDesignReport()" style="width:100%; background: rgba(46, 204, 113, 0.2); border-color: rgba(46, 204, 113, 0.4); color: #2ecc71;">
+                    📊 设计报告
+                </button>
+            </div>
+
+            <div class="achievement-panel">
+                <h4>🏆 成就</h4>
+                <div id="achievementContent">
+                    <div class="achievement-item">
+                        <div class="achievement-icon">🎯</div>
+                        <div class="achievement-text">创建第一个体块</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">🌟</div>
+                        <div class="achievement-text">完成第一关</div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">💡</div>
+                        <div class="achievement-text">使用撤销功能</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 底部状态栏 -->
+        <footer class="status-bar">
+            <div class="status-item">⌨️ <b>R</b>: 旋转体块</div>
+            <div class="status-item">⌨️ <b>方向键</b>: 水平移动</div>
+            <div class="status-item">⌨️ <b>PgUp/PgDn</b>: 上下移动</div>
+            <div class="status-item">🎮 当前关卡: <span id="currentLevel">1</span></div>
+            <div class="status-item">✅ 任务进度: <span id="taskProgress2">0</span>/<span id="taskTotal">9</span></div>
+            <div class="status-item">📐 体形系数: <span id="statusShapeFactor">-</span></div>
+        </footer>
+    </div>
+    
+    <!-- 游戏3设计报告弹窗 -->
+    <div class="game3-report-overlay" id="game3ReportOverlay" onclick="closeDesignReport()"></div>
+    <div class="game3-report-panel" id="game3ReportPanel">
+        <div class="game3-report-header">
+            <h3>📊 设计报告</h3>
+            <button class="game3-report-close" onclick="closeDesignReport()">×</button>
+        </div>
+        <div class="game3-report-content" id="game3ReportContent">
+            <!-- 报告内容由JS动态生成 -->
+        </div>
+        <div class="game3-report-footer">
+            <button class="btn btn-secondary" onclick="exportGame3Report()">📄 导出报告</button>
+            <button class="btn" onclick="closeDesignReport()">关闭</button>
+        </div>
+    </div>
+
+    <!-- Three.js: CDN优先，本地fallback -->
+    <script>console.warn('Scripts "build/three.js" and "build/three.min.js" are deprecated with r150+, and will be removed with r160. Please use ES Modules or alternatives: https://threejs.org/docs/index.html#manual/en/introduction/Installation'),
 /**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -1400,8 +1529,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                     0.1,
                     1000
                 );
-                // 新坐标系: Z垂直向上, Y前后
-                this.orthoCamera.position.set(20, -20, 20);
+                this.orthoCamera.position.set(-20, 20, 20); // 相机在(-20,20,20)看向原点：红轴(X)朝左，绿轴(Z)朝右，蓝轴(Y)垂直向上
                 this.orthoCamera.lookAt(0, 0, 0);
 
                 // 创建透视相机（备用）
@@ -1411,7 +1539,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                     0.1,
                     1000
                 );
-                this.perspCamera.position.set(20, -20, 20);
+                this.perspCamera.position.set(-20, 20, 20); // 相机在(-20,20,20)看向原点：红轴(X)朝左，绿轴(Z)朝右，蓝轴(Y)垂直向上
                 this.perspCamera.lookAt(0, 0, 0);
 
                 this.camera = this.orthoCamera;
@@ -1430,7 +1558,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // 添加方向光（产生阴影）- 新坐标系
+                // 添加方向光（产生阴影）
                 this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
                 this.directionalLight.position.set(10, 10, 20);
                 this.directionalLight.castShadow = true;
@@ -1442,10 +1570,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
                 // 添加网格辅助线
                 this.gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                this.gridHelper.rotation.x = Math.PI / 2;
                 this.scene.add(this.gridHelper);
 
                 // 添加自定义坐标轴（X红、Y蓝、Z绿）
                 this.createCustomAxes();
+                // 设置场景等轴测视角（顺时针旋转90度）：红轴向左，绿轴向右，蓝轴垂直向上
+                this.scene.rotation.set(0, 0, 0);
 
                 // 初始化三视图渲染器
                 this.initViewPanels();
@@ -1486,8 +1617,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                     0.1,
                     1000
                 );
-                // 新坐标系: Z垂直向上, Y前后
-                this.orthoCamera.position.set(20, -20, 20);
+                this.orthoCamera.position.set(-20, 20, 20); // 相机在(-20,20,20)看向原点：红轴(X)朝左，绿轴(Z)朝右，蓝轴(Y)垂直向上
                 this.orthoCamera.lookAt(0, 0, 0);
 
                 // 创建透视相机（备用）
@@ -1497,7 +1627,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                     0.1,
                     1000
                 );
-                this.perspCamera.position.set(20, -20, 20);
+                this.perspCamera.position.set(-20, 20, 20); // 相机在(-20,20,20)看向原点：红轴(X)朝左，绿轴(Z)朝右，蓝轴(Y)垂直向上
                 this.perspCamera.lookAt(0, 0, 0);
 
                 this.camera = this.orthoCamera;
@@ -1516,7 +1646,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // 添加方向光（产生阴影）- 新坐标系
+                // 添加方向光（产生阴影）
                 this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
                 this.directionalLight.position.set(10, 10, 20);
                 this.directionalLight.castShadow = true;
@@ -1528,10 +1658,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
                 // 添加网格辅助线
                 this.gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+                this.gridHelper.rotation.x = Math.PI / 2;
                 this.scene.add(this.gridHelper);
 
                 // 添加自定义坐标轴（X红、Y蓝、Z绿）
                 this.createCustomAxes();
+                // 设置场景等轴测视角（顺时针旋转90度）：红轴向左，绿轴向右，蓝轴垂直向上
+                this.scene.rotation.set(0, 0, 0);
 
                 // 初始化三视图渲染器
                 this.initViewPanels();
@@ -1548,42 +1681,43 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
             
             // 初始化三视图（四个立面 + 平面图）
+            // 建筑学第一角投影标准：X红(左右)、Y绿(前后)、Z蓝(垂直)
             initViewPanels() {
                 const frustumSize = 12;
                 
-                // 背立面相机（从后往前看，Z负方向）- 显示宽度×高度
+                // 背立面相机（从后往前看，Z负方向）- 显示XZ平面（红+蓝，宽度×高度）
                 this.backCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.backCamera.position.set(0, 5, -30);
-                this.backCamera.lookAt(0, 5, 0);
+                this.backCamera.position.set(0, 0, -30);
+                this.backCamera.lookAt(0, 0, 0);
                 
-                // 左侧立面相机（从左往右看，X负方向）- 显示深度×高度
+                // 左侧立面相机（从左往右看，X负方向）- 显示YZ平面（绿+蓝，深度×高度）
                 this.leftCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.leftCamera.position.set(-30, 5, 0);
-                this.leftCamera.lookAt(0, 5, 0);
+                this.leftCamera.position.set(-30, 0, 0);
+                this.leftCamera.lookAt(0, 0, 0);
                 
-                // 正立面相机（从前往后看，Z正方向）- 显示宽度×高度
+                // 正立面相机（从前往后看，Z正方向）- 显示XZ平面（红+蓝，宽度×高度）
                 this.frontCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.frontCamera.position.set(0, 5, 30);
-                this.frontCamera.lookAt(0, 5, 0);
+                this.frontCamera.position.set(0, 0, 30);
+                this.frontCamera.lookAt(0, 0, 0);
                 
-                // 右侧立面相机（从右往左看，X正方向）- 显示深度×高度
+                // 右侧立面相机（从右往左看，X正方向）- 显示YZ平面（绿+蓝，深度×高度）
                 this.rightCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.rightCamera.position.set(30, 5, 0);
-                this.rightCamera.lookAt(0, 5, 0);
+                this.rightCamera.position.set(30, 0, 0);
+                this.rightCamera.lookAt(0, 0, 0);
                 
-                // 平面图相机（从上往下看，Y轴方向）- 显示宽度×深度
+                // 平面图相机（从上往下看，Y正方向）- 显示XY平面（红+绿，宽度×深度）
                 this.topCamera = new THREE.OrthographicCamera(
                     -frustumSize, frustumSize, frustumSize, -frustumSize, 0.1, 100
                 );
-                this.topCamera.position.set(0, 30, 0.01);
+                this.topCamera.position.set(0, 30, 0);
                 this.topCamera.lookAt(0, 0, 0);
                 
                 // 五个视图渲染器
@@ -1622,29 +1756,31 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 this.updateViewPanelSizes();
             }
             
-            // 创建自定义坐标轴（X红、Y蓝垂直、Z绿）
+            // 创建自定义坐标轴（X红左右、Y绿前后、Z蓝垂直向上 - 建筑学标准）
             createCustomAxes() {
                 const axisLength = 8;
                 
-                // X轴 - 红色（左右方向）
+                // X轴 - 红色（左右方向）：沿Three.js的X轴
                 const xGeometry = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(-axisLength, 0, 0),
                     new THREE.Vector3(axisLength, 0, 0)
                 ]);
                 const xMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
                 const xAxis = new THREE.Line(xGeometry, xMaterial);
                 this.scene.add(xAxis);
+                // 旋转场景：绕Y轴逆时针旋转90度，确保红轴向左、绿轴向右、蓝轴向上
+                this.scene.rotation.y = Math.PI / 2;
                 
-                // Y轴 - 绿色（前后方向）
+                // Y轴 - 绿色（前后方向）：沿Three.js的Z轴
                 const yGeometry = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, -axisLength),
                     new THREE.Vector3(0, 0, axisLength)
                 ]);
                 const yMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
                 const yAxis = new THREE.Line(yGeometry, yMaterial);
                 this.scene.add(yAxis);
                 
-                // Z轴 - 蓝色（垂直向上）
+                // Z轴 - 蓝色（垂直向上）：沿Three.js的Y轴
                 const zGeometry = new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
                     new THREE.Vector3(0, axisLength, 0)
@@ -1656,7 +1792,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 // 添加箭头
                 const arrowSize = 0.3;
                 
-                // X轴箭头
+                // X轴箭头（红色，左右）
                 const xArrow = new THREE.ConeGeometry(arrowSize, arrowSize * 2, 8);
                 const xArrowMesh = new THREE.Mesh(xArrow, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
                 xArrowMesh.position.set(axisLength, 0, 0);
@@ -1682,18 +1818,20 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 const allPanels = document.querySelectorAll('.view-panel');
                 
                 if (allPanels.length === 5) {
-                    // 获取可见面板的数量，动态调整网格
                     const visibleCount = panels.length;
                     const container = document.getElementById('viewPanels');
+                    
+                    // 始终使用1行并列布局
                     if (container) {
                         container.style.gridTemplateColumns = `repeat(${visibleCount}, 1fr)`;
+                        container.style.gridTemplateRows = '1fr';
                     }
                     
                     panels.forEach(panel => {
-                        const width = panel.clientWidth || 150;
-                        const height = panel.clientHeight || 140;
+                        const width = panel.clientWidth || 200;
+                        const height = panel.clientHeight || 130;
                         const aspect = width / height;
-                        const frustumSize = 12;
+                        const frustumSize = 15;  // 增大视锥体，显示更清晰
                         
                         const canvasId = panel.querySelector('canvas')?.id;
                         
@@ -1778,6 +1916,58 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 this.canvas.addEventListener('mouseup', (e) => {
                     try { this.onCanvasMouseUp(e); } catch(err) { console.error('MouseUp error:', err); }
                 }, true);
+
+                // ==================== 键盘控制映射 - 体块移动 ====================
+                window.addEventListener('keydown', (e) => {
+                    const state = this.store.getState();
+                    if (!state.selectedNodeId) return;
+
+                    // 方向键控制体块移动
+                    switch(e.key) {
+                        case 'ArrowLeft':
+                            // 左箭头 → X轴向左
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(-1, 0, 0);
+                            }
+                            break;
+                        case 'ArrowRight':
+                            // 右箭头 → X轴向右
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(1, 0, 0);
+                            }
+                            break;
+                        case 'ArrowUp':
+                            // 上箭头 → Y轴向前
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(0, 1, 0);
+                            }
+                            break;
+                        case 'ArrowDown':
+                            // 下箭头 → Y轴向后
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(0, -1, 0);
+                            }
+                            break;
+                        case 'PageUp':
+                            // PageUp → Z轴向上
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(0, 0, 1);
+                            }
+                            break;
+                        case 'PageDown':
+                            // PageDown → Z轴向下
+                            if (window.moveSelectedBlock) {
+                                window.moveSelectedBlock(0, 0, -1);
+                            }
+                            break;
+                        default:
+                            return;
+                    }
+
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Keyboard move:', e.key);
+                });
             }
 
             onCanvasMouseDown(event) {
@@ -3553,7 +3743,6 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                             
                             switch(e.key) {
                                 case 'ArrowUp':
-                                    // 前后移动 (Y轴)
                                     newPos.z -= moveStep;
                                     moved = true;
                                     break;
@@ -3562,7 +3751,6 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                                     moved = true;
                                     break;
                                 case 'ArrowLeft':
-                                    // 左右移动 (X轴)
                                     newPos.x -= moveStep;
                                     moved = true;
                                     break;
@@ -3571,12 +3759,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                                     moved = true;
                                     break;
                                 case 'PageUp':
-                                    // 上下移动 (Z轴垂直)
                                     newPos.y += moveStep;
                                     moved = true;
                                     break;
                                 case 'PageDown':
-                                    newPos.y = Math.max(0, newPos.y - moveStep);
+                                    newPos.z = Math.max(0, newPos.z - moveStep);
                                     moved = true;
                                     break;
                             }
@@ -3683,18 +3870,18 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
             if (node) {
                 const newPos = {
                     x: node.position.x + dx,
-                    y: Math.max(0, node.position.y + dy), // Y不能为负 (垂直方向)
-                    z: node.position.z + dz
+                    y: node.position.y + dy,
+                    z: Math.max(0, node.position.z + dz) // Z不能为负（垂直方向）
                 };
                 _app.nodeManager.updateNode(state.selectedNodeId, { position: newPos });
                 console.log('体块移动到:', newPos);
                 
                 // 检测任务完成
                 if (_app.uiManager) {
-                    if (dy !== 0) {
+                    if (dz !== 0) {
                         _app.uiManager.checkTask('moveUp');
                     }
-                    if (dx !== 0 || dz !== 0) {
+                    if (dx !== 0 || dy !== 0) {
                         _app.uiManager.checkTask('moveHorizontal');
                     }
                 }
@@ -3718,18 +3905,18 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 return;
             }
             
-            // 围绕原点旋转相机（保持Z轴高度不变 - 新坐标系Z垂直）
+            // 围绕原点旋转相机（保持Y轴高度不变 - Three.js中Y垂直向上）
             const x = camera.position.x;
-            const y = camera.position.y;
+            const y = camera.position.y; // 保持垂直高度
             const z = camera.position.z;
-            const distance = Math.sqrt(x * x + y * y); // 计算水平距离(XY平面)
+            const distance = Math.sqrt(x * x + z * z); // 计算水平距离(XZ平面)
             
             // 计算新的角度
-            const currentAngle = Math.atan2(y, x);
+            const currentAngle = Math.atan2(z, x);
             const newAngle = currentAngle + rad;
             
             camera.position.x = distance * Math.cos(newAngle);
-            camera.position.y = distance * Math.sin(newAngle);
+            camera.position.z = distance * Math.sin(newAngle);
             camera.lookAt(0, 0, 0);
             
             // 同步另一个相机
@@ -3753,7 +3940,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
             const renderer = _app.renderer;
             
             // 重置所有相机到默认位置（等轴测视角）
-            const defaultPos = { x: 20, y: 20, z: 20 };
+            const defaultPos = { x: -20, y: 20, z: 20 }; // 相机在(-20,20,20)看向原点：红轴(X)朝左，绿轴(Z)朝右，蓝轴(Y)垂直向上
             
             if (renderer.orthoCamera) {
                 renderer.orthoCamera.position.set(defaultPos.x, defaultPos.y, defaultPos.z);
