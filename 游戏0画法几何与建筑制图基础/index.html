@@ -33,7 +33,7 @@
             height: 100vh;
         }
 
-        .container {
+        .game-container {
             display: grid;
             grid-template-columns: 240px 1fr 280px;
             grid-template-rows: 60px 1fr 30px;
@@ -1080,7 +1080,7 @@
 
         /* 响应式设计 - 移动端竖屏 */
         @media (max-width: 1px) and (orientation: portrait) {
-            .container {
+            .game-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr auto;
                 gap: 6px;
@@ -1250,7 +1250,7 @@
 
         /* 移动端横屏 */
         @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
-            .container {
+            .game-container {
                 grid-template-columns: 200px 1fr 220px;
                 height: 100dvh;
             }
@@ -1271,7 +1271,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="game-container">
         <!-- 顶部导航 -->
         <header class="header">
             <h1>📐 画法几何与建筑制图基础</h1>
