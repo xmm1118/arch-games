@@ -825,9 +825,33 @@
    * @param {string} value 当前值。
    * @returns {string}
    */
+  /**
+   * 构建班级选择字段。
+   * 用途：从 ClassConfig 读取班级列表，生成下拉选择框。
+   * @param {string} value 当前选中的班级名称
+   * @returns {string} HTML 字符串
+   */
   function buildClassSelectField(value) {
-    var config = getRuntimeConfig();
-    var optionsHtml = config.classOptions
+    var classes = [];
+    var courses = [];
+    var semesters = [];
+
+    // 优先从 ClassConfig 获取班级配置
+    if (global.ClassConfig) {
+      classes = global.ClassConfig.getClasses() || [];
+      courses = global.ClassConfig.getCourses() || [];
+      semesters = global.ClassConfig.getSemesters() || [];
+    }
+
+    // 构建班级选项
+    var classOptions = ["游客"];
+    classes.forEach(function (cls) {
+      if (cls.className && classOptions.indexOf(cls.className) === -1) {
+        classOptions.push(cls.className);
+      }
+    });
+
+    var optionsHtml = classOptions
       .map(function renderOption(option) {
         var isSelected = option === value ? " selected" : "";
         return (
@@ -842,13 +866,39 @@
       })
       .join("");
 
+    // 构建学期选项
+    var semesterOptions = semesters
+      .map(function (s) {
+        return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + "</option>";
+      })
+      .join("");
+
+    // 构建课程选项
+    var courseOptions = courses
+      .map(function (c) {
+        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + "</option>";
+      })
+      .join("");
+
     return [
       '<label class="feishu-field">',
       '<span class="feishu-field__label">班级</span>',
-      '<select name="className">',
+      '<select name="className" id="feishu-class-select">',
       optionsHtml,
       "</select>",
-      '<span class="feishu-field__hint">班级先使用前端固定选项，后续可继续增删，也可保留“游客”。</span>',
+      '<span class="feishu-field__hint">选择班级后自动填充课程信息。</span>',
+      "</label>",
+      '<label class="feishu-field">',
+      '<span class="feishu-field__label">课程</span>',
+      '<select name="courseName" id="feishu-course-select">',
+      courseOptions,
+      "</select>",
+      "</label>",
+      '<label class="feishu-field">',
+      '<span class="feishu-field__label">学期</span>',
+      '<select name="semester" id="feishu-semester-select">',
+      semesterOptions,
+      "</select>",
       "</label>",
     ].join("");
   }
@@ -901,6 +951,8 @@
       className: String(form.className.value || "").trim(),
       studentName: String(form.studentName.value || "").trim(),
       identityType: String(form.identityType.value || "正式学生").trim(),
+      courseName: form.courseName ? String(form.courseName.value || "").trim() : "",
+      semester: form.semester ? String(form.semester.value || "").trim() : "",
     };
   }
 
@@ -976,6 +1028,30 @@
         onSaved(getSavedProfile());
       }
     };
+
+
+    // 班级选择变化时自动填充课程和学期
+    var classSelect = form.querySelector("#feishu-class-select");
+    var courseSelect = form.querySelector("#feishu-course-select");
+    var semesterSelect = form.querySelector("#feishu-semester-select");
+
+    if (classSelect && courseSelect && semesterSelect) {
+      classSelect.addEventListener("change", function handleClassChange() {
+        var selectedClass = classSelect.value;
+        if (global.ClassConfig && selectedClass !== "游客") {
+          var courseName = global.ClassConfig.getCourseByClassName(selectedClass);
+          if (courseName && courseSelect) {
+            // 找到匹配的课程选项并选中
+            for (var i = 0; i < courseSelect.options.length; i++) {
+              if (courseSelect.options[i].value === courseName) {
+                courseSelect.selectedIndex = i;
+                break;
+              }
+            }
+          }
+        }
+      });
+    }
 
     saveButton.onclick = function handleSaveClick() {
       var nextProfile = readProfileFromForm(form);
@@ -1391,6 +1467,19 @@
    */
   function sendDraftToMiaoda(payload, targetUrl) {
     var config = getRuntimeConfig();
+
+    // 将提交数据存储到 localStorage，供妙搭页面读取
+    try {
+      localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(payload));
+      localStorage.setItem(
+        STORAGE_KEYS.draft + "_timestamp",
+        new Date().toISOString()
+      );
+    } catch (e) {
+      console.warn("[feishu-submission] 无法存储草稿到 localStorage:", e);
+    }
+
+    // 尝试通过 postMessage 发送数据
     var submitWindow = global.open(targetUrl, config.submitWindowName);
     var messagePayload = {
       type: "FEISHU_SUBMISSION_DRAFT",
@@ -1399,7 +1488,7 @@
     var attempt = 0;
 
     if (!submitWindow) {
-      showToast("浏览器拦截了新窗口，请允许弹窗后重试。", "warning");
+      showToast("浏览器拦截了新窗口，请允许弹窗后重试。数据已保存到本地。", "warning");
       return;
     }
 
@@ -1409,7 +1498,11 @@
      */
     function postDraft() {
       attempt += 1;
-      submitWindow.postMessage(messagePayload, "*");
+      try {
+        submitWindow.postMessage(messagePayload, "*");
+      } catch (e) {
+        console.warn("[feishu-submission] postMessage 失败:", e);
+      }
       if (attempt < 10) {
         global.setTimeout(postDraft, 700);
       }
@@ -1417,7 +1510,7 @@
 
     postDraft();
     showToast(
-      "已打开妙搭提交页；如未登录，登录只会发生在妙搭提交页。",
+      "已打开妙搭提交页；数据已保存到本地存储。",
       "success",
     );
   }

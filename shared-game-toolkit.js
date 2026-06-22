@@ -474,6 +474,13 @@
   function triggerExport(config) {
     const handled = safeCall(config.hooks.exportFile);
     if (handled === true) {
+      // 页面原生导出已执行，存储一个标记表示已导出
+      storeExportArtifact(
+        JSON.stringify({ source: "native-export", timestamp: new Date().toISOString() }),
+        `${config.gameId}-原生导出-${formatTime()}.json`,
+        "application/json"
+      );
+      toast("已导出文件（可随作业提交）");
       return;
     }
     const summary = buildScoreSummary(config);
