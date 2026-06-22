@@ -6,7 +6,9 @@
 
 **主站首页：** [https://xmm1118.github.io/arch-games/](https://xmm1118.github.io/arch-games/)
 
-**妙搭首页（飞书）：** 请参考项目内妙搭部署文档
+**妙搭系统首页（飞书）：** [https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f](https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f)
+
+**妙搭游戏列表页（飞书）：** [https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f/games](https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f/games)
 
 ## 游戏模块一览
 

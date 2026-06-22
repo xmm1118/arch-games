@@ -12473,7 +12473,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
 
 
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../shared-game-toolkit.js?v=20260620a" defer><\/script>
 <script>
     /**
      * 共享工具条接入配置
@@ -12509,7 +12509,7 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
             ranking: { enabled: true, semester: '2026春', courseName: '建筑性能模拟', game: '游戏6' }
         }
     );
-</script>
+<\/script>
 <!-- sgt-injected:end -->
 
 </body>
@@ -15937,6 +15937,47 @@ PMV = f(温度, 湿度, 风速, 辐射)`,
     </script>
       <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
     <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏6',
+        gameTitle: '建筑性能模拟',
+        captureTarget: '#mainCanvas, .canvas-area, body',
+        scoring: { type: 'evaluation', threshold: 70, total: 100, description: '综合性能评价 ≥ 70 即达标' },
+        hideSelectors: [],
+        ranking: { enabled: true, semester: '2026春', course: '建筑性能模拟', game: '游戏6' },
+        hooks: {
+            capture: () => false,
+            undo: () => false,
+            reset: () => (typeof window.handleReset === 'function' ? (window.handleReset(), true) : false),
+            exportFile: () => (typeof exportData === 'function' ? (exportData(), true) : false),
+            readScore: () => Number(window.performanceScore || (window.gameState && window.gameState.totalScore) || 0)
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '建筑性能模拟', game: '游戏6' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
 </body>
 </html>
 
