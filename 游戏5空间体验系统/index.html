@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2769,6 +2769,8 @@
             }
 
             experienceRecords.push({ title, description, time: new Date() });
+            // 暴露体验记录数量到 window 供共享工具条读取
+            window.completedExperience = experienceRecords.length;
         }
 
         // 切换关卡

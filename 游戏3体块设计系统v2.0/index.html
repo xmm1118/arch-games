@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -6091,6 +6091,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 buildScore: evaluation.buildabilityScore,
                 totalScore: evaluation.total
             };
+            // 暴露评分到 window 供共享工具条读取
+            window.designEvaluation = { totalScore: evaluation.total };
             const suggestions = generateLevel5Suggestions(scores, state);
             const grade = getGrade(evaluation.total);
             const metrics = calculateGame3DesignMetrics(state);

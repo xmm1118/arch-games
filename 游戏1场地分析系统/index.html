@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -4639,6 +4639,8 @@
         
         // 保存反馈
         GameState.currentFeedback = feedback;
+        // 暴露评分到 window 供共享工具条读取
+        window.evaluationScore = feedback.score;
         
         // 更新弹窗内容
         const levelNames = {

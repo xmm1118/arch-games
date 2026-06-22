@@ -1,6 +1,6 @@
 {
   "name": "architectural-design-game-development",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "private": true,
   "description": "建筑课程游戏化教学系统的页面维护与风格统一元数据文件。",
   "scripts": {

@@ -3628,6 +3628,9 @@
           state.score += levelScore;
           state.stars += levelStars;
 
+          /** 将碳排放计算得分暴露到 window 对象，供共享工具条 readScore hook 读取 */
+          window.carbonScore = state.score;
+
           // 更新UI
           document.getElementById("score").textContent = state.score;
           document.getElementById("stars").textContent = state.stars;
@@ -3690,6 +3693,9 @@
 
       function finishGame() {
         state.score += 500; // 通关奖励
+
+        /** 将碳排放计算得分暴露到 window 对象，供共享工具条 readScore hook 读取 */
+        window.carbonScore = state.score;
 
         document.getElementById("score").textContent = state.score;
 

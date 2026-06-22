@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -3384,6 +3384,7 @@ professional architectural rendering, high quality, --ar 16:9 --v 6 --iw 1.5`;
             if (['材质', 'material', 'facade', '幕墙'].some(k => prompt.includes(k))) professional += 30;
             
             const total = Math.round((completeness + clarity + professional) / 3);
+            window.renderScore = total;
             
             document.getElementById('totalScore').textContent = total;
             document.getElementById('scoreBar').style.width = `${total}%`;

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2708,6 +2708,8 @@
                 totalScoreEl.className = 'eval-total-score poor';
             }
             document.getElementById('totalScoreValue').textContent = totalScore;
+            // 暴露到 window 供共享工具条读取
+            window.totalScore = totalScore;
             
             // 生成各项得分HTML
             const itemsHTML = results.map(r => {

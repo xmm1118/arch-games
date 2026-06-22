@@ -1,4 +1,4 @@
-﻿﻿﻿﻿<!doctype html>
+﻿﻿﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -5411,6 +5411,30 @@
       const geometryManager = new GeometryManager(store);
       const renderer3d = new Renderer3D("canvas3d", store, geometryManager);
 
+      /**
+       * 根据当前 Store 状态计算已完成任务数量，并同步到 window.completedTaskCount。
+       * 共 6 项任务：创建点、创建连线、创建体块、查看投影模块、选择剖切面、生成剖面图。
+       * @returns {number} 已完成任务数（0-6）
+       */
+      function updateCompletedTaskCount() {
+        const s = store.getState();
+        let count = 0;
+        if (s.points.length > 0) count++;         // 任务1：创建点
+        if (s.lines.length > 0) count++;           // 任务2：创建连线
+        if (s.solids.length > 0) count++;           // 任务3：创建体块
+        if (s.showProjectionModule) count++;        // 任务4：查看投影模块
+        if (s.cutPlaneType !== null) count++;       // 任务5：选择剖切面
+        if (s.sectionConfirmed) count++;            // 任务6：生成剖面图
+        window.completedTaskCount = count;
+        return count;
+      }
+
+      /** 订阅 Store 变化，每次状态更新后重新计算已完成任务数 */
+      store.subscribe(() => updateCompletedTaskCount());
+
+      /** 初始化时计算一次评分基准值 */
+      updateCompletedTaskCount();
+
       // 全局函数供HTML调用
       function deletePoint(pointId) {
         store.pushUndoStack();
@@ -6337,7 +6361,7 @@
             undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => (typeof exportDesign === 'function' ? (exportDesign(), true) : false),
-            readScore: () => (window.gameState && window.gameState.completedTasks ? window.gameState.completedTasks.length : 0)
+            readScore: () => Number(window.completedTaskCount || 0)
         }
     };
     /**

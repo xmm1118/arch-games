@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2960,6 +2960,8 @@
             const requiredTasks = level.tasks.map(t => t.id);
             const completedCount = requiredTasks.filter(id => state.completedTasks[id]).length;
             const totalTasks = requiredTasks.length;
+            // 暴露评分到 window 供共享工具条读取
+            window.completedTaskCount = completedCount;
             
             const score = Math.round((completedCount / totalTasks) * 100);
             
@@ -3232,7 +3234,7 @@
             undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => false,
-            readScore: () => (window.gameState && window.gameState.completedTasks ? (window.gameState.completedTasks.size || window.gameState.completedTasks.length) : 0)
+            readScore: () => Number(window.completedTaskCount || 0)
         }
     };
     /**

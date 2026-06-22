@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2146,6 +2146,8 @@
 
         function updateScoreDisplay() {
             const totalScore = calculateTotalScore();
+            /** 将综合评分暴露到 window 对象，供共享工具条 readScore hook 读取 */
+            window.iterationScore = totalScore;
             document.getElementById('totalScore').textContent = Math.round(totalScore);
             document.querySelector('.score-circle').style.setProperty('--score', totalScore);
 

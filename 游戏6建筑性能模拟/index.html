@@ -14889,6 +14889,8 @@ C_全生命周期 = ${(operationalCarbon * buildingLifespan).toFixed(0)} + ${(fl
                 // 计算综合评分
                 const comprehensiveResult = calculateComprehensiveScore();
                 GameState.comprehensiveScore = comprehensiveResult;
+                // 暴露评分到 window 供共享工具条读取
+                window.performanceScore = comprehensiveResult.totalScore;
 
                 // 更新UI显示综合评分
                 updateComprehensiveScoreUI(comprehensiveResult);

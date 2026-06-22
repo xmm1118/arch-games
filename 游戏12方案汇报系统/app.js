@@ -2919,6 +2919,8 @@ class PresentationSystem {
     // 关卡完成
     completeLevel(level) {
         this.state.levelProgress[level - 1] = 100;
+        const score = this.getLevelScoreSummary().score;
+        window.reportScore = score;
         this.renderLevelDots();
         this.showToast(`关卡${level}已完成！`, 'success');
         

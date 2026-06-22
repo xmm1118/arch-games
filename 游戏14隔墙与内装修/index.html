@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -890,7 +890,9 @@
             const score = 100 + gameState.currentLevel * 20;
             gameState.score += score;
             gameState.levelProgress[gameState.currentLevel] = true;
-            
+            /** 将已通关数暴露到 window.partitionProgress，供共享工具条 readScore hook 读取 */
+            window.partitionProgress = { completed: Object.keys(gameState.levelProgress).filter(k => gameState.levelProgress[k]).length };
+
             // 解锁成就
             if (gameState.currentLevel === 1) unlockAchievement('first_level');
             if (gameState.currentLevel === 1) unlockAchievement('partition_master');
@@ -1164,7 +1166,7 @@
             undo: () => (typeof undo === 'function' ? (undo(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => (typeof exportMaterialPackage === 'function' ? (exportMaterialPackage(), true) : false),
-            readScore: () => Number((window.partitionProgress && window.partitionProgress.completed) || (window.gameState && window.gameState.completedLayers) || 0)
+            readScore: () => Number(window.partitionProgress && window.partitionProgress.completed || 0)
         }
     };
     /**

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -913,6 +913,8 @@
         function completeLevel() {
             if (GameState.completedLevels.includes(GameState.currentLevel)) return;
             GameState.completedLevels.push(GameState.currentLevel);
+            /** 将已通关数暴露到 window.windowProgress，供共享工具条 readScore hook 读取 */
+            window.windowProgress = { completed: GameState.completedLevels.length };
             const scoreGain = 100 + (GameState.currentLevel * 25);
             GameState.score += scoreGain;
             document.getElementById('scoreValue').textContent = GameState.score;
@@ -1346,7 +1348,7 @@
             undo: () => (typeof undo === 'function' ? (undo(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => (typeof exportMaterialPackage === 'function' ? (exportMaterialPackage(), true) : false),
-            readScore: () => Number((window.windowProgress && window.windowProgress.completed) || (window.gameState && window.gameState.completedNodes) || 0)
+            readScore: () => Number(window.windowProgress && window.windowProgress.completed || 0)
         }
     };
     /**

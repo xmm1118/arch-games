@@ -3537,7 +3537,7 @@
             undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => false,
-            readScore: () => Number((window.layerProgress && window.layerProgress.completed) || (window.gameState && window.gameState.completedLayers) || 0)
+            readScore: () => Number(window.completedLayerCount || 0)
         }
     };
     /**
