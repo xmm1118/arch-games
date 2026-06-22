@@ -39,7 +39,7 @@
    */
   var DEFAULT_CONFIG = {
     classOptions: ["建筑2301班", "建筑2302班", "建筑2303班", "游客"],
-    miaodaSubmitUrl: "https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f",
+    miaodaSubmitUrl: "https://wavk97moa3e.aiforce.cloud/app/app_4ke3mggtgq97f/games",
     allowGuestSubmit: true,
     submitWindowName: "feishu-submission-window",
     ranking: {
