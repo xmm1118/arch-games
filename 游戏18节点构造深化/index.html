@@ -1,0 +1,2725 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>游戏18：节点构造深化 - 建筑师成长之路</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --primary-light: #818cf8;
+        --secondary: #10b981;
+        --secondary-dark: #059669;
+        --accent: #f59e0b;
+        --accent-dark: #d97706;
+        --danger: #ef4444;
+        --bg-dark: #0f172a;
+        --bg-card: #1e293b;
+        --bg-card-hover: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --border: #334155;
+        --success: #22c55e;
+        --warning: #eab308;
+        --node-primary: #8b5cf6;
+        --node-light: #a78bfa;
+      }
+      body {
+        font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #0f172a 100%
+        );
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      .header {
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.2) 0%,
+          transparent 100%
+        );
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--node-primary) 0%,
+          var(--primary-dark) 100%
+        );
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+      }
+      .logo-text {
+        font-size: 1.25rem;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--node-light) 0%,
+          var(--secondary) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .level-indicator {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .level-badge {
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent-dark) 100%
+        );
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+      .score-display {
+        background: var(--bg-card);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        font-size: 0.875rem;
+      }
+      .score-display span {
+        color: var(--node-primary);
+        font-weight: 700;
+      }
+      .main-container {
+        display: grid;
+        grid-template-columns: 280px 1fr 300px;
+        gap: 1rem;
+        padding: 1rem;
+        min-height: calc(100vh - 70px);
+      }
+      @media (max-width: 1200px) {
+        .main-container {
+          grid-template-columns: 1fr;
+        }
+        .left-panel,
+        .right-panel {
+          display: none;
+        }
+        .mobile-toggle {
+          display: flex !important;
+        }
+      }
+      .left-panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .panel-section {
+        border-bottom: 1px solid var(--border);
+      }
+      .panel-header {
+        padding: 1rem;
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.1) 0%,
+          transparent 100%
+        );
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+      }
+      .panel-header:hover {
+        background: rgba(139, 92, 246, 0.15);
+      }
+      .panel-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      .panel-content {
+        padding: 0.75rem;
+        display: none;
+      }
+      .panel-section.active .panel-content {
+        display: block;
+      }
+      .panel-section.active .toggle-icon {
+        transform: rotate(180deg);
+      }
+      .toggle-icon {
+        transition: transform 0.2s;
+        color: var(--text-secondary);
+      }
+      .level-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .level-item {
+        padding: 0.75rem;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .level-item:hover {
+        border-color: var(--node-primary);
+        transform: translateX(4px);
+      }
+      .level-item.active {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.2) 0%,
+          rgba(139, 92, 246, 0.1) 100%
+        );
+        border-color: var(--node-primary);
+      }
+      .level-item.completed {
+        border-color: var(--success);
+      }
+      .level-item.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .level-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--bg-card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .level-item.active .level-number {
+        background: var(--node-primary);
+      }
+      .level-item.completed .level-number {
+        background: var(--success);
+      }
+      .level-info {
+        flex: 1;
+      }
+      .level-title {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .level-desc {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+      }
+      .element-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+      .element-item {
+        padding: 0.625rem;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        cursor: grab;
+        text-align: center;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      .element-item:hover {
+        border-color: var(--node-primary);
+        background: rgba(139, 92, 246, 0.1);
+      }
+      .element-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .element-name {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+      }
+      .material-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+      }
+      .material-item {
+        padding: 0.5rem 0.75rem;
+        background: var(--bg-dark);
+        border-radius: 6px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .material-item:hover {
+        border-color: var(--secondary);
+      }
+      .material-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+      }
+      .material-name {
+        font-size: 0.75rem;
+        flex: 1;
+      }
+      .material-prop {
+        font-size: 0.625rem;
+        color: var(--text-muted);
+      }
+      .node-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+      .node-item {
+        padding: 0.5rem;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+      }
+      .node-item:hover {
+        border-color: var(--accent);
+      }
+      .node-icon {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+      }
+      .node-name {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+      }
+      .canvas-area {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .canvas-toolbar {
+        padding: 0.75rem 1rem;
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.1) 0%,
+          transparent 100%
+        );
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tool-group {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--bg-dark);
+        padding: 0.25rem;
+        border-radius: 8px;
+      }
+      .tool-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        transition: all 0.2s;
+      }
+      .tool-btn:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+      }
+      .tool-btn.active {
+        background: var(--node-primary);
+        color: white;
+      }
+      .layer-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .layer-btn {
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        background: var(--bg-dark);
+        color: var(--text-secondary);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .layer-btn:hover {
+        border-color: var(--node-primary);
+      }
+      .layer-btn.active {
+        background: var(--node-primary);
+        border-color: var(--node-primary);
+        color: white;
+      }
+      .canvas-wrapper {
+        flex: 1;
+        position: relative;
+        background:
+          linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+        overflow: hidden;
+      }
+      #mainCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .canvas-info {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        background: var(--bg-dark);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+      }
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .property-panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .property-header {
+        padding: 1rem;
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.1) 0%,
+          transparent 100%
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .property-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      .property-content {
+        padding: 1rem;
+      }
+      .property-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .property-row:last-child {
+        border-bottom: none;
+      }
+      .property-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+      .property-value {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      .eco-panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .eco-header {
+        padding: 1rem;
+        background: linear-gradient(
+          180deg,
+          rgba(239, 68, 68, 0.1) 0%,
+          transparent 100%
+        );
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .eco-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #f87171;
+      }
+      .eco-content {
+        padding: 1rem;
+      }
+      .eco-meter {
+        margin-bottom: 1rem;
+      }
+      .eco-meter-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        margin-bottom: 0.375rem;
+      }
+      .eco-meter-bar {
+        height: 8px;
+        background: var(--bg-dark);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .eco-meter-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition:
+          width 0.3s,
+          background 0.3s;
+      }
+      .eco-meter-fill.good {
+        background: linear-gradient(90deg, var(--success), #4ade80);
+      }
+      .eco-meter-fill.warning {
+        background: linear-gradient(90deg, var(--warning), #fbbf24);
+      }
+      .eco-meter-fill.danger {
+        background: linear-gradient(90deg, var(--danger), #f87171);
+      }
+      .eco-suggestions {
+        background: var(--bg-dark);
+        border-radius: 8px;
+        padding: 0.75rem;
+      }
+      .eco-suggestion-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--accent);
+      }
+      .eco-suggestion-item {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+        padding: 0.25rem 0;
+        padding-left: 1rem;
+        position: relative;
+      }
+      .eco-suggestion-item::before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        color: var(--node-primary);
+      }
+      .objective-panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .objective-header {
+        padding: 1rem;
+        background: linear-gradient(
+          180deg,
+          rgba(245, 158, 11, 0.1) 0%,
+          transparent 100%
+        );
+        border-bottom: 1px solid var(--border);
+      }
+      .objective-header h3 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .objective-content {
+        padding: 1rem;
+      }
+      .objective-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+      }
+      .objective-check {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+        transition: all 0.2s;
+      }
+      .objective-item.completed .objective-check {
+        background: var(--success);
+        border-color: var(--success);
+      }
+      .objective-text {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+      .objective-item.completed .objective-text {
+        text-decoration: line-through;
+        color: var(--text-muted);
+      }
+      .achievement-panel {
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+      }
+      .achievement-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        padding: 0.75rem;
+      }
+      .achievement-item {
+        aspect-ratio: 1;
+        background: var(--bg-dark);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .achievement-item:hover {
+        border-color: var(--accent);
+      }
+      .achievement-item.unlocked {
+        background: linear-gradient(
+          135deg,
+          rgba(245, 158, 11, 0.2) 0%,
+          rgba(245, 158, 11, 0.1) 100%
+        );
+        border-color: var(--accent);
+      }
+      .achievement-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .achievement-item.locked .achievement-icon {
+        filter: grayscale(1);
+        opacity: 0.5;
+      }
+      .achievement-name {
+        font-size: 0.5625rem;
+        color: var(--text-secondary);
+        text-align: center;
+      }
+      .achievement-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.6875rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s;
+        z-index: 100;
+      }
+      .achievement-item:hover .achievement-tooltip {
+        opacity: 1;
+        visibility: visible;
+      }
+      .btn {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--node-primary) 0%,
+          var(--primary-dark) 100%
+        );
+        color: white;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      }
+      .btn-secondary {
+        background: var(--bg-dark);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+      .btn-secondary:hover {
+        border-color: var(--node-primary);
+      }
+      .btn-success {
+        background: linear-gradient(
+          135deg,
+          var(--secondary) 0%,
+          var(--secondary-dark) 100%
+        );
+        color: white;
+      }
+      .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+      }
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .modal {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow: hidden;
+        transform: scale(0.9);
+        transition: transform 0.3s;
+      }
+      .modal-overlay.active .modal {
+        transform: scale(1);
+      }
+      .modal-header {
+        padding: 1.25rem;
+        background: linear-gradient(
+          180deg,
+          rgba(139, 92, 246, 0.15) 0%,
+          transparent 100%
+        );
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-header h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+      }
+      .modal-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: var(--bg-dark);
+        color: var(--text-secondary);
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all 0.2s;
+      }
+      .modal-close:hover {
+        background: var(--danger);
+        color: white;
+      }
+      .modal-body {
+        padding: 1.25rem;
+        overflow-y: auto;
+        max-height: 60vh;
+      }
+      .modal-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
+      .notification-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1100;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .notification {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+        min-width: 280px;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .notification.success {
+        border-color: var(--success);
+      }
+      .notification.error {
+        border-color: var(--danger);
+      }
+      .notification.warning {
+        border-color: var(--warning);
+      }
+      .notification-icon {
+        font-size: 1.5rem;
+      }
+      .notification-content {
+        flex: 1;
+      }
+      .notification-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.125rem;
+      }
+      .notification-message {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+      .notification-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1.25rem;
+      }
+      .level-intro {
+        text-align: center;
+      }
+      .level-intro-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+      .level-intro-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(
+          135deg,
+          var(--node-light) 0%,
+          var(--secondary) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .level-intro-desc {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+      .level-intro-goals {
+        text-align: left;
+        background: var(--bg-dark);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .level-intro-goals h4 {
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+        color: var(--accent);
+      }
+      .level-intro-goals ul {
+        list-style: none;
+      }
+      .level-intro-goals li {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        padding: 0.375rem 0;
+        padding-left: 1.25rem;
+        position: relative;
+      }
+      .level-intro-goals li::before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: var(--success);
+      }
+      .completion-modal .modal {
+        max-width: 450px;
+        text-align: center;
+      }
+      .completion-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        animation: bounce 0.5s ease;
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+      .completion-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--success);
+      }
+      .completion-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+      }
+      .completion-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .stat-item {
+        background: var(--bg-dark);
+        padding: 1rem;
+        border-radius: 12px;
+      }
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--node-light);
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+      .help-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .help-section h4 {
+        font-size: 0.875rem;
+        color: var(--node-light);
+        margin-bottom: 0.5rem;
+      }
+      .help-section p {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      .help-shortcuts {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+      .shortcut-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8125rem;
+      }
+      .shortcut-key {
+        background: var(--bg-dark);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        border: 1px solid var(--border);
+        min-width: 60px;
+        text-align: center;
+      }
+      .mobile-toggle {
+        display: none;
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 900;
+      }
+      .mobile-toggle button {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--node-primary);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+      }
+      .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+      .empty-state-text {
+        font-size: 0.875rem;
+      }
+      .demo-banner {
+        background: linear-gradient(90deg, var(--node-primary), #ec4899);
+        padding: 0.5rem 1rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: white;
+        display: none;
+      }
+      .demo-banner.active {
+        display: block;
+      }
+    </style>
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b" />
+    <link
+      rel="stylesheet"
+      href="../shared-feishu-submission.css?v=20260619-feishu1"
+    />
+  </head>
+  <body>
+    <div class="demo-banner" id="demoBanner">
+      🎬 演示模式 - 展示自动播放功能
+    </div>
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">🔧</div>
+        <span class="logo-text">游戏18：节点构造深化</span>
+      </div>
+      <div class="level-indicator">
+        <div class="level-badge">关卡 <span id="currentLevel">1</span>/5</div>
+        <div class="score-display">得分: <span id="scoreValue">0</span></div>
+        <button
+          class="tool-btn tooltip"
+          data-tooltip="帮助"
+          onclick="showHelp()"
+        >
+          ❓
+        </button>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <aside class="left-panel">
+        <div class="panel-section active">
+          <div class="panel-header" onclick="toggleSection(this)">
+            <h3>📚 关卡列表</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="panel-content">
+            <div class="level-list" id="levelList"></div>
+          </div>
+        </div>
+        <div class="panel-section active">
+          <div class="panel-header" onclick="toggleSection(this)">
+            <h3>📐 节点构造元素</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="panel-content">
+            <div class="element-grid" id="elementGrid"></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-header" onclick="toggleSection(this)">
+            <h3>🧱 材料系统</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="panel-content">
+            <div class="material-list" id="materialList"></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-header" onclick="toggleSection(this)">
+            <h3>📋 节点详图库</h3>
+            <span class="toggle-icon">▼</span>
+          </div>
+          <div class="panel-content">
+            <div class="node-grid" id="nodeGrid"></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="canvas-area">
+        <div class="canvas-toolbar">
+          <div class="tool-group">
+            <button
+              class="tool-btn tooltip active"
+              data-tool="select"
+              data-tooltip="选择 (V)"
+              onclick="setTool('select')"
+            >
+              🖱️
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tool="move"
+              data-tooltip="移动 (M)"
+              onclick="setTool('move')"
+            >
+              ✋
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tool="draw"
+              data-tooltip="绘制 (D)"
+              onclick="setTool('draw')"
+            >
+              ✏️
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tool="annotate"
+              data-tooltip="标注 (A)"
+              onclick="setTool('annotate')"
+            >
+              📏
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tool="erase"
+              data-tooltip="删除 (E)"
+              onclick="setTool('erase')"
+            >
+              🗑️
+            </button>
+          </div>
+          <div class="layer-controls">
+            <button
+              class="layer-btn active"
+              data-layer="structure"
+              onclick="toggleLayer('structure')"
+            >
+              结构层
+            </button>
+            <button
+              class="layer-btn active"
+              data-layer="joint"
+              onclick="toggleLayer('joint')"
+            >
+              节点层
+            </button>
+            <button
+              class="layer-btn active"
+              data-layer="detail"
+              onclick="toggleLayer('detail')"
+            >
+              细部层
+            </button>
+          </div>
+          <div class="tool-group">
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="撤销 (Ctrl+Z)"
+              onclick="undo()"
+            >
+              ↩️
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="重做 (Ctrl+Y)"
+              onclick="redo()"
+            >
+              ↪️
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="清空画布"
+              onclick="clearCanvas()"
+            >
+              🧹
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="保存设计"
+              onclick="saveDesign()"
+            >
+              💾
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="导出材料包"
+              onclick="showExport()"
+            >
+              📦
+            </button>
+            <button
+              class="tool-btn tooltip"
+              data-tooltip="演示模式"
+              onclick="toggleDemo()"
+            >
+              🎬
+            </button>
+          </div>
+        </div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="mainCanvas"></canvas>
+          <div class="canvas-info">
+            画布尺寸: <span id="canvasSize">800 × 600</span> | 元素:
+            <span id="elementCount">0</span>
+          </div>
+        </div>
+      </main>
+
+      <aside class="right-panel">
+        <div class="eco-panel">
+          <div class="eco-header">
+            <span>🛡️</span>
+            <h3>安全性能指标</h3>
+          </div>
+          <div class="eco-content">
+            <div class="eco-meter">
+              <div class="eco-meter-label">
+                <span>防火性能</span><span id="fireValue">50%</span>
+              </div>
+              <div class="eco-meter-bar">
+                <div
+                  class="eco-meter-fill warning"
+                  id="fireMeter"
+                  style="width: 50%"
+                ></div>
+              </div>
+            </div>
+            <div class="eco-meter">
+              <div class="eco-meter-label">
+                <span>防水性能</span><span id="waterValue">45%</span>
+              </div>
+              <div class="eco-meter-bar">
+                <div
+                  class="eco-meter-fill warning"
+                  id="waterMeter"
+                  style="width: 45%"
+                ></div>
+              </div>
+            </div>
+            <div class="eco-meter">
+              <div class="eco-meter-label">
+                <span>隔声性能</span><span id="soundValue">40%</span>
+              </div>
+              <div class="eco-meter-bar">
+                <div
+                  class="eco-meter-fill danger"
+                  id="soundMeter"
+                  style="width: 40%"
+                ></div>
+              </div>
+            </div>
+            <div class="eco-suggestions">
+              <div class="eco-suggestion-title">💡 设计建议</div>
+              <div class="eco-suggestion-item" id="suggestion1">
+                选用防火材料提升耐火极限
+              </div>
+              <div class="eco-suggestion-item" id="suggestion2">
+                节点防水需设置多道防线
+              </div>
+              <div class="eco-suggestion-item" id="suggestion3">
+                隔声节点应设置弹性垫层
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="objective-panel">
+          <div class="objective-header"><h3>🎯 学习目标</h3></div>
+          <div class="objective-content" id="objectives"></div>
+        </div>
+
+        <div class="property-panel">
+          <div class="property-header"><h3>⚙️ 属性编辑</h3></div>
+          <div class="property-content" id="propertyContent">
+            <div class="empty-state">
+              <div class="empty-state-icon">📋</div>
+              <div class="empty-state-text">选择元素以编辑属性</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="achievement-panel">
+          <div class="panel-header"><h3>🏆 成就</h3></div>
+          <div class="achievement-grid" id="achievementGrid"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="mobile-toggle">
+      <button onclick="toggleMobilePanel()">📱</button>
+    </div>
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <div class="modal-overlay" id="levelIntroModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>关卡介绍</h2>
+          <button class="modal-close" onclick="closeLevelIntro()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="level-intro">
+            <div class="level-intro-icon" id="introIcon">🏗️</div>
+            <div class="level-intro-title" id="introTitle">基础节点设计</div>
+            <div class="level-intro-desc" id="introDesc">
+              学习建筑基础节点构造，包括墙与地面、墙与顶棚、墙与柱、楼板与梁的连接节点。
+            </div>
+            <div class="level-intro-goals">
+              <h4>🎯 学习目标</h4>
+              <ul id="introGoals">
+                <li>认识4种基础节点类型</li>
+                <li>了解各节点的设计原则</li>
+                <li>完成基础节点设计练习</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeLevelIntro()">
+            稍后
+          </button>
+          <button class="btn btn-primary" onclick="startLevel()">
+            开始学习
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay completion-modal" id="completionModal">
+      <div class="modal">
+        <div class="modal-body">
+          <div class="completion-icon">🎉</div>
+          <div class="completion-title">关卡完成！</div>
+          <div class="completion-subtitle">你已经完成了本关的学习任务</div>
+          <div class="completion-stats">
+            <div class="stat-item">
+              <div class="stat-value" id="statScore">+100</div>
+              <div class="stat-label">获得积分</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statStars">⭐⭐⭐</div>
+              <div class="stat-label">评价星级</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeCompletion()">
+            复习一下
+          </button>
+          <button class="btn btn-success" onclick="nextLevel()">
+            下一关卡
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>游戏帮助</h2>
+          <button class="modal-close" onclick="closeHelp()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="help-content">
+            <div class="help-section">
+              <h4>🎮 操作指南</h4>
+              <p>
+                通过拖拽或点击添加节点构造元素到画布上，组合不同的构造层次完成节点设计。安全性能是重要考量因素。
+              </p>
+            </div>
+            <div class="help-section">
+              <h4>🖱️ 工具使用</h4>
+              <div class="help-shortcuts">
+                <div class="shortcut-item">
+                  <span class="shortcut-key">V</span> 选择工具
+                </div>
+                <div class="shortcut-item">
+                  <span class="shortcut-key">M</span> 移动工具
+                </div>
+                <div class="shortcut-item">
+                  <span class="shortcut-key">D</span> 绘制工具
+                </div>
+                <div class="shortcut-item">
+                  <span class="shortcut-key">A</span> 标注工具
+                </div>
+                <div class="shortcut-item">
+                  <span class="shortcut-key">E</span> 删除工具
+                </div>
+                <div class="shortcut-item">
+                  <span class="shortcut-key">Del</span> 删除选中
+                </div>
+              </div>
+            </div>
+            <div class="help-section">
+              <h4>🔧 节点类型</h4>
+              <p>
+                本游戏涵盖基础节点、变形缝、防火节点、防水节点和综合节点五大模块。
+              </p>
+            </div>
+            <div class="help-section">
+              <h4>🏆 成就系统</h4>
+              <p>
+                完成关卡、优秀设计、创意组合等可解锁不同成就，获得更高评价。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay export-modal" id="exportModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>导出材料包</h2>
+          <button class="modal-close" onclick="closeExport()">×</button>
+        </div>
+        <div class="modal-body">
+          <div
+            class="export-preview"
+            id="exportPreview"
+            style="
+              background: var(--bg-dark);
+              border-radius: 8px;
+              padding: 1rem;
+              max-height: 300px;
+              overflow-y: auto;
+            "
+          ></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeExport()">
+            关闭
+          </button>
+          <button class="btn btn-primary" onclick="downloadExport()">
+            下载JSON
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const GameState = {
+        currentLevel: 1,
+        score: 0,
+        completedLevels: [],
+        achievements: [],
+        currentTool: "select",
+        layers: { structure: true, joint: true, detail: true },
+        elements: [],
+        selectedElement: null,
+        history: [],
+        historyIndex: -1,
+        isDemoMode: false,
+        demoInterval: null,
+      };
+
+      const LEVELS = [
+        {
+          id: 1,
+          title: "基础节点设计",
+          icon: "🏗️",
+          description:
+            "学习建筑基础节点构造，包括墙与地面、墙与顶棚、墙与柱、楼板与梁的连接节点设计。",
+          goals: [
+            "认识4种基础节点类型",
+            "了解各节点的设计原则",
+            "完成基础节点设计练习",
+          ],
+          elements: [
+            "wall_floor",
+            "wall_ceiling",
+            "wall_column",
+            "slab_beam",
+            "beam_column_node",
+          ],
+          materials: ["concrete", "mortar", "rebar", "steel_plate"],
+        },
+        {
+          id: 2,
+          title: "变形缝设计",
+          icon: "〰️",
+          description:
+            "学习变形缝构造，包括伸缩缝、沉降缝、防震缝和盖缝板的设计原则与做法。",
+          goals: ["掌握变形缝类型", "了解缝宽计算方法", "完成变形缝设计练习"],
+          elements: [
+            "expansion_joint",
+            "settlement_joint",
+            "seismic_joint",
+            "cover_plate",
+            "waterstop",
+          ],
+          materials: ["mineral_wool", "rubber_pad", "metal_cover", "sealant"],
+        },
+        {
+          id: 3,
+          title: "防火节点设计",
+          icon: "🔥",
+          description:
+            "学习防火节点构造，包括防火墙、防火门、防火卷帘和防火封堵的设计要求。",
+          goals: ["掌握防火分隔要求", "了解耐火极限概念", "完成防火节点设计"],
+          elements: [
+            "fire_wall",
+            "fire_door_node",
+            "fire_curtain",
+            "fire_seal",
+            "fire_collar",
+          ],
+          materials: [
+            "fire_board",
+            "intumescent_seal",
+            "fire_damp",
+            "mineral_fiber",
+          ],
+        },
+        {
+          id: 4,
+          title: "防水节点设计",
+          icon: "💧",
+          description:
+            "学习防水节点构造，包括卫生间防水、屋面泛水、地下室防水和管井防水的设计要点。",
+          goals: ["掌握防水等级要求", "了解节点防水做法", "完成防水节点设计"],
+          elements: [
+            "bathroom_waterproof",
+            "roof_flashing",
+            "basement_waterproof",
+            "pipe penetration",
+            "corner_tape",
+          ],
+          materials: [
+            "waterproof_membrane",
+            "polymer_cement",
+            "preformed_corner",
+            "waterstop_profile",
+          ],
+        },
+        {
+          id: 5,
+          title: "综合节点设计",
+          icon: "🔧",
+          description:
+            "综合应用所学知识，完成复杂节点的设计，包括隔声节点、设备基础节点等综合应用。",
+          goals: ["综合应用节点知识", "完成复杂节点设计", "达到优秀设计标准"],
+          elements: [
+            "sound_isolation",
+            "equipment_base",
+            "curtain_wall_node",
+            "facade_connection",
+          ],
+          materials: [
+            "acoustic_slab",
+            "elastic_pad",
+            "vibration_isolator",
+            "thermal_bridge",
+          ],
+        },
+      ];
+
+      const ELEMENTS = {
+        // 基础节点
+        wall_floor: {
+          name: "墙与地面节点",
+          icon: "📐",
+          category: "structure",
+          color: "#6b7280",
+          width: 120,
+          height: 80,
+        },
+        wall_ceiling: {
+          name: "墙与顶棚节点",
+          icon: "⬆️",
+          category: "structure",
+          color: "#4b5563",
+          width: 100,
+          height: 70,
+        },
+        wall_column: {
+          name: "墙与柱节点",
+          icon: "🔗",
+          category: "joint",
+          color: "#9ca3af",
+          width: 80,
+          height: 80,
+        },
+        slab_beam: {
+          name: "楼板与梁节点",
+          icon: "═",
+          category: "joint",
+          color: "#64748b",
+          width: 100,
+          height: 60,
+        },
+        beam_column_node: {
+          name: "梁柱节点",
+          icon: "⚙️",
+          category: "joint",
+          color: "#78716c",
+          width: 90,
+          height: 90,
+        },
+
+        // 变形缝
+        expansion_joint: {
+          name: "伸缩缝",
+          icon: "〰️",
+          category: "joint",
+          color: "#a8a29e",
+          width: 40,
+          height: 100,
+        },
+        settlement_joint: {
+          name: "沉降缝",
+          icon: "⬇️",
+          category: "joint",
+          color: "#57534e",
+          width: 50,
+          height: 100,
+        },
+        seismic_joint: {
+          name: "防震缝",
+          icon: "↔️",
+          category: "joint",
+          color: "#78716c",
+          width: 45,
+          height: 100,
+        },
+        cover_plate: {
+          name: "盖缝板",
+          icon: "▬",
+          category: "detail",
+          color: "#d1d5db",
+          width: 80,
+          height: 10,
+        },
+        waterstop: {
+          name: "止水带",
+          icon: "🔵",
+          category: "detail",
+          color: "#3b82f6",
+          width: 60,
+          height: 8,
+        },
+
+        // 防火节点
+        fire_wall: {
+          name: "防火墙",
+          icon: "🔥",
+          category: "structure",
+          color: "#dc2626",
+          width: 150,
+          height: 25,
+        },
+        fire_door_node: {
+          name: "防火门节点",
+          icon: "🚪",
+          category: "joint",
+          color: "#ef4444",
+          width: 80,
+          height: 120,
+        },
+        fire_curtain: {
+          name: "防火卷帘",
+          icon: "⬜",
+          category: "detail",
+          color: "#f87171",
+          width: 120,
+          height: 15,
+        },
+        fire_seal: {
+          name: "防火封堵",
+          icon: "🔒",
+          category: "detail",
+          color: "#b91c1c",
+          width: 40,
+          height: 40,
+        },
+        fire_collar: {
+          name: "防火套管",
+          icon: "⭕",
+          category: "detail",
+          color: "#7f1d1d",
+          width: 30,
+          height: 50,
+        },
+
+        // 防水节点
+        bathroom_waterproof: {
+          name: "卫生间防水",
+          icon: "🚿",
+          category: "structure",
+          color: "#0ea5e9",
+          width: 100,
+          height: 80,
+        },
+        roof_flashing: {
+          name: "屋面泛水",
+          icon: "🏔️",
+          category: "joint",
+          color: "#0284c7",
+          width: 80,
+          height: 60,
+        },
+        basement_waterproof: {
+          name: "地下室防水",
+          icon: "🏠",
+          category: "structure",
+          color: "#0369a1",
+          width: 110,
+          height: 90,
+        },
+        pipe_penetration: {
+          name: "管井防水",
+          icon: "🔧",
+          category: "detail",
+          color: "#38bdf8",
+          width: 50,
+          height: 70,
+        },
+        corner_tape: {
+          name: "阴阳角",
+          icon: "📐",
+          category: "detail",
+          color: "#7dd3fc",
+          width: 40,
+          height: 40,
+        },
+
+        // 综合节点
+        sound_isolation: {
+          name: "隔声节点",
+          icon: "🔇",
+          category: "joint",
+          color: "#7c3aed",
+          width: 100,
+          height: 70,
+        },
+        equipment_base: {
+          name: "设备基础",
+          icon: "⚙️",
+          category: "structure",
+          color: "#6b7280",
+          width: 120,
+          height: 50,
+        },
+        curtain_wall_node: {
+          name: "幕墙节点",
+          icon: "🏢",
+          category: "joint",
+          color: "#64748b",
+          width: 100,
+          height: 100,
+        },
+        facade_connection: {
+          name: "幕墙连接",
+          icon: "🔗",
+          category: "detail",
+          color: "#94a3b8",
+          width: 60,
+          height: 80,
+        },
+      };
+
+      const MATERIALS = {
+        concrete: {
+          name: "混凝土",
+          fire: 120,
+          waterproof: 70,
+          color: "#6b7280",
+        },
+        mortar: { name: "砂浆", waterproof: 60, color: "#d6d3d1" },
+        rebar: { name: "钢筋", fire: 180, color: "#b91c1c" },
+        steel_plate: { name: "钢板", fire: 90, color: "#4b5563" },
+        mineral_wool: { name: "矿棉", fire: 180, sound: 45, color: "#92400e" },
+        rubber_pad: { name: "橡胶垫", fire: 60, sound: 35, color: "#1f2937" },
+        metal_cover: { name: "金属盖板", fire: 90, color: "#d1d5db" },
+        sealant: { name: "密封胶", waterproof: 80, color: "#a3a3a3" },
+        fire_board: { name: "防火板", fire: 240, color: "#fca5a5" },
+        intumescent_seal: { name: "膨胀密封", fire: 180, color: "#fecaca" },
+        fire_damp: { name: "防火阀", fire: 180, color: "#dc2626" },
+        mineral_fiber: {
+          name: "矿物纤维",
+          fire: 180,
+          sound: 50,
+          color: "#78716c",
+        },
+        waterproof_membrane: {
+          name: "防水卷材",
+          waterproof: 95,
+          color: "#3b82f6",
+        },
+        polymer_cement: {
+          name: "聚合物水泥",
+          waterproof: 85,
+          color: "#7dd3fc",
+        },
+        preformed_corner: {
+          name: "预制阴阳角",
+          waterproof: 90,
+          color: "#60a5fa",
+        },
+        waterstop_profile: {
+          name: "止水型材",
+          waterproof: 95,
+          color: "#1d4ed8",
+        },
+      };
+
+      const NODES = [
+        {
+          id: "wall_floor_detail",
+          name: "墙地节点",
+          icon: "📐",
+          desc: "墙体与地面连接详图",
+        },
+        {
+          id: "expansion_detail",
+          name: "伸缩缝详图",
+          icon: "〰️",
+          desc: "变形缝盖缝构造详图",
+        },
+        {
+          id: "fire_wall_detail",
+          name: "防火墙详图",
+          icon: "🔥",
+          desc: "防火墙节点构造详图",
+        },
+        {
+          id: "waterproof_corner",
+          name: "防水阴阳角",
+          icon: "💧",
+          desc: "防水节点阴阳角做法",
+        },
+        {
+          id: "sound_detail",
+          name: "隔声节点",
+          icon: "🔇",
+          desc: "楼板隔声构造详图",
+        },
+        {
+          id: "equipment_detail",
+          name: "设备基础",
+          icon: "⚙️",
+          desc: "设备基础节点详图",
+        },
+      ];
+
+      const ACHIEVEMENTS = [
+        {
+          id: "first_node",
+          name: "初学者",
+          icon: "🌱",
+          desc: "完成第一个关卡",
+        },
+        {
+          id: "fire_master",
+          name: "防火专家",
+          icon: "🔥",
+          desc: "防火性能达到95%以上",
+        },
+        {
+          id: "waterproof_master",
+          name: "防水专家",
+          icon: "💧",
+          desc: "防水性能达到95%以上",
+        },
+        {
+          id: "sound_master",
+          name: "隔声专家",
+          icon: "🔇",
+          desc: "隔声性能达到80%以上",
+        },
+        {
+          id: "all_complete",
+          name: "节点大师",
+          icon: "🏆",
+          desc: "完成全部关卡",
+        },
+        {
+          id: "perfect_design",
+          name: "完美设计",
+          icon: "💎",
+          desc: "获得三星评价",
+        },
+      ];
+
+      // Canvas初始化
+      const canvas = document.getElementById("mainCanvas");
+      const ctx = canvas.getContext("2d");
+      let canvasWidth, canvasHeight;
+
+      function resizeCanvas() {
+        const wrapper = document.getElementById("canvasWrapper");
+        canvasWidth = wrapper.clientWidth;
+        canvasHeight = wrapper.clientHeight;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        document.getElementById("canvasSize").textContent =
+          `${canvasWidth} × ${canvasHeight}`;
+        render();
+      }
+      window.addEventListener("resize", resizeCanvas);
+
+      function render() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawGrid();
+        GameState.elements.forEach((elem, i) => {
+          drawElement(
+            elem,
+            i === GameState.elements.indexOf(GameState.selectedElement),
+          );
+        });
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = "rgba(139, 92, 246, 0.1)";
+        ctx.lineWidth = 1;
+        const gridSize = 20;
+        for (let x = 0; x < canvasWidth; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvasHeight);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvasHeight; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvasWidth, y);
+          ctx.stroke();
+        }
+      }
+
+      function drawElement(elem, isSelected) {
+        const elemData = ELEMENTS[elem.type];
+        if (!elemData) return;
+        const { x, y, width = elemData.width, height = elemData.height } = elem;
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+
+        ctx.fillStyle = elemData.color;
+        ctx.fillRect(-width / 2, -height / 2, width, height);
+
+        ctx.strokeStyle = isSelected ? "#8b5cf6" : "rgba(255,255,255,0.3)";
+        ctx.lineWidth = isSelected ? 3 : 1;
+        ctx.strokeRect(-width / 2, -height / 2, width, height);
+
+        // 节点纹理
+        if (elemData.category === "joint") {
+          ctx.strokeStyle = "rgba(255,255,255,0.2)";
+          ctx.setLineDash([4, 2]);
+          for (let i = 0; i < width; i += 15) {
+            ctx.beginPath();
+            ctx.moveTo(-width / 2 + i, -height / 2);
+            ctx.lineTo(-width / 2 + i + 10, height / 2);
+            ctx.stroke();
+          }
+          ctx.setLineDash([]);
+        }
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "10px Microsoft YaHei";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(elemData.name, 0, 0);
+
+        if (isSelected) {
+          ctx.strokeStyle = "#8b5cf6";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.strokeRect(
+            -width / 2 - 5,
+            -height / 2 - 5,
+            width + 10,
+            height + 10,
+          );
+          ctx.setLineDash([]);
+        }
+        ctx.restore();
+      }
+
+      // UI初始化
+      function initUI() {
+        initLevelList();
+        initElementGrid();
+        initMaterialList();
+        initNodeGrid();
+        initAchievements();
+        loadProgress();
+        resizeCanvas();
+      }
+
+      function initLevelList() {
+        const container = document.getElementById("levelList");
+        container.innerHTML = LEVELS.map((level) => {
+          const isLocked =
+            level.id > 1 && !GameState.completedLevels.includes(level.id - 1);
+          const isCompleted = GameState.completedLevels.includes(level.id);
+          const isActive = GameState.currentLevel === level.id;
+          return `<div class="level-item ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""} ${isLocked ? "locked" : ""}" onclick="selectLevel(${level.id})" ${isLocked ? 'title="请先完成上一关卡"' : ""}>
+                    <div class="level-number">${isCompleted ? "✓" : level.id}</div>
+                    <div class="level-info">
+                        <div class="level-title">${level.icon} ${level.title}</div>
+                        <div class="level-desc">${isLocked ? "🔒 未解锁" : isCompleted ? "✅ 已完成" : "进行中"}</div>
+                    </div>
+                </div>`;
+        }).join("");
+      }
+
+      function initElementGrid() {
+        const container = document.getElementById("elementGrid");
+        const currentLevelData = LEVELS[GameState.currentLevel - 1];
+        const levelElements = currentLevelData
+          ? currentLevelData.elements
+          : Object.keys(ELEMENTS).slice(0, 6);
+        container.innerHTML = levelElements
+          .map((key) => {
+            const elem = ELEMENTS[key];
+            return `<div class="element-item" draggable="true" ondragstart="handleDragStart(event, '${key}')" ondragend="handleDragEnd(event)" onclick="addElement('${key}')">
+                    <div class="element-icon">${elem.icon}</div>
+                    <div class="element-name">${elem.name}</div>
+                </div>`;
+          })
+          .join("");
+      }
+
+      function initMaterialList() {
+        const container = document.getElementById("materialList");
+        container.innerHTML = Object.entries(MATERIALS)
+          .slice(0, 10)
+          .map(
+            ([key, mat]) => `
+                <div class="material-item" onclick="selectMaterial('${key}')">
+                    <div class="material-color" style="background: ${mat.color}"></div>
+                    <div class="material-name">${mat.name}</div>
+                    <div class="material-prop">${mat.fire ? "F=" + mat.fire : mat.waterproof ? "W=" + mat.waterproof : "S=" + mat.sound}</div>
+                </div>`,
+          )
+          .join("");
+      }
+
+      function initNodeGrid() {
+        const container = document.getElementById("nodeGrid");
+        container.innerHTML = NODES.map(
+          (node) => `
+                <div class="node-item" onclick="loadNode('${node.id}')">
+                    <div class="node-icon">${node.icon}</div>
+                    <div class="node-name">${node.name}</div>
+                </div>`,
+        ).join("");
+      }
+
+      function initAchievements() {
+        const container = document.getElementById("achievementGrid");
+        container.innerHTML = ACHIEVEMENTS.map((ach) => {
+          const unlocked = GameState.achievements.includes(ach.id);
+          return `<div class="achievement-item ${unlocked ? "unlocked" : "locked"}" onclick="showAchievement('${ach.id}')">
+                    <div class="achievement-icon">${ach.icon}</div>
+                    <div class="achievement-name">${ach.name}</div>
+                    <div class="achievement-tooltip">${ach.desc}</div>
+                </div>`;
+        }).join("");
+      }
+
+      function updateObjectives() {
+        const container = document.getElementById("objectives");
+        const levelData = LEVELS[GameState.currentLevel - 1];
+        if (!levelData) return;
+        container.innerHTML = levelData.goals
+          .map((goal, i) => {
+            const completed = GameState.elements.length >= (i + 1) * 2;
+            return `<div class="objective-item ${completed ? "completed" : ""}">
+                    <div class="objective-check">${completed ? "✓" : ""}</div>
+                    <div class="objective-text">${goal}</div>
+                </div>`;
+          })
+          .join("");
+      }
+
+      // 关卡管理
+      function selectLevel(levelId) {
+        if (levelId > 1 && !GameState.completedLevels.includes(levelId - 1)) {
+          showNotification("warning", "未解锁", "请先完成上一关卡");
+          return;
+        }
+        GameState.currentLevel = levelId;
+        GameState.elements = [];
+        GameState.selectedElement = null;
+        document.getElementById("currentLevel").textContent = levelId;
+        initLevelList();
+        initElementGrid();
+        updateObjectives();
+        showLevelIntro(levelId);
+        resizeCanvas();
+      }
+
+      function showLevelIntro(levelId) {
+        const level = LEVELS[levelId - 1];
+        if (!level) return;
+        document.getElementById("introIcon").textContent = level.icon;
+        document.getElementById("introTitle").textContent = level.title;
+        document.getElementById("introDesc").textContent = level.description;
+        document.getElementById("introGoals").innerHTML = level.goals
+          .map((g) => `<li>${g}</li>`)
+          .join("");
+        document.getElementById("levelIntroModal").classList.add("active");
+      }
+
+      function closeLevelIntro() {
+        document.getElementById("levelIntroModal").classList.remove("active");
+      }
+      function startLevel() {
+        closeLevelIntro();
+        showNotification(
+          "success",
+          "开始学习",
+          `关卡${GameState.currentLevel}：${LEVELS[GameState.currentLevel - 1].title}`,
+        );
+        render();
+      }
+
+      function checkLevelComplete() {
+        const levelData = LEVELS[GameState.currentLevel - 1];
+        if (!levelData) return;
+        const minElements = levelData.elements.length;
+        if (GameState.elements.length >= minElements) completeLevel();
+      }
+
+      function completeLevel() {
+        if (GameState.completedLevels.includes(GameState.currentLevel)) return;
+        GameState.completedLevels.push(GameState.currentLevel);
+        const scoreGain = 100 + GameState.currentLevel * 25;
+        GameState.score += scoreGain;
+        document.getElementById("scoreValue").textContent = GameState.score;
+
+        let stars = Math.min(3, 1 + Math.floor(Math.random() * 2));
+        document.getElementById("statScore").textContent = `+${scoreGain}`;
+        document.getElementById("statStars").textContent =
+          "⭐".repeat(stars) + "☆".repeat(3 - stars);
+
+        if (GameState.currentLevel === 1) unlockAchievement("first_node");
+        if (stars === 3) unlockAchievement("perfect_design");
+        if (GameState.completedLevels.length === 5)
+          unlockAchievement("all_complete");
+
+        saveProgress();
+        document.getElementById("completionModal").classList.add("active");
+      }
+
+      function closeCompletion() {
+        document.getElementById("completionModal").classList.remove("active");
+      }
+      function nextLevel() {
+        closeCompletion();
+        if (GameState.currentLevel < 5) selectLevel(GameState.currentLevel + 1);
+        else
+          showNotification(
+            "success",
+            "恭喜通关",
+            "你已经完成了所有关卡的学习！",
+          );
+      }
+
+      // 元素操作
+      function addElement(type, x = null, y = null) {
+        const elemData = ELEMENTS[type];
+        if (!elemData) return;
+        const newElement = {
+          id: Date.now(),
+          type: type,
+          x:
+            x !== null
+              ? x
+              : Math.random() * (canvasWidth - elemData.width - 100) + 50,
+          y:
+            y !== null
+              ? y
+              : Math.random() * (canvasHeight - elemData.height - 100) + 50,
+          width: elemData.width,
+          height: elemData.height,
+        };
+        GameState.elements.push(newElement);
+        GameState.selectedElement = newElement;
+        saveToHistory();
+        updateEcoIndicators();
+        updateElementCount();
+        updateObjectives();
+        checkLevelComplete();
+        render();
+        showNotification("info", "添加元素", `${elemData.name} 已添加到画布`);
+      }
+
+      function deleteElement(id) {
+        const index = GameState.elements.findIndex((e) => e.id === id);
+        if (index > -1) {
+          const elem = GameState.elements[index];
+          GameState.elements.splice(index, 1);
+          GameState.selectedElement = null;
+          saveToHistory();
+          updateEcoIndicators();
+          updateElementCount();
+          updateObjectives();
+          render();
+          showNotification(
+            "info",
+            "删除元素",
+            `${ELEMENTS[elem.type].name} 已删除`,
+          );
+        }
+      }
+
+      function selectElement(x, y) {
+        for (let i = GameState.elements.length - 1; i >= 0; i--) {
+          const elem = GameState.elements[i];
+          if (
+            x >= elem.x &&
+            x <= elem.x + elem.width &&
+            y >= elem.y &&
+            y <= elem.y + elem.height
+          ) {
+            GameState.selectedElement = elem;
+            updatePropertyPanel(elem);
+            render();
+            return elem;
+          }
+        }
+        GameState.selectedElement = null;
+        updatePropertyPanel(null);
+        render();
+        return null;
+      }
+
+      function updatePropertyPanel(elem) {
+        const container = document.getElementById("propertyContent");
+        if (!elem) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">选择元素以编辑属性</div></div>`;
+          return;
+        }
+        const elemData = ELEMENTS[elem.type];
+        container.innerHTML = `
+                <div class="property-row"><span class="property-label">名称</span><span class="property-value">${elemData.name}</span></div>
+                <div class="property-row"><span class="property-label">类别</span><span class="property-value">${elemData.category}</span></div>
+                <div class="property-row"><span class="property-label">颜色</span><div style="width:20px;height:20px;border-radius:4px;background:${elemData.color}"></div></div>
+                <div class="property-row"><span class="property-label">X坐标</span><span class="property-value">${Math.round(elem.x)}</span></div>
+                <div class="property-row"><span class="property-label">Y坐标</span><span class="property-value">${Math.round(elem.y)}</span></div>
+                <button class="btn btn-secondary" style="width:100%;margin-top:0.5rem" onclick="deleteElement(${elem.id})">🗑️ 删除元素</button>`;
+      }
+
+      function updateEcoIndicators() {
+        const fireCount = GameState.elements.filter((e) =>
+          ["fire_wall", "fire_door_node", "fire_seal", "fire_collar"].includes(
+            e.type,
+          ),
+        ).length;
+        const waterCount = GameState.elements.filter((e) =>
+          [
+            "bathroom_waterproof",
+            "roof_flashing",
+            "basement_waterproof",
+            "waterstop",
+          ].includes(e.type),
+        ).length;
+        const soundCount = GameState.elements.filter((e) =>
+          ["sound_isolation", "rubber_pad", "mineral_wool"].includes(e.type),
+        ).length;
+
+        const fireValue = Math.min(100, fireCount * 25 + 40);
+        const waterValue = Math.min(100, waterCount * 30 + 30);
+        const soundValue = Math.min(100, soundCount * 30 + 25);
+
+        document.getElementById("fireValue").textContent = fireValue + "%";
+        document.getElementById("waterValue").textContent = waterValue + "%";
+        document.getElementById("soundValue").textContent = soundValue + "%";
+
+        document.getElementById("fireMeter").style.width = fireValue + "%";
+        document.getElementById("fireMeter").className =
+          "eco-meter-fill " +
+          (fireValue >= 80 ? "good" : fireValue >= 60 ? "warning" : "danger");
+        document.getElementById("waterMeter").style.width = waterValue + "%";
+        document.getElementById("waterMeter").className =
+          "eco-meter-fill " +
+          (waterValue >= 80 ? "good" : waterValue >= 60 ? "warning" : "danger");
+        document.getElementById("soundMeter").style.width = soundValue + "%";
+        document.getElementById("soundMeter").className =
+          "eco-meter-fill " +
+          (soundValue >= 80 ? "good" : soundValue >= 60 ? "warning" : "danger");
+
+        if (fireValue >= 95) unlockAchievement("fire_master");
+        if (waterValue >= 95) unlockAchievement("waterproof_master");
+        if (soundValue >= 80) unlockAchievement("sound_master");
+      }
+
+      function updateElementCount() {
+        document.getElementById("elementCount").textContent =
+          GameState.elements.length;
+      }
+
+      // 拖拽处理
+      function handleDragStart(event, type) {
+        event.dataTransfer.setData("text/plain", type);
+        event.dataTransfer.effectAllowed = "copy";
+      }
+
+      function handleDragEnd(event) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const x = event.clientX - canvasRect.left;
+        const y = event.clientY - canvasRect.top;
+        if (x >= 0 && x <= canvasWidth && y >= 0 && y <= canvasHeight) {
+          const type = event.dataTransfer.getData("text/plain");
+          addElement(type, x - 50, y - 20);
+        }
+      }
+
+      // Canvas事件
+      canvas.addEventListener("mousedown", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (GameState.currentTool === "select") {
+          const elem = selectElement(x, y);
+          if (elem) canvas.style.cursor = "move";
+        } else if (GameState.currentTool === "erase") {
+          const elem = selectElement(x, y);
+          if (elem) deleteElement(elem.id);
+        }
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (GameState.selectedElement && canvas.style.cursor === "move") {
+          const rect = canvas.getBoundingClientRect();
+          GameState.selectedElement.x =
+            e.clientX - rect.left - GameState.selectedElement.width / 2;
+          GameState.selectedElement.y =
+            e.clientY - rect.top - GameState.selectedElement.height / 2;
+          render();
+        }
+      });
+
+      canvas.addEventListener("mouseup", () => {
+        canvas.style.cursor = "default";
+        if (GameState.selectedElement) saveToHistory();
+      });
+
+      // 工具和图层
+      function setTool(tool) {
+        GameState.currentTool = tool;
+        document.querySelectorAll(".tool-btn[data-tool]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.tool === tool);
+        });
+      }
+
+      function toggleLayer(layer) {
+        GameState.layers[layer] = !GameState.layers[layer];
+        document
+          .querySelector(`[data-layer="${layer}"]`)
+          .classList.toggle("active", GameState.layers[layer]);
+        render();
+      }
+
+      function toggleSection(header) {
+        header.parentElement.classList.toggle("active");
+      }
+
+      // 历史记录
+      function saveToHistory() {
+        GameState.history = GameState.history.slice(
+          0,
+          GameState.historyIndex + 1,
+        );
+        GameState.history.push(JSON.stringify(GameState.elements));
+        GameState.historyIndex++;
+      }
+
+      function undo() {
+        if (GameState.historyIndex > 0) {
+          GameState.historyIndex--;
+          GameState.elements = JSON.parse(
+            GameState.history[GameState.historyIndex],
+          );
+          render();
+          updateEcoIndicators();
+          updateElementCount();
+        }
+      }
+
+      function redo() {
+        if (GameState.historyIndex < GameState.history.length - 1) {
+          GameState.historyIndex++;
+          GameState.elements = JSON.parse(
+            GameState.history[GameState.historyIndex],
+          );
+          render();
+          updateEcoIndicators();
+          updateElementCount();
+        }
+      }
+
+      function clearCanvas() {
+        if (confirm("确定要清空画布吗？")) {
+          GameState.elements = [];
+          GameState.selectedElement = null;
+          saveToHistory();
+          render();
+          updateEcoIndicators();
+          updateElementCount();
+          updateObjectives();
+          showNotification("info", "清空画布", "画布已清空");
+        }
+      }
+
+      // 导出功能
+      function showExport() {
+        const preview = document.getElementById("exportPreview");
+        const data = {
+          game: "游戏18：节点构造深化",
+          version: "1.0",
+          exportTime: new Date().toISOString(),
+          level: GameState.currentLevel,
+          elements: GameState.elements.map((e) => ({
+            type: e.type,
+            name: ELEMENTS[e.type]?.name || e.type,
+            category: ELEMENTS[e.type]?.category || "unknown",
+            position: { x: Math.round(e.x), y: Math.round(e.y) },
+          })),
+          statistics: {
+            totalElements: GameState.elements.length,
+            structureCount: GameState.elements.filter(
+              (el) => ELEMENTS[el.type]?.category === "structure",
+            ).length,
+            jointCount: GameState.elements.filter(
+              (el) => ELEMENTS[el.type]?.category === "joint",
+            ).length,
+            detailCount: GameState.elements.filter(
+              (el) => ELEMENTS[el.type]?.category === "detail",
+            ).length,
+          },
+        };
+        preview.innerHTML = Object.entries(data)
+          .map(
+            ([key, val]) =>
+              `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border)}"><span>${key}</span><span style="color:var(--text-secondary)">${typeof val === "object" ? JSON.stringify(val) : val}</span></div>`,
+          )
+          .join("");
+        document.getElementById("exportModal").classList.add("active");
+      }
+
+      function closeExport() {
+        document.getElementById("exportModal").classList.remove("active");
+      }
+
+      function downloadExport() {
+        const data = {
+          game: "游戏18：节点构造深化",
+          version: "1.0",
+          exportTime: new Date().toISOString(),
+          level: GameState.currentLevel,
+          levelName: LEVELS[GameState.currentLevel - 1]?.title,
+          elements: GameState.elements.map((e) => ({
+            type: e.type,
+            name: ELEMENTS[e.type]?.name || e.type,
+            category: ELEMENTS[e.type]?.category || "unknown",
+            position: { x: Math.round(e.x), y: Math.round(e.y) },
+          })),
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `节点构造深化_材料包_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification("success", "导出成功", "材料包已下载");
+      }
+
+      // 演示模式
+      function toggleDemo() {
+        GameState.isDemoMode = !GameState.isDemoMode;
+        document
+          .getElementById("demoBanner")
+          .classList.toggle("active", GameState.isDemoMode);
+
+        if (GameState.isDemoMode) {
+          showNotification("info", "演示模式", "开始自动演示");
+          startDemo();
+        } else {
+          stopDemo();
+        }
+      }
+
+      function startDemo() {
+        const demoElements = Object.keys(ELEMENTS).slice(0, 8);
+        let index = 0;
+        GameState.demoInterval = setInterval(() => {
+          if (!GameState.isDemoMode || index >= demoElements.length) {
+            stopDemo();
+            return;
+          }
+          addElement(demoElements[index]);
+          index++;
+        }, 1500);
+      }
+
+      function stopDemo() {
+        if (GameState.demoInterval) {
+          clearInterval(GameState.demoInterval);
+          GameState.demoInterval = null;
+        }
+      }
+
+      // 成就
+      function unlockAchievement(id) {
+        if (!GameState.achievements.includes(id)) {
+          GameState.achievements.push(id);
+          const ach = ACHIEVEMENTS.find((a) => a.id === id);
+          if (ach) {
+            showNotification(
+              "success",
+              "🏆 成就解锁",
+              ach.name + "：" + ach.desc,
+            );
+            initAchievements();
+          }
+        }
+      }
+
+      function showAchievement(id) {
+        const ach = ACHIEVEMENTS.find((a) => a.id === id);
+        if (ach) showNotification("info", ach.icon + " " + ach.name, ach.desc);
+      }
+
+      // 保存/加载
+      function saveProgress() {
+        const data = {
+          currentLevel: GameState.currentLevel,
+          score: GameState.score,
+          completedLevels: GameState.completedLevels,
+          achievements: GameState.achievements,
+        };
+        localStorage.setItem("nodeConstructionGame", JSON.stringify(data));
+      }
+
+      function loadProgress() {
+        const saved = localStorage.getItem("nodeConstructionGame");
+        if (saved) {
+          const data = JSON.parse(saved);
+          GameState.currentLevel = data.currentLevel || 1;
+          GameState.score = data.score || 0;
+          GameState.completedLevels = data.completedLevels || [];
+          GameState.achievements = data.achievements || [];
+          document.getElementById("scoreValue").textContent = GameState.score;
+          document.getElementById("currentLevel").textContent =
+            GameState.currentLevel;
+        }
+        updateObjectives();
+      }
+
+      function saveDesign() {
+        saveProgress();
+        showNotification("success", "保存成功", "进度已保存");
+      }
+
+      // 模态框
+      function showHelp() {
+        document.getElementById("helpModal").classList.add("active");
+      }
+      function closeHelp() {
+        document.getElementById("helpModal").classList.remove("active");
+      }
+
+      function toggleMobilePanel() {
+        document
+          .querySelector(".left-panel")
+          .classList.toggle("mobile-visible");
+      }
+
+      // 通知
+      function showNotification(type, title, message) {
+        const container = document.getElementById("notificationContainer");
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+        const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
+        notification.innerHTML = `
+                <div class="notification-icon">${icons[type]}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">×</button>`;
+        container.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+      }
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", () => {
+        initUI();
+        updateObjectives();
+        setTimeout(() => showLevelIntro(1), 500);
+      });
+
+      // 快捷键
+      document.addEventListener("keydown", (e) => {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
+          return;
+        switch (e.key.toLowerCase()) {
+          case "v":
+            setTool("select");
+            break;
+          case "m":
+            setTool("move");
+            break;
+          case "d":
+            setTool("draw");
+            break;
+          case "a":
+            setTool("annotate");
+            break;
+          case "e":
+            setTool("erase");
+            break;
+          case "z":
+            if (e.ctrlKey) undo();
+            break;
+          case "y":
+            if (e.ctrlKey) redo();
+            break;
+          case "delete":
+          case "backspace":
+            if (GameState.selectedElement)
+              deleteElement(GameState.selectedElement.id);
+            break;
+        }
+      });
+    </script>
+    <script>
+      /**
+       * 页面级飞书提交与排行榜配置。
+       * 用途：为试点页面开启单页单关排行榜，并声明学期与课程元数据。
+       */
+      window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+          ranking: {
+            enabled: true,
+            semester: "2026春",
+            courseName: "建筑节点构造课程",
+            displayCount: 10,
+            showClassBoard: true,
+            allowGuest: true,
+          },
+        },
+      );
+    </script>
+    <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+  
+
+
+
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏18',
+        gameTitle: '节点构造深化',
+        captureTarget: '#mainCanvas, .canvas-area, body',
+        scoring: { type: 'completion', threshold: 3, total: 5, description: '完成 3 个节点深化即达标' },
+        hideSelectors: ["button[onclick='undo()']","button[onclick='clearCanvas()']"],
+        ranking: { enabled: true, semester: '2026春', course: '建筑节点构造', game: '游戏18' },
+        hooks: {
+            capture: () => false,
+            undo: () => (typeof undo === 'function' ? (undo(), true) : false),
+            reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
+            exportFile: () => (typeof exportMaterialPackage === 'function' ? (exportMaterialPackage(), true) : false),
+            readScore: () => Number((window.detailProgress && window.detailProgress.completed) || (window.gameState && window.gameState.completedNodes) || 0)
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '建筑节点构造', game: '游戏18' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
+</body>
+</html>

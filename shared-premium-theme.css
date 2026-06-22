@@ -1,0 +1,474 @@
+/* Shared premium education theme for game pages. */
+:root {
+  --edu-bg: #f6f9ff;
+  --edu-bg-soft: rgba(255, 255, 255, 0.86);
+  --edu-card: rgba(255, 255, 255, 0.78);
+  --edu-card-strong: rgba(255, 255, 255, 0.92);
+  --edu-line: rgba(76, 102, 192, 0.14);
+  --edu-primary: #4f6ef7;
+  --edu-secondary: #75d0ff;
+  --edu-success: #2bb48a;
+  --edu-warning: #d68244;
+  --edu-danger: #ef4444;
+  --edu-text: #18212f;
+  --edu-text-soft: #60708a;
+  --edu-text-muted: #94a3b8;
+  --edu-shadow: 0 18px 36px rgba(47, 69, 145, 0.1);
+  --edu-glow: 0 30px 70px rgba(47, 69, 145, 0.14);
+  /* Override legacy dark-page variables so old modules follow the light theme. */
+  --bg-dark: rgba(255, 255, 255, 0.92);
+  --bg-medium: rgba(255, 255, 255, 0.86);
+  --bg-light: rgba(79, 110, 247, 0.08);
+  --text-primary: #18212f;
+  --text-secondary: #60708a;
+  --text-muted: #94a3b8;
+  --border: rgba(76, 102, 192, 0.14);
+}
+
+html {
+  background: #eef4ff;
+}
+
+body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(117, 208, 255, 0.24),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 86% 10%,
+      rgba(79, 110, 247, 0.18),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 120%,
+      rgba(214, 130, 68, 0.1),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #fbfdff 0%, #f6f9ff 42%, #eef4ff 100%) !important;
+  color: var(--edu-text) !important;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(79, 110, 247, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 110, 247, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  opacity: 0.42;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.header,
+.app-header {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: var(--edu-glow) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+.header,
+.app-header,
+.header-content {
+  color: var(--edu-text) !important;
+}
+
+.logo-text,
+.logo-text h1,
+.logo-text span,
+.game-title,
+.title-stack h1,
+.title-stack p,
+.game-subtitle,
+.game-title i,
+.logo-text h1 span {
+  color: var(--edu-text) !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.logo-text span,
+.title-stack p,
+.game-subtitle,
+.header-center,
+.header-right,
+.progress-display,
+.stats-bar,
+.stat-item,
+.current-level,
+.phase-tag {
+  color: var(--edu-text-soft) !important;
+}
+
+.game-badge,
+.level-badge,
+.status-chip,
+.phase-tag,
+.presentation-timer,
+.recording-header h3 {
+  background: linear-gradient(135deg, var(--edu-primary), #6886ff) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 16px 30px rgba(79, 110, 247, 0.18) !important;
+}
+
+.main-container,
+.main-layout,
+.main-content {
+  gap: 16px !important;
+}
+
+.toolbar,
+.info-panel,
+.left-toolbar,
+.left-panel,
+.right-panel,
+.left-sidebar,
+.workspace,
+.panel,
+.panel-section,
+.property-panel,
+.eco-panel,
+.objective-panel,
+.achievement-panel,
+.card,
+.hero-card,
+.canvas-area,
+.result-card,
+.toolbar-section,
+.modal-content,
+.modal,
+.welcome-card,
+.recording-body,
+.presentation-content {
+  background: var(--edu-bg-soft) !important;
+  border: 1px solid var(--edu-line) !important;
+  box-shadow: var(--edu-shadow) !important;
+  backdrop-filter: blur(16px) !important;
+  color: var(--edu-text) !important;
+}
+
+.workspace,
+.canvas-area,
+.hero-card,
+.card,
+.panel,
+.panel-section,
+.toolbar-section {
+  border-radius: 24px !important;
+}
+
+.panel-title,
+.tool-section-title,
+.property-header h3,
+.eco-header h3,
+.objective-header h3,
+.panel-header h3,
+.toolbar-section h3,
+.panel-section h3,
+.card h3,
+.card h2,
+.hero-card h2,
+.result-title,
+.modal-header h2,
+.welcome-card h3 {
+  color: var(--edu-text) !important;
+}
+
+.property-label,
+.objective-text,
+.level-desc,
+.element-name,
+.level-details p,
+.help-section p,
+.toolbar-title,
+.grid-toggle,
+.toggle-icon,
+.score-criteria-desc,
+.suggestion-desc,
+.g3-report-card .g3-label,
+.g3-report-card .g3-unit,
+.g3-report-card .g3-sub-value,
+.module-name,
+.material-prop,
+.node-name,
+.logo-text span,
+.header .score-display,
+.score-display,
+.score-display span,
+.stat-item,
+.empty-hint,
+.data-preview,
+.output-list,
+.task-list,
+.level-info,
+.card p,
+.hero-card p,
+.welcome-card p {
+  color: var(--edu-text-soft) !important;
+}
+
+.canvas-toolbar,
+.tool-group,
+.panel-header,
+.property-header,
+.eco-header,
+.objective-header,
+.modal-header,
+.toolbar-section h3 {
+  background: linear-gradient(
+    180deg,
+    rgba(79, 110, 247, 0.1) 0%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  border-bottom: 1px solid var(--edu-line) !important;
+}
+
+.canvas-toolbar,
+.tool-group {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid var(--edu-line) !important;
+  box-shadow: 0 8px 18px rgba(47, 69, 145, 0.06) !important;
+}
+
+.canvas-wrapper,
+.canvas-container {
+  background:
+    linear-gradient(rgba(79, 110, 247, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 110, 247, 0.05) 1px, transparent 1px),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.76),
+      rgba(238, 244, 255, 0.94)
+    ) !important;
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto !important;
+}
+
+.level-btn,
+.header-btn,
+.btn,
+.btn-secondary,
+.action-btn,
+.tool-btn,
+.tool-btn.active,
+.nav-button,
+.quick-button,
+.nav-button.active,
+.quick-button.active,
+.level-item,
+.module-item,
+.element-item,
+.material-item,
+.node-item,
+.tool-btn,
+.ctrl-btn,
+.layer-btn {
+  border-radius: 14px !important;
+  border: 1px solid var(--edu-line) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: var(--edu-text) !important;
+  box-shadow: none !important;
+}
+
+.btn-primary,
+.tool-btn.active,
+.nav-button.active,
+.quick-button.active,
+.level-btn.active,
+.ctrl-btn.primary,
+.layer-btn.active {
+  background: linear-gradient(135deg, var(--edu-primary), #6886ff) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+.btn-success,
+.status-chip.success,
+.level-btn.completed {
+  background: linear-gradient(135deg, var(--edu-success), #4bc8a2) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+.btn:hover,
+.level-btn:hover,
+.header-btn:hover,
+.action-btn:hover,
+.tool-btn:hover,
+.nav-button:hover,
+.quick-button:hover,
+.level-item:hover,
+.module-item:hover,
+.element-item:hover,
+.material-item:hover,
+.node-item:hover,
+.ctrl-btn:hover,
+.layer-btn:hover {
+  background: rgba(79, 110, 247, 0.08) !important;
+  color: var(--edu-text) !important;
+  border-color: rgba(79, 110, 247, 0.22) !important;
+  transform: translateY(-1px);
+}
+
+.level-item.active,
+.module-item.active,
+.element-item.active,
+.node-item.active {
+  background: linear-gradient(
+    180deg,
+    rgba(79, 110, 247, 0.1),
+    rgba(255, 255, 255, 0.88)
+  ) !important;
+  border-color: rgba(79, 110, 247, 0.24) !important;
+}
+
+.level-number,
+.logo-icon,
+.module-icon,
+.node-icon,
+.achievement-icon {
+  background: linear-gradient(
+    135deg,
+    rgba(79, 110, 247, 0.12),
+    rgba(117, 208, 255, 0.18)
+  ) !important;
+  color: var(--edu-primary) !important;
+}
+
+.progress-bar,
+.eco-meter-bar,
+.weight-bar,
+.progress-indicator,
+.score-display,
+.stat-item {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid var(--edu-line) !important;
+}
+
+.progress-fill,
+.eco-meter-fill.good,
+.weight-bar-fill {
+  background: linear-gradient(
+    90deg,
+    var(--edu-primary),
+    var(--edu-secondary)
+  ) !important;
+}
+
+.eco-meter-fill.warning {
+  background: linear-gradient(90deg, #e0a458, #f6c17c) !important;
+}
+
+.eco-meter-fill.danger {
+  background: linear-gradient(90deg, #ef4444, #f87171) !important;
+}
+
+.canvas-info,
+.canvas-overlay,
+.score-overview-card,
+.eco-suggestions,
+.data-warnings,
+.import-status-list {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: var(--edu-text) !important;
+  border: 1px solid var(--edu-line) !important;
+  box-shadow: var(--edu-shadow) !important;
+}
+
+.canvas-info,
+.canvas-overlay,
+.score-overview-card,
+.eco-suggestions,
+.data-warnings,
+.import-status-list,
+.level-intro-goals,
+.help-section,
+.stat-item {
+  backdrop-filter: blur(16px) !important;
+}
+
+.canvas-info *,
+.canvas-overlay *,
+.score-overview-card *,
+.eco-suggestions *,
+.data-warnings *,
+.import-status-list * {
+  color: inherit !important;
+}
+
+.modal-overlay,
+.modal {
+  backdrop-filter: blur(10px) !important;
+}
+
+.close-btn,
+.modal-close,
+.btn-close {
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: var(--edu-text) !important;
+  border: 1px solid var(--edu-line) !important;
+}
+
+.close-btn:hover,
+.modal-close:hover,
+.btn-close:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: var(--edu-danger) !important;
+}
+
+@media (max-width: 1200px) {
+  .header,
+  .app-header,
+  .header-content {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .main-container,
+  .main-layout,
+  .main-content {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header,
+  .app-header {
+    padding: 14px !important;
+  }
+
+  .main-container,
+  .main-layout,
+  .main-content {
+    padding: 12px !important;
+  }
+
+  .header-right,
+  .header-center,
+  .header-actions,
+  .progress-section,
+  .stats-bar,
+  .level-selector,
+  .level-nav {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .workspace,
+  .canvas-area,
+  .panel,
+  .panel-section,
+  .hero-card,
+  .card {
+    border-radius: 20px !important;
+  }
+}

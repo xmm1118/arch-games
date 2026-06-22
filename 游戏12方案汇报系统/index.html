@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑师成长之路 - 游戏12：方案汇报系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b">
+    <link rel="stylesheet" href="../shared-feishu-submission.css?v=20260619-feishu1">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="game-badge">游戏 12</div>
+                <h1 class="game-title">方案汇报系统</h1>
+                <span class="phase-tag">Phase 1 核心流程</span>
+            </div>
+            <div class="header-center">
+                <div class="progress-indicator">
+                    <span class="current-level">当前关卡: <strong id="currentLevelDisplay">1</strong>/5</span>
+                    <div class="level-dots" id="levelDots"></div>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" onclick="app.importGameData()">
+                    <span class="icon">📥</span> 导入数据
+                </button>
+                <button class="btn btn-primary" onclick="app.exportPackage()">
+                    <span class="icon">📤</span> 导出材料包
+                </button>
+            </div>
+        </header>
+
+        <!-- 主体内容区 -->
+        <main class="main-content">
+            <!-- 左侧工具栏 -->
+            <aside class="toolbar" id="toolbar">
+                <div class="toolbar-section">
+                    <h3>功能模块</h3>
+                    <nav class="tool-nav">
+                        <button class="tool-btn active" data-module="overview" onclick="app.switchModule('overview')">
+                            <span class="icon">📋</span>
+                            <span>方案整合</span>
+                        </button>
+                        <button class="tool-btn" data-module="ppt" onclick="app.switchModule('ppt')">
+                            <span class="icon">📊</span>
+                            <span>PPT生成</span>
+                        </button>
+                        <button class="tool-btn" data-module="script" onclick="app.switchModule('script')">
+                            <span class="icon">📝</span>
+                            <span>汇报脚本</span>
+                        </button>
+                        <button class="tool-btn" data-module="tips" onclick="app.switchModule('tips')">
+                            <span class="icon">💡</span>
+                            <span>汇报技巧</span>
+                        </button>
+                        <button class="tool-btn" data-module="qa" onclick="app.switchModule('qa')">
+                            <span class="icon">❓</span>
+                            <span>Q&A准备</span>
+                        </button>
+                        <button class="tool-btn" data-module="eval" onclick="app.switchModule('eval')">
+                            <span class="icon">📈</span>
+                            <span>汇报评估</span>
+                        </button>
+                        <button class="tool-btn" data-module="tools" onclick="app.switchModule('tools')">
+                            <span class="icon">🛠️</span>
+                            <span>第三方工具</span>
+                        </button>
+                    </nav>
+                </div>
+                <div class="toolbar-section">
+                    <h3>关卡选择</h3>
+                    <nav class="level-nav" id="levelNav"></nav>
+                </div>
+                <div class="toolbar-section">
+                    <h3>快捷操作</h3>
+                    <div class="quick-actions">
+                        <button class="action-btn" onclick="app.saveProgress()">
+                            <span class="icon">💾</span> 保存进度
+                        </button>
+                        <button class="action-btn" onclick="app.loadProgress()">
+                            <span class="icon">📂</span> 加载进度
+                        </button>
+                        <button class="action-btn" onclick="app.resetProgress()">
+                            <span class="icon">🔄</span> 重置进度
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 中间工作区 -->
+            <section class="workspace" id="workspace">
+                <!-- 动态内容将在这里渲染 -->
+            </section>
+
+            <!-- 右侧信息面板 -->
+            <aside class="info-panel" id="infoPanel">
+                <div class="panel-section">
+                    <h3>📌 当前关卡</h3>
+                    <div class="level-info" id="levelInfo"></div>
+                </div>
+                <div class="panel-section">
+                    <h3>🎯 任务说明</h3>
+                    <div class="task-list" id="taskList"></div>
+                </div>
+                <div class="panel-section">
+                    <h3>📥 导入数据预览</h3>
+                    <div class="data-preview" id="dataPreview">
+                        <p class="empty-hint">暂无导入数据</p>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <h3>📤 产出清单</h3>
+                    <div class="output-list" id="outputList"></div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- 模态框：导入数据 -->
+        <div class="modal" id="importModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>导入前置游戏数据</h2>
+                    <button class="close-btn" onclick="app.closeModal('importModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>请选择要导入的游戏数据文件（JSON格式）：</p>
+                    <div class="game-sources">
+                        <label class="source-item">
+                            <input type="checkbox" value="game2" checked> 游戏2 - 平面布局系统
+                        </label>
+                        <label class="source-item">
+                            <input type="checkbox" value="game3" checked> 游戏3 - 体块设计系统
+                        </label>
+                        <label class="source-item">
+                            <input type="checkbox" value="game4" checked> 游戏4 - 立面造型系统
+                        </label>
+                        <label class="source-item">
+                            <input type="checkbox" value="game8" checked> 游戏8 - 构造设计系统
+                        </label>
+                        <label class="source-item">
+                            <input type="checkbox" value="game9" checked> 游戏9 - 碳排放计算系统
+                        </label>
+                        <label class="source-item">
+                            <input type="checkbox" value="game11" checked> 游戏11 - 效果图生成系统
+                        </label>
+                    </div>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="gameDataFile" accept=".json" multiple style="display:none">
+                        <div class="upload-hint">
+                            <span class="icon">📁</span>
+                            <p>点击或拖拽上传JSON文件</p>
+                            <p class="small">支持多个文件</p>
+                        </div>
+                    </div>
+                    <div class="uploaded-files" id="uploadedFiles"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="app.closeModal('importModal')">取消</button>
+                    <button class="btn btn-primary" onclick="app.confirmImport()">确认导入</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框：导出材料包 -->
+        <div class="modal" id="exportModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>导出汇报材料包</h2>
+                    <button class="close-btn" onclick="app.closeModal('exportModal')">&times;</button>
+                </div>
+                <div class="modal-body" id="exportContent">
+                    <!-- 动态内容 -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="app.closeModal('exportModal')">关闭</button>
+                    <button class="btn btn-primary" onclick="app.downloadPackage()">
+                        <span class="icon">⬇️</span> 下载材料包
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 演示模式浮层 -->
+        <div class="presentation-overlay" id="presentationOverlay">
+            <div class="presentation-header">
+                <div class="presentation-timer">
+                    <span id="presentationTime">00:00</span>
+                    <span class="target-time">/ 目标: <span id="targetTime">10:00</span></span>
+                </div>
+                <button class="btn-close" onclick="app.exitPresentation()">&times;</button>
+            </div>
+            <div class="presentation-content">
+                <div class="script-display" id="scriptDisplay"></div>
+                <div class="presentation-notes" id="presentationNotes"></div>
+            </div>
+            <div class="presentation-controls">
+                <button class="ctrl-btn" onclick="app.prevScript()">⬆️ 上一段</button>
+                <button class="ctrl-btn primary" onclick="app.togglePause()">
+                    <span id="pauseIcon">⏸️</span>
+                    <span id="pauseText">暂停</span>
+                </button>
+                <button class="ctrl-btn" onclick="app.nextScript()">⬇️ 下一段</button>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="scriptProgress"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 录音浮层 -->
+        <div class="recording-overlay" id="recordingOverlay">
+            <div class="recording-header">
+                <h3>🗣️ 录音练习</h3>
+                <button class="close-btn" onclick="app.stopRecording()">&times;</button>
+            </div>
+            <div class="recording-body">
+                <div class="recording-timer">
+                    <span id="recordingTime">00:00</span>
+                </div>
+                <div class="waveform" id="waveform">
+                    <canvas id="waveformCanvas" width="400" height="100"></canvas>
+                </div>
+                <div class="recording-controls">
+                    <button class="rec-btn" id="recordBtn" onclick="app.toggleRecording()">
+                        <span id="recordIcon">🎤</span>
+                        <span id="recordText">开始录音</span>
+                    </button>
+                    <button class="rec-btn secondary" id="playBtn" onclick="app.playRecording()" style="display:none">
+                        <span>▶️</span> 播放
+                    </button>
+                    <button class="rec-btn danger" id="deleteRecBtn" onclick="app.deleteRecording()" style="display:none">
+                        <span>🗑️</span> 删除
+                    </button>
+                </div>
+                <div class="recording-list" id="recordingList"></div>
+            </div>
+        </div>
+
+        <!-- 提示消息 -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script src="app.js?v=20260619-feishu1"></script>
+    <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
+
+
+
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏12',
+        gameTitle: '方案汇报系统',
+        captureTarget: '.workspace, .canvas-area, body',
+        scoring: { type: 'evaluation', threshold: 75, total: 100, description: '自评+任务综合 ≥ 75 即达标' },
+        hideSelectors: [],
+        ranking: { enabled: true, semester: '2026春', course: '方案汇报', game: '游戏12' },
+        hooks: {
+            capture: () => false,
+            undo: () => false,
+            reset: () => (typeof app !== 'undefined' && app.resetProgress ? (app.resetProgress(), true) : false),
+            exportFile: () => (typeof app !== 'undefined' && app.exportPackage ? (app.exportPackage(), true) : false),
+            readScore: () => Number(window.reportScore || (window.appState && window.appState.totalScore) || 0)
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '方案汇报', game: '游戏12' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
+</body>
+</html>
+
+
+

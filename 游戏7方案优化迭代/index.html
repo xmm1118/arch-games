@@ -1,0 +1,2735 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏场7：方案优化迭代</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-panel: #111827;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #334155;
+            --shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f3a 50%, #0d1321 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .game-badge {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .game-title {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--text-primary), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-center {
+            display: flex;
+            gap: 8px;
+        }
+
+        .level-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .level-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .level-btn.active {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-color: transparent;
+            color: white;
+        }
+
+        .level-btn.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 6px;
+            background: var(--bg-hover);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+            transition: width 0.5s;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            margin-top: 70px;
+            height: calc(100vh - 70px);
+        }
+
+        .left-panel {
+            width: 280px;
+            background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.9) 100%);
+            border-right: 1px solid var(--border-color);
+            padding: 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .center-canvas {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .right-panel {
+            width: 320px;
+            background: linear-gradient(180deg, rgba(17,24,39,0.95) 0%, rgba(17,24,39,0.9) 100%);
+            border-left: 1px solid var(--border-color);
+            padding: 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Panel Sections */
+        .panel-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 2px;
+        }
+
+        /* Data Status */
+        .data-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.warning {
+            background: var(--accent-yellow);
+        }
+
+        .status-indicator.inactive {
+            background: var(--text-muted);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Scheme Cards */
+        .scheme-card {
+            background: var(--bg-hover);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .scheme-card:hover {
+            background: var(--border-color);
+        }
+
+        .scheme-card.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .scheme-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .scheme-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .scheme-score {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .scheme-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .scheme-actions .btn-small {
+            flex: 1;
+        }
+
+        /* Input Fields */
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .canvas-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .canvas-tools {
+            display: flex;
+            gap: 8px;
+        }
+
+        .canvas-wrapper {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mainCanvas {
+            border-radius: 8px;
+        }
+
+        /* Charts */
+        .chart-container {
+            width: 100%;
+            padding: 20px 0;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Comparison Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+        }
+
+        .comparison-card {
+            background: var(--bg-hover);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .comparison-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .comparison-card.best {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .comparison-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .comparison-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .comparison-unit {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        .comparison-change {
+            font-size: 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .change-up {
+            color: var(--accent-green);
+        }
+
+        .change-down {
+            color: var(--accent-red);
+        }
+
+        /* Optimization Cards */
+        .optimization-card {
+            background: var(--bg-hover);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--accent-blue);
+            transition: all 0.3s;
+        }
+
+        .optimization-card:hover {
+            background: var(--border-color);
+        }
+
+        .optimization-card.high {
+            border-left-color: var(--accent-red);
+        }
+
+        .optimization-card.medium {
+            border-left-color: var(--accent-yellow);
+        }
+
+        .optimization-card.low {
+            border-left-color: var(--accent-green);
+        }
+
+        .optimization-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .optimization-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .optimization-impact {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .impact-label {
+            color: var(--text-muted);
+        }
+
+        .impact-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .impact-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-green));
+            border-radius: 3px;
+        }
+
+        /* Sensitivity Analysis */
+        .sensitivity-chart {
+            width: 100%;
+            height: 200px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin: 12px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensitivity-chart canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .param-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .param-chip {
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .param-chip:hover, .param-chip.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* History Timeline */
+        .history-timeline {
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .history-item {
+            position: relative;
+            padding: 12px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            margin-left: 12px;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 16px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--bg-card);
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .history-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .history-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Level Guide */
+        .level-guide {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .level-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .level-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .level-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .level-objectives {
+            list-style: none;
+            padding: 0;
+        }
+
+        .level-objectives li {
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-objectives li::before {
+            content: '○';
+            color: var(--accent-blue);
+        }
+
+        .level-objectives li.completed::before {
+            content: '●';
+            color: var(--accent-green);
+        }
+
+        /* Score Display */
+        .score-display {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-green) 0deg, var(--accent-green) calc(var(--score) * 3.6deg), var(--bg-hover) calc(var(--score) * 3.6deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .score-circle::before {
+            content: '';
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            position: absolute;
+        }
+
+        .score-value {
+            position: relative;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .toast.success {
+            border-color: var(--accent-green);
+        }
+
+        .toast.warning {
+            border-color: var(--accent-yellow);
+        }
+
+        .toast.error {
+            border-color: var(--accent-red);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Achievement Badge */
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            animation: badgePop 0.5s ease;
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        /* Performance Bar */
+        .perf-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .perf-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .perf-track {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .perf-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+
+        .perf-value {
+            width: 50px;
+            font-size: 12px;
+            text-align: right;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .left-panel { width: 240px; }
+            .right-panel { width: 280px; }
+        }
+
+        /* 仅在移动端竖屏时改为垂直布局 */
+        @media (max-width: 1px) and (orientation: portrait) {
+            .main-container {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                width: 100%;
+                max-height: 300px;
+            }
+        }
+
+        /* 平板横屏：调整面板宽度 */
+        @media (min-width: 769px) and (max-width: 1px) and (orientation: landscape) {
+            .left-panel, .right-panel {
+                width: 240px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b">
+    <link rel="stylesheet" href="../shared-feishu-submission.css?v=20260619-feishu1">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <span class="game-badge">游戏场 7</span>
+            <h1 class="game-title">方案优化迭代</h1>
+        </div>
+        <div class="header-center">
+            <button class="level-btn active" data-level="1">关卡1</button>
+            <button class="level-btn" data-level="2">关卡2</button>
+            <button class="level-btn" data-level="3">关卡3</button>
+            <button class="level-btn" data-level="4">关卡4</button>
+            <button class="level-btn" data-level="5">关卡5</button>
+        </div>
+        <div class="header-right">
+            <div class="progress-display">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="totalProgress" style="width: 0%"></div>
+                </div>
+                <span class="progress-text"><span id="progressPercent">0</span>%</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Panel -->
+        <aside class="left-panel">
+            <!-- Data Import Section -->
+            <div class="panel-section">
+                <div class="section-title">数据导入</div>
+                <div class="data-status" id="dataStatus">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <div class="status-text" id="statusText">检测中...</div>
+                </div>
+                <button class="btn btn-secondary btn-block" id="importDataBtn">
+                    <span>📥</span> 导入游戏6数据
+                </button>
+                <button class="btn btn-secondary btn-block" id="importGame8Btn" style="margin-top: 8px;">
+                    <span>📋</span> 使用游戏8数据(简化)
+                </button>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                    模式: <span id="dataMode">未检测</span>
+                </div>
+            </div>
+
+            <!-- Scheme Management -->
+            <div class="panel-section">
+                <div class="section-title">方案管理</div>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="schemeNameInput" placeholder="输入方案名称">
+                </div>
+                <button class="btn btn-primary btn-block" id="createSchemeBtn">
+                    <span>➕</span> 创建新方案
+                </button>
+                <div style="margin-top: 12px;">
+                    <div class="input-label">从其他游戏导入</div>
+                    <select class="input-field" id="importSourceSelect">
+                        <option value="">选择数据源</option>
+                        <option value="game2">游戏2 - 建筑布局</option>
+                        <option value="game3">游戏3 - 日照分析</option>
+                        <option value="game4">游戏4 - 采光设计</option>
+                        <option value="game8">游戏8 - 能耗模拟</option>
+                    </select>
+                </div>
+                <div id="schemeList" style="margin-top: 12px;"></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="panel-section">
+                <div class="section-title">快捷操作</div>
+                <button class="btn btn-success btn-block" id="autoOptimizeBtn">
+                    <span>✨</span> 一键智能优化
+                </button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                    <button class="btn btn-secondary btn-small" id="compareBtn">📊 对比</button>
+                    <button class="btn btn-secondary btn-small" id="historyBtn">📜 历史</button>
+                    <button class="btn btn-secondary btn-small" id="exportBtn">📤 导出</button>
+                    <button class="btn btn-secondary btn-small" id="resetBtn">🔄 重置</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Canvas -->
+        <main class="center-canvas">
+            <!-- Level Guide -->
+            <div class="level-guide" id="levelGuide">
+                <div class="level-header">
+                    <div class="level-number" id="levelNumber">1</div>
+                    <div class="level-info">
+                        <h3 id="levelTitle">方案导入与对比</h3>
+                        <p id="levelDesc">学习导入和管理多个设计方案</p>
+                    </div>
+                </div>
+                <ul class="level-objectives" id="levelObjectives">
+                    <li>导入至少2个设计方案</li>
+                    <li>完成性能数据对比</li>
+                    <li>识别最优方案</li>
+                </ul>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="canvas-container">
+                <div class="canvas-header">
+                    <h2 class="canvas-title" id="canvasTitle">方案对比分析</h2>
+                    <div class="canvas-tools">
+                        <button class="btn btn-secondary btn-small" id="viewChartBtn">📈 图表</button>
+                        <button class="btn btn-secondary btn-small" id="viewListBtn">📋 列表</button>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="mainCanvas" width="800" height="400"></canvas>
+                </div>
+            </div>
+
+            <!-- Comparison Results -->
+            <div class="comparison-grid" id="comparisonGrid" style="max-width: 900px; width: 100%; margin-top: 20px;">
+                <div class="comparison-card">
+                    <div class="comparison-label">日照性能</div>
+                    <div class="comparison-value" id="sunlightValue">--</div>
+                    <div class="comparison-unit">小时/年</div>
+                    <div class="comparison-change" id="sunlightChange"></div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">采光性能</div>
+                    <div class="comparison-value" id="daylightValue">--</div>
+                    <div class="comparison-unit">平均值</div>
+                    <div class="comparison-change" id="daylightChange"></div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">能耗性能</div>
+                    <div class="comparison-value" id="energyValue">--</div>
+                    <div class="comparison-unit">kWh/m²</div>
+                    <div class="comparison-change" id="energyChange"></div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">热工性能</div>
+                    <div class="comparison-value" id="thermalValue">--</div>
+                    <div class="comparison-unit">综合评分</div>
+                    <div class="comparison-change" id="thermalChange"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+            <!-- Optimization Suggestions -->
+            <div class="panel-section">
+                <div class="section-title">优化建议</div>
+                <div id="suggestionList"></div>
+            </div>
+
+            <!-- Sensitivity Analysis -->
+            <div class="panel-section">
+                <div class="section-title">参数敏感性分析</div>
+                <div class="param-selector">
+                    <div class="param-chip active" data-param="wwr">窗墙比</div>
+                    <div class="param-chip" data-param="insulation">保温厚度</div>
+                    <div class="param-chip" data-param="orientation">建筑朝向</div>
+                    <div class="param-chip" data-param="volume">建筑体量</div>
+                </div>
+                <div class="sensitivity-chart">
+                    <canvas id="sensitivityCanvas"></canvas>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+                    X轴: 参数变化 (%) | Y轴: 性能变化 (%)
+                </div>
+            </div>
+
+            <!-- Performance Score -->
+            <div class="panel-section">
+                <div class="section-title">综合评分</div>
+                <div id="scoreDisplay" class="score-display" style="padding: 16px;">
+                    <div class="score-circle" style="--score: 0">
+                        <span class="score-value" id="totalScore">0</span>
+                    </div>
+                    <div class="score-label">综合性能评分</div>
+                </div>
+                <div class="perf-bar">
+                    <span class="perf-label">日照</span>
+                    <div class="perf-track"><div class="perf-fill" id="sunlightBar" style="width: 0%; background: var(--accent-yellow);"></div></div>
+                    <span class="perf-value" id="sunlightScore">0</span>
+                </div>
+                <div class="perf-bar">
+                    <span class="perf-label">采光</span>
+                    <div class="perf-track"><div class="perf-fill" id="daylightBar" style="width: 0%; background: var(--accent-cyan);"></div></div>
+                    <span class="perf-value" id="daylightScore">0</span>
+                </div>
+                <div class="perf-bar">
+                    <span class="perf-label">能耗</span>
+                    <div class="perf-track"><div class="perf-fill" id="energyBar" style="width: 0%; background: var(--accent-green);"></div></div>
+                    <span class="perf-value" id="energyScore">0</span>
+                </div>
+                <div class="perf-bar">
+                    <span class="perf-label">热工</span>
+                    <div class="perf-track"><div class="perf-fill" id="thermalBar" style="width: 0%; background: var(--accent-purple);"></div></div>
+                    <span class="perf-value" id="thermalScore">0</span>
+                </div>
+            </div>
+
+            <!-- Optimization History -->
+            <div class="panel-section">
+                <div class="section-title">优化历史</div>
+                <div class="history-timeline" id="historyList">
+                    <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">
+                        暂无优化记录
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="panel-section" id="achievementSection" style="display: none;">
+                <div class="section-title">成就奖励</div>
+                <div id="achievementList"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Create Scheme Modal -->
+    <div class="modal-overlay" id="createSchemeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">创建新方案</h3>
+                <button class="modal-close" onclick="closeModal('createSchemeModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">方案名称</label>
+                    <input type="text" class="input-field" id="newSchemeName" placeholder="如：优化方案A">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">方案描述（可选）</label>
+                    <input type="text" class="input-field" id="newSchemeDesc" placeholder="描述方案特点">
+                </div>
+                <div class="input-group">
+                    <label class="input-label">基准方案</label>
+                    <select class="input-field" id="baseSchemeSelect">
+                        <option value="">无（空白方案）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createSchemeModal')">取消</button>
+                <button class="btn btn-primary" onclick="confirmCreateScheme()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="modal-overlay" id="compareModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">方案对比</h3>
+                <button class="modal-close" onclick="closeModal('compareModal')">✕</button>
+            </div>
+            <div class="modal-body" id="compareModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('compareModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">优化历史</h3>
+                <button class="modal-close" onclick="closeModal('historyModal')">✕</button>
+            </div>
+            <div class="modal-body" id="historyModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('historyModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ============= Game State =============
+        const GameState = {
+            currentLevel: 1,
+            dataMode: null, // 'detailed' or 'simplified'
+            schemes: [],
+            selectedScheme: null,
+            performanceData: null,
+            optimizationHistory: [],
+            achievements: [],
+            levelProgress: [false, false, false, false, false],
+            sensitivityParam: 'wwr'
+        };
+
+        // ============= Level Configuration =============
+        const LEVELS = [
+            {
+                id: 1,
+                title: '方案导入与对比',
+                desc: '学习导入和管理多个设计方案',
+                objectives: [
+                    '导入至少2个设计方案',
+                    '完成性能数据对比',
+                    '识别最优方案'
+                ],
+                target: 2 // 需要至少2个方案
+            },
+            {
+                id: 2,
+                title: '性能优化建议',
+                desc: '分析性能问题，提出优化建议',
+                objectives: [
+                    '查看各方案性能指标',
+                    '理解优化建议内容',
+                    '应用至少3条优化建议'
+                ],
+                target: 3
+            },
+            {
+                id: 3,
+                title: '参数敏感性分析',
+                desc: '分析关键参数对性能的影响',
+                objectives: [
+                    '切换查看不同参数分析',
+                    '理解敏感性曲线含义',
+                    '完成4种参数分析'
+                ],
+                target: 4
+            },
+            {
+                id: 4,
+                title: '方案迭代优化',
+                desc: '生成优化方案，对比优化效果',
+                objectives: [
+                    '使用一键优化功能',
+                    '对比优化前后变化',
+                    '保存优化版本'
+                ],
+                target: 1
+            },
+            {
+                id: 5,
+                title: '综合优化评估',
+                desc: '完成最优方案设计',
+                objectives: [
+                    '综合评分达到80分以上',
+                    '完成所有关卡目标',
+                    '解锁最终成就'
+                ],
+                target: 80
+            }
+        ];
+
+        // ============= Performance Thresholds =============
+        const THRESHOLDS = {
+            sunlight: { excellent: 2500, good: 2000, fair: 1500 },
+            daylight: { excellent: 0.7, good: 0.5, fair: 0.35 },
+            energy: { excellent: 50, good: 80, fair: 120 }, // lower is better
+            thermal: { excellent: 85, good: 70, fair: 55 }
+        };
+
+        // ============= Initialize =============
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            checkGame6Data();
+            setupEventListeners();
+            renderSchemes();
+            updateUI();
+            drawMainCanvas();
+            drawSensitivityChart();
+        });
+
+        // ============= Storage Functions =============
+        function saveToStorage() {
+            localStorage.setItem('game7_state', JSON.stringify({
+                schemes: GameState.schemes,
+                optimizationHistory: GameState.optimizationHistory,
+                achievements: GameState.achievements,
+                levelProgress: GameState.levelProgress,
+                currentLevel: GameState.currentLevel,
+                dataMode: GameState.dataMode
+            }));
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('game7_state');
+            if (saved) {
+                const data = JSON.parse(saved);
+                GameState.schemes = data.schemes || [];
+                GameState.optimizationHistory = data.optimizationHistory || [];
+                GameState.achievements = data.achievements || [];
+                GameState.levelProgress = data.levelProgress || [false, false, false, false, false];
+                GameState.currentLevel = data.currentLevel || 1;
+                GameState.dataMode = data.dataMode || null;
+            }
+        }
+
+        function checkGame6Data() {
+            const game6Data = localStorage.getItem('game6_results');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const dataMode = document.getElementById('dataMode');
+
+            if (game6Data) {
+                try {
+                    const parsed = JSON.parse(game6Data);
+                    if (parsed.performance) {
+                        GameState.performanceData = parsed.performance;
+                        GameState.dataMode = 'detailed';
+                        statusIndicator.className = 'status-indicator';
+                        statusText.textContent = '游戏6详细数据已导入';
+                        dataMode.textContent = '详细模式';
+                        showToast('已检测到游戏6数据', 'success');
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Parse error:', e);
+                }
+            }
+
+            // Check for game8 data
+            const game8Data = localStorage.getItem('game8_results');
+            if (game8Data) {
+                try {
+                    const parsed = JSON.parse(game8Data);
+                    if (parsed.energyData) {
+                        GameState.performanceData = {
+                            energy: parsed.energyData,
+                            thermal: parsed.thermalData || { kValue: 1.5, dValue: 2.0 }
+                        };
+                        GameState.dataMode = 'simplified';
+                        statusIndicator.className = 'status-indicator warning';
+                        statusText.textContent = '游戏8简化数据可用';
+                        dataMode.textContent = '简化模式';
+                        showToast('使用简化模式（游戏8数据）', 'warning');
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Parse error:', e);
+                }
+            }
+
+            statusIndicator.className = 'status-indicator inactive';
+            statusText.textContent = '无可用数据，请导入';
+            dataMode.textContent = '无数据';
+        }
+
+        // ============= Event Listeners =============
+        function setupEventListeners() {
+            // Level buttons
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchLevel(parseInt(btn.dataset.level)));
+            });
+
+            // Data import
+            document.getElementById('importDataBtn').addEventListener('click', importGame6Data);
+            document.getElementById('importGame8Btn').addEventListener('click', importGame8Data);
+
+            // Scheme management
+            document.getElementById('createSchemeBtn').addEventListener('click', showCreateSchemeModal);
+            document.getElementById('importSourceSelect').addEventListener('change', importFromSource);
+
+            // Quick actions
+            document.getElementById('autoOptimizeBtn').addEventListener('click', autoOptimize);
+            document.getElementById('compareBtn').addEventListener('click', showCompareModal);
+            document.getElementById('historyBtn').addEventListener('click', showHistoryModal);
+            document.getElementById('exportBtn').addEventListener('click', exportSchemes);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+
+            // View toggle
+            document.getElementById('viewChartBtn').addEventListener('click', () => setViewMode('chart'));
+            document.getElementById('viewListBtn').addEventListener('click', () => setViewMode('list'));
+
+            // Param chips
+            document.querySelectorAll('.param-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.param-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    GameState.sensitivityParam = chip.dataset.param;
+                    drawSensitivityChart();
+                });
+            });
+        }
+
+        // ============= Level Management =============
+        function switchLevel(level) {
+            GameState.currentLevel = level;
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.level) === level);
+            });
+            updateLevelUI();
+            saveToStorage();
+        }
+
+        function updateLevelUI() {
+            const level = LEVELS[GameState.currentLevel - 1];
+            document.getElementById('levelNumber').textContent = level.id;
+            document.getElementById('levelTitle').textContent = level.title;
+            document.getElementById('levelDesc').textContent = level.desc;
+            document.getElementById('canvasTitle').textContent = level.title;
+
+            const objectivesList = document.getElementById('levelObjectives');
+            objectivesList.innerHTML = level.objectives.map((obj, i) => 
+                `<li class="${GameState.levelProgress[GameState.currentLevel - 1] && i === 0 ? 'completed' : ''}">${obj}</li>`
+            ).join('');
+
+            // Update level button states
+            document.querySelectorAll('.level-btn').forEach((btn, i) => {
+                btn.classList.toggle('locked', i > 0 && !GameState.levelProgress[i - 1]);
+            });
+        }
+
+        function checkLevelCompletion() {
+            const level = LEVELS[GameState.currentLevel - 1];
+            let completed = false;
+
+            switch (GameState.currentLevel) {
+                case 1:
+                    completed = GameState.schemes.length >= 2;
+                    break;
+                case 2:
+                    completed = GameState.optimizationHistory.filter(h => h.type === 'suggestion').length >= 3;
+                    break;
+                case 3:
+                    completed = GameState.optimizationHistory.filter(h => h.type === 'sensitivity').length >= 4;
+                    break;
+                case 4:
+                    completed = GameState.optimizationHistory.filter(h => h.type === 'optimize').length >= 1;
+                    break;
+                case 5:
+                    const score = calculateTotalScore();
+                    completed = score >= 80;
+                    break;
+            }
+
+            if (completed && !GameState.levelProgress[GameState.currentLevel - 1]) {
+                GameState.levelProgress[GameState.currentLevel - 1] = true;
+                showToast(`🎉 恭喜完成 ${level.title}！`, 'success');
+                checkAchievements();
+                updateProgress();
+                saveToStorage();
+            }
+        }
+
+        function updateProgress() {
+            const completed = GameState.levelProgress.filter(Boolean).length;
+            const percent = (completed / 5) * 100;
+            document.getElementById('totalProgress').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = Math.round(percent);
+        }
+
+        // ============= Data Import =============
+        function importGame6Data() {
+            const game6Data = localStorage.getItem('game6_results');
+            if (game6Data) {
+                try {
+                    const parsed = JSON.parse(game6Data);
+                    GameState.performanceData = parsed.performance;
+                    GameState.dataMode = 'detailed';
+                    document.getElementById('statusIndicator').className = 'status-indicator';
+                    document.getElementById('statusText').textContent = '游戏6详细数据已导入';
+                    document.getElementById('dataMode').textContent = '详细模式';
+                    showToast('成功导入游戏6数据', 'success');
+
+                    // Create default scheme from game6 data
+                    createDefaultSchemes();
+                    saveToStorage();
+                } catch (e) {
+                    showToast('数据解析失败', 'error');
+                }
+            } else {
+                showToast('未找到游戏6数据', 'error');
+            }
+        }
+
+        function importGame8Data() {
+            const game8Data = localStorage.getItem('game8_results');
+            if (game8Data) {
+                try {
+                    const parsed = JSON.parse(game8Data);
+                    GameState.performanceData = {
+                        energy: parsed.energyData,
+                        thermal: parsed.thermalData || { kValue: 1.5, dValue: 2.0 }
+                    };
+                    GameState.dataMode = 'simplified';
+                    document.getElementById('statusIndicator').className = 'status-indicator warning';
+                    document.getElementById('statusText').textContent = '游戏8简化数据已导入';
+                    document.getElementById('dataMode').textContent = '简化模式';
+                    showToast('成功导入游戏8数据（简化模式）', 'warning');
+                    saveToStorage();
+                } catch (e) {
+                    showToast('数据解析失败', 'error');
+                }
+            } else {
+                showToast('未找到游戏8数据', 'error');
+            }
+        }
+
+        function importFromSource() {
+            const source = document.getElementById('importSourceSelect').value;
+            if (!source) return;
+
+            let sourceData = null;
+            let dataKey = '';
+
+            switch (source) {
+                case 'game2':
+                    dataKey = 'game2_results';
+                    break;
+                case 'game3':
+                    dataKey = 'game3_results';
+                    break;
+                case 'game4':
+                    dataKey = 'game4_results';
+                    break;
+                case 'game8':
+                    dataKey = 'game8_results';
+                    break;
+            }
+
+            const saved = localStorage.getItem(dataKey);
+            if (saved) {
+                try {
+                    sourceData = JSON.parse(saved);
+                    const schemeName = `从${source.toUpperCase()}导入`;
+                    createSchemeFromData(schemeName, sourceData);
+                    showToast(`成功从${source}导入方案`, 'success');
+                } catch (e) {
+                    showToast('数据导入失败', 'error');
+                }
+            } else {
+                showToast(`未找到${source}数据`, 'error');
+            }
+
+            document.getElementById('importSourceSelect').value = '';
+        }
+
+        function createDefaultSchemes() {
+            if (!GameState.performanceData) return;
+
+            const data = GameState.performanceData;
+            
+            // Create initial schemes based on performance data
+            if (data.sunlight) {
+                createSchemeFromData('日照优化方案', {
+                    sunlight: data.sunlight,
+                    daylight: data.daylight,
+                    energy: data.energy,
+                    thermal: data.thermal
+                });
+            }
+        }
+
+        function createSchemeFromData(name, data) {
+            const scheme = {
+                id: Date.now(),
+                name: name,
+                description: '',
+                createdAt: new Date().toISOString(),
+                performance: {
+                    sunlight: data.sunlight || generateRandomPerformance('sunlight'),
+                    daylight: data.daylight || generateRandomPerformance('daylight'),
+                    energy: data.energy || generateRandomPerformance('energy'),
+                    thermal: data.thermal || generateRandomPerformance('thermal')
+                },
+                parameters: {
+                    wwr: data.wwr || 0.3 + Math.random() * 0.2,
+                    insulation: data.insulation || 20 + Math.random() * 20,
+                    orientation: data.orientation || Math.floor(Math.random() * 4),
+                    volumeRatio: data.volumeRatio || 0.8 + Math.random() * 0.4
+                },
+                versions: []
+            };
+
+            GameState.schemes.push(scheme);
+            renderSchemes();
+            updateComparison();
+            checkLevelCompletion();
+            saveToStorage();
+        }
+
+        function generateRandomPerformance(type) {
+            switch (type) {
+                case 'sunlight':
+                    return 1500 + Math.random() * 1000;
+                case 'daylight':
+                    return 0.3 + Math.random() * 0.5;
+                case 'energy':
+                    return 40 + Math.random() * 80;
+                case 'thermal':
+                    return 50 + Math.random() * 50;
+                default:
+                    return 50 + Math.random() * 50;
+            }
+        }
+
+        // ============= Scheme Management =============
+        function showCreateSchemeModal() {
+            const baseSelect = document.getElementById('baseSchemeSelect');
+            baseSelect.innerHTML = '<option value="">无（空白方案）</option>' + 
+                GameState.schemes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            openModal('createSchemeModal');
+        }
+
+        function confirmCreateScheme() {
+            const name = document.getElementById('newSchemeName').value.trim();
+            const desc = document.getElementById('newSchemeDesc').value.trim();
+            const baseId = document.getElementById('baseSchemeSelect').value;
+
+            if (!name) {
+                showToast('请输入方案名称', 'warning');
+                return;
+            }
+
+            let baseScheme = null;
+            if (baseId) {
+                baseScheme = GameState.schemes.find(s => s.id === parseInt(baseId));
+            }
+
+            const scheme = {
+                id: Date.now(),
+                name: name,
+                description: desc,
+                createdAt: new Date().toISOString(),
+                performance: baseScheme ? { ...baseScheme.performance } : {
+                    sunlight: generateRandomPerformance('sunlight'),
+                    daylight: generateRandomPerformance('daylight'),
+                    energy: generateRandomPerformance('energy'),
+                    thermal: generateRandomPerformance('thermal')
+                },
+                parameters: baseScheme ? { ...baseScheme.parameters } : {
+                    wwr: 0.3 + Math.random() * 0.2,
+                    insulation: 20 + Math.random() * 20,
+                    orientation: Math.floor(Math.random() * 4),
+                    volumeRatio: 0.8 + Math.random() * 0.4
+                },
+                versions: []
+            };
+
+            GameState.schemes.push(scheme);
+            closeModal('createSchemeModal');
+            renderSchemes();
+            updateComparison();
+            showToast(`方案 "${name}" 创建成功`, 'success');
+            saveToStorage();
+
+            // Reset modal
+            document.getElementById('newSchemeName').value = '';
+            document.getElementById('newSchemeDesc').value = '';
+            document.getElementById('baseSchemeSelect').value = '';
+        }
+
+        function selectScheme(id) {
+            GameState.selectedScheme = id;
+            document.querySelectorAll('.scheme-card').forEach(card => {
+                card.classList.toggle('selected', parseInt(card.dataset.id) === id);
+            });
+        }
+
+        function cloneScheme(id) {
+            const scheme = GameState.schemes.find(s => s.id === id);
+            if (!scheme) return;
+
+            const clone = {
+                ...JSON.parse(JSON.stringify(scheme)),
+                id: Date.now(),
+                name: scheme.name + ' (副本)',
+                createdAt: new Date().toISOString()
+            };
+
+            GameState.schemes.push(clone);
+            renderSchemes();
+            updateComparison();
+            showToast('方案克隆成功', 'success');
+            saveToStorage();
+        }
+
+        function deleteScheme(id) {
+            if (GameState.schemes.length <= 1) {
+                showToast('至少保留一个方案', 'warning');
+                return;
+            }
+
+            GameState.schemes = GameState.schemes.filter(s => s.id !== id);
+            if (GameState.selectedScheme === id) {
+                GameState.selectedScheme = GameState.schemes[0]?.id || null;
+            }
+
+            renderSchemes();
+            updateComparison();
+            showToast('方案已删除', 'success');
+            saveToStorage();
+        }
+
+        function renderSchemes() {
+            const container = document.getElementById('schemeList');
+            
+            if (GameState.schemes.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 12px;">暂无方案</div>';
+                return;
+            }
+
+            container.innerHTML = GameState.schemes.map(scheme => {
+                const score = calculateSchemeScore(scheme);
+                const isSelected = GameState.selectedScheme === scheme.id;
+                return `
+                    <div class="scheme-card ${isSelected ? 'selected' : ''}" data-id="${scheme.id}" onclick="selectScheme(${scheme.id})">
+                        <div class="scheme-name">${scheme.name}</div>
+                        <div class="scheme-meta">
+                            <span>${scheme.performance.sunlight?.toFixed(0) || '--'}h日照</span>
+                            <span class="scheme-score">${score.toFixed(0)}分</span>
+                        </div>
+                        <div class="scheme-actions">
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); cloneScheme(${scheme.id})">复制</button>
+                            <button class="btn btn-secondary btn-small" onclick="event.stopPropagation(); deleteScheme(${scheme.id})">删除</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateSchemeScore(scheme) {
+            const p = scheme.performance;
+            let score = 0;
+
+            // Sunlight score (higher is better)
+            if (p.sunlight) {
+                score += Math.min(25, (p.sunlight / 2500) * 25);
+            }
+
+            // Daylight score (higher is better)
+            if (p.daylight) {
+                score += Math.min(25, (p.daylight / 0.7) * 25);
+            }
+
+            // Energy score (lower is better, so invert)
+            if (p.energy) {
+                score += Math.min(25, (1 - (p.energy - 40) / 100) * 25);
+            }
+
+            // Thermal score
+            if (p.thermal) {
+                score += Math.min(25, (p.thermal / 100) * 25);
+            }
+
+            return Math.max(0, Math.min(100, score));
+        }
+
+        // ============= Optimization =============
+        function autoOptimize() {
+            if (GameState.schemes.length === 0) {
+                showToast('请先创建方案', 'warning');
+                return;
+            }
+
+            const scheme = GameState.schemes[0];
+            const original = { ...scheme.performance };
+
+            // Apply optimizations
+            if (scheme.performance.sunlight) {
+                scheme.performance.sunlight = Math.min(2800, scheme.performance.sunlight * (1.05 + Math.random() * 0.1));
+            }
+            if (scheme.performance.daylight) {
+                scheme.performance.daylight = Math.min(0.8, scheme.performance.daylight * (1.02 + Math.random() * 0.08));
+            }
+            if (scheme.performance.energy) {
+                scheme.performance.energy = Math.max(30, scheme.performance.energy * (0.85 + Math.random() * 0.1));
+            }
+            if (scheme.performance.thermal) {
+                scheme.performance.thermal = Math.min(100, scheme.performance.thermal * (1.03 + Math.random() * 0.07));
+            }
+
+            // Update parameters
+            scheme.parameters.wwr = Math.min(0.5, scheme.parameters.wwr * 1.1);
+            scheme.parameters.insulation = Math.min(60, scheme.parameters.insulation * 1.15);
+
+            // Record history
+            const historyEntry = {
+                id: Date.now(),
+                time: new Date().toISOString(),
+                type: 'optimize',
+                schemeName: scheme.name,
+                changes: {
+                    sunlight: ((scheme.performance.sunlight - original.sunlight) / original.sunlight * 100).toFixed(1),
+                    daylight: ((scheme.performance.daylight - original.daylight) / original.daylight * 100).toFixed(1),
+                    energy: ((scheme.performance.energy - original.energy) / original.energy * 100).toFixed(1),
+                    thermal: ((scheme.performance.thermal - original.thermal) / original.thermal * 100).toFixed(1)
+                }
+            };
+
+            GameState.optimizationHistory.push(historyEntry);
+            renderSchemes();
+            updateComparison();
+            updateScoreDisplay();
+            renderHistory();
+            checkLevelCompletion();
+            saveToStorage();
+
+            showToast('✨ 一键优化完成！', 'success');
+            drawMainCanvas();
+        }
+
+        function getOptimizationSuggestions() {
+            const suggestions = [];
+
+            GameState.schemes.forEach(scheme => {
+                const p = scheme.performance;
+
+                // Sunlight suggestions
+                if (p.sunlight && p.sunlight < THRESHOLDS.sunlight.good) {
+                    suggestions.push({
+                        type: 'sunlight',
+                        priority: p.sunlight < THRESHOLDS.sunlight.fair ? 'high' : 'medium',
+                        title: '日照优化建议',
+                        desc: `当前日照${p.sunlight.toFixed(0)}小时，低于推荐值。建议调整建筑朝向或减少周边遮挡。`,
+                        impact: Math.round((THRESHOLDS.sunlight.good - p.sunlight) / THRESHOLDS.sunlight.good * 100),
+                        action: () => {
+                            scheme.parameters.orientation = (scheme.parameters.orientation + 1) % 4;
+                            scheme.performance.sunlight = Math.min(2800, p.sunlight * 1.15);
+                            recordSuggestionHistory(scheme);
+                        }
+                    });
+                }
+
+                // Daylight suggestions
+                if (p.daylight && p.daylight < THRESHOLDS.daylight.good) {
+                    suggestions.push({
+                        type: 'daylight',
+                        priority: p.daylight < THRESHOLDS.daylight.fair ? 'high' : 'medium',
+                        title: '采光优化建议',
+                        desc: `当前采光系数${(p.daylight * 100).toFixed(1)}%，建议优化窗墙比或调整窗户位置。`,
+                        impact: Math.round((THRESHOLDS.daylight.good - p.daylight) / THRESHOLDS.daylight.good * 100),
+                        action: () => {
+                            scheme.parameters.wwr = Math.min(0.5, scheme.parameters.wwr * 1.2);
+                            scheme.performance.daylight = Math.min(0.8, p.daylight * 1.12);
+                            recordSuggestionHistory(scheme);
+                        }
+                    });
+                }
+
+                // Energy suggestions
+                if (p.energy && p.energy > THRESHOLDS.energy.good) {
+                    suggestions.push({
+                        type: 'energy',
+                        priority: p.energy > THRESHOLDS.energy.fair ? 'high' : 'medium',
+                        title: '能耗优化建议',
+                        desc: `当前能耗${p.energy.toFixed(1)}kWh/m²，建议改善保温或优化通风设计。`,
+                        impact: Math.round((p.energy - THRESHOLDS.energy.good) / THRESHOLDS.energy.good * 100),
+                        action: () => {
+                            scheme.parameters.insulation = Math.min(60, scheme.parameters.insulation * 1.25);
+                            scheme.performance.energy = Math.max(30, p.energy * 0.85);
+                            recordSuggestionHistory(scheme);
+                        }
+                    });
+                }
+
+                // Thermal suggestions
+                if (p.thermal && p.thermal < THRESHOLDS.thermal.good) {
+                    suggestions.push({
+                        type: 'thermal',
+                        priority: p.thermal < THRESHOLDS.thermal.fair ? 'high' : 'medium',
+                        title: '热工优化建议',
+                        desc: `热工性能评分${p.thermal.toFixed(0)}分，建议优化构造层次或消除热桥。`,
+                        impact: Math.round((THRESHOLDS.thermal.good - p.thermal) / THRESHOLDS.thermal.good * 100),
+                        action: () => {
+                            scheme.parameters.insulation = Math.min(60, scheme.parameters.insulation * 1.2);
+                            scheme.performance.thermal = Math.min(100, p.thermal * 1.1);
+                            recordSuggestionHistory(scheme);
+                        }
+                    });
+                }
+            });
+
+            return suggestions.sort((a, b) => {
+                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            });
+        }
+
+        function recordSuggestionHistory(scheme) {
+            const historyEntry = {
+                id: Date.now(),
+                time: new Date().toISOString(),
+                type: 'suggestion',
+                schemeName: scheme.name,
+                changes: { ...scheme.performance }
+            };
+            GameState.optimizationHistory.push(historyEntry);
+            renderSchemes();
+            updateComparison();
+            updateScoreDisplay();
+            renderHistory();
+            checkLevelCompletion();
+            saveToStorage();
+        }
+
+        function renderSuggestions() {
+            const container = document.getElementById('suggestionList');
+            const suggestions = getOptimizationSuggestions();
+
+            if (suggestions.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px;">性能良好，暂无优化建议</div>';
+                return;
+            }
+
+            container.innerHTML = suggestions.slice(0, 4).map(s => `
+                <div class="optimization-card ${s.priority}">
+                    <div class="optimization-title">${s.title}</div>
+                    <div class="optimization-desc">${s.desc}</div>
+                    <div class="optimization-impact">
+                        <span class="impact-label">预期提升:</span>
+                        <div class="impact-bar"><div class="impact-fill" style="width: ${s.impact}%;"></div></div>
+                        <span style="color: var(--accent-green);">+${s.impact}%</span>
+                    </div>
+                    <button class="btn btn-primary btn-small btn-block" style="margin-top: 12px;" onclick="this.closest('.optimization-card').querySelector('.optimization-title').textContent; applySuggestion(${GameState.schemes.findIndex(sc => sc.performance[s.type])});">
+                        应用建议
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function applySuggestion(schemeIndex) {
+            if (schemeIndex < 0 || schemeIndex >= GameState.schemes.length) return;
+            const scheme = GameState.schemes[schemeIndex];
+            const p = scheme.performance;
+            const suggestions = getOptimizationSuggestions();
+            const suggestion = suggestions.find(s => s.type && p[s.type]);
+
+            if (suggestion) {
+                suggestion.action();
+                showToast('已应用优化建议', 'success');
+                renderSuggestions();
+                drawMainCanvas();
+            }
+        }
+
+        // ============= Comparison =============
+        function updateComparison() {
+            if (GameState.schemes.length === 0) {
+                document.getElementById('sunlightValue').textContent = '--';
+                document.getElementById('daylightValue').textContent = '--';
+                document.getElementById('energyValue').textContent = '--';
+                document.getElementById('thermalValue').textContent = '--';
+                return;
+            }
+
+            // Find best scheme for each metric
+            const bestSunlight = GameState.schemes.reduce((best, s) => 
+                (!best || s.performance.sunlight > best.performance.sunlight) ? s : best);
+            const bestDaylight = GameState.schemes.reduce((best, s) => 
+                (!best || s.performance.daylight > best.performance.daylight) ? s : best);
+            const bestEnergy = GameState.schemes.reduce((best, s) => 
+                (!best || s.performance.energy < best.performance.energy) ? s : best);
+            const bestThermal = GameState.schemes.reduce((best, s) => 
+                (!best || s.performance.thermal > best.performance.thermal) ? s : best);
+
+            // Update comparison cards
+            const sunlightEl = document.getElementById('sunlightValue');
+            const daylightEl = document.getElementById('daylightValue');
+            const energyEl = document.getElementById('energyValue');
+            const thermalEl = document.getElementById('thermalValue');
+
+            sunlightEl.textContent = bestSunlight?.performance.sunlight?.toFixed(0) || '--';
+            daylightEl.textContent = bestDaylight?.performance.daylight?.toFixed(2) || '--';
+            energyEl.textContent = bestEnergy?.performance.energy?.toFixed(1) || '--';
+            thermalEl.textContent = bestThermal?.performance.thermal?.toFixed(0) || '--';
+
+            // Highlight best
+            document.querySelectorAll('.comparison-card').forEach(card => card.classList.remove('best'));
+            if (bestSunlight) {
+                sunlightEl.closest('.comparison-card').classList.add('best');
+            }
+
+            renderSuggestions();
+            updateScoreDisplay();
+        }
+
+        function showCompareModal() {
+            if (GameState.schemes.length < 2) {
+                showToast('至少需要2个方案才能对比', 'warning');
+                return;
+            }
+
+            const body = document.getElementById('compareModalBody');
+            body.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="padding: 12px; text-align: left; color: var(--text-secondary);">指标</th>
+                                ${GameState.schemes.map(s => `<th style="padding: 12px; text-align: center;">${s.name}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 12px;">日照时数 (h/年)</td>
+                                ${GameState.schemes.map(s => `<td style="padding: 12px; text-align: center; ${s.performance.sunlight === Math.max(...GameState.schemes.map(sc => sc.performance.sunlight)) ? 'color: var(--accent-green); font-weight: 600;' : ''}">${s.performance.sunlight?.toFixed(0) || '--'}</td>`).join('')}
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 12px;">采光系数</td>
+                                ${GameState.schemes.map(s => `<td style="padding: 12px; text-align: center; ${s.performance.daylight === Math.max(...GameState.schemes.map(sc => sc.performance.daylight)) ? 'color: var(--accent-green); font-weight: 600;' : ''}">${s.performance.daylight?.toFixed(2) || '--'}</td>`).join('')}
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 12px;">能耗 (kWh/m²)</td>
+                                ${GameState.schemes.map(s => `<td style="padding: 12px; text-align: center; ${s.performance.energy === Math.min(...GameState.schemes.map(sc => sc.performance.energy)) ? 'color: var(--accent-green); font-weight: 600;' : ''}">${s.performance.energy?.toFixed(1) || '--'}</td>`).join('')}
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 12px;">热工评分</td>
+                                ${GameState.schemes.map(s => `<td style="padding: 12px; text-align: center; ${s.performance.thermal === Math.max(...GameState.schemes.map(sc => sc.performance.thermal)) ? 'color: var(--accent-green); font-weight: 600;' : ''}">${s.performance.thermal?.toFixed(0) || '--'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; font-weight: 600;">综合评分</td>
+                                ${GameState.schemes.map(s => `<td style="padding: 12px; text-align: center; font-weight: 600;">${calculateSchemeScore(s).toFixed(0)}</td>`).join('')}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 16px; padding: 12px; background: var(--bg-hover); border-radius: 8px;">
+                    <div style="font-size: 12px; color: var(--text-muted);">💡 绿色标注表示该指标最优</div>
+                </div>
+            `;
+
+            openModal('compareModal');
+        }
+
+        // ============= Score System =============
+        function calculateTotalScore() {
+            if (GameState.schemes.length === 0) return 0;
+            const avgScores = GameState.schemes.map(s => calculateSchemeScore(s));
+            return avgScores.reduce((a, b) => a + b, 0) / avgScores.length;
+        }
+
+        function updateScoreDisplay() {
+            const totalScore = calculateTotalScore();
+            document.getElementById('totalScore').textContent = Math.round(totalScore);
+            document.querySelector('.score-circle').style.setProperty('--score', totalScore);
+
+            // Calculate individual scores
+            let sunlightTotal = 0, daylightTotal = 0, energyTotal = 0, thermalTotal = 0;
+            
+            GameState.schemes.forEach(s => {
+                const p = s.performance;
+                sunlightTotal += Math.min(100, (p.sunlight / 2500) * 100);
+                daylightTotal += Math.min(100, (p.daylight / 0.7) * 100);
+                energyTotal += Math.min(100, (1 - (p.energy - 40) / 100) * 100);
+                thermalTotal += p.thermal;
+            });
+
+            const count = Math.max(1, GameState.schemes.length);
+            const sunlightScore = Math.round(sunlightTotal / count);
+            const daylightScore = Math.round(daylightTotal / count);
+            const energyScore = Math.round(Math.max(0, energyTotal / count));
+            const thermalScore = Math.round(thermalTotal / count);
+
+            // Update bars
+            document.getElementById('sunlightScore').textContent = sunlightScore;
+            document.getElementById('sunlightBar').style.width = sunlightScore + '%';
+            
+            document.getElementById('daylightScore').textContent = daylightScore;
+            document.getElementById('daylightBar').style.width = daylightScore + '%';
+            
+            document.getElementById('energyScore').textContent = energyScore;
+            document.getElementById('energyBar').style.width = energyScore + '%';
+            
+            document.getElementById('thermalScore').textContent = thermalScore;
+            document.getElementById('thermalBar').style.width = thermalScore + '%';
+        }
+
+        // ============= History =============
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            
+            if (GameState.optimizationHistory.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 20px;">暂无优化记录</div>';
+                return;
+            }
+
+            const recent = GameState.optimizationHistory.slice(-5).reverse();
+            container.innerHTML = recent.map(h => {
+                const date = new Date(h.time);
+                const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                const typeLabel = h.type === 'optimize' ? '一键优化' : h.type === 'suggestion' ? '应用建议' : '敏感性分析';
+                const typeIcon = h.type === 'optimize' ? '✨' : h.type === 'suggestion' ? '💡' : '📊';
+                
+                let detail = '';
+                if (h.changes.sunlight !== undefined) {
+                    detail = `日照: ${h.changes.sunlight > 0 ? '+' : ''}${h.changes.sunlight}%`;
+                } else if (h.changes.wwr !== undefined) {
+                    detail = `参数: ${h.changes.param}`;
+                }
+
+                return `
+                    <div class="history-item">
+                        <div class="history-time">${timeStr}</div>
+                        <div class="history-title">${typeIcon} ${typeLabel}</div>
+                        <div class="history-detail">${h.schemeName} ${detail}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showHistoryModal() {
+            const body = document.getElementById('historyModalBody');
+            
+            if (GameState.optimizationHistory.length === 0) {
+                body.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">暂无优化历史记录</div>';
+            } else {
+                body.innerHTML = GameState.optimizationHistory.slice().reverse().map(h => {
+                    const date = new Date(h.time);
+                    const typeLabel = h.type === 'optimize' ? '一键优化' : h.type === 'suggestion' ? '应用建议' : '敏感性分析';
+                    return `
+                        <div style="padding: 12px; background: var(--bg-hover); border-radius: 8px; margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">${h.schemeName}</span>
+                                <span style="font-size: 11px; color: var(--text-muted);">${date.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--accent-blue);">${typeLabel}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            openModal('historyModal');
+        }
+
+        // ============= Sensitivity Analysis =============
+        function drawSensitivityChart() {
+            const canvas = document.getElementById('sensitivityCanvas');
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const padding = 40;
+
+            // Clear
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, w, h);
+
+            // Generate data based on parameter
+            let data = [];
+            let paramName = '';
+
+            switch (GameState.sensitivityParam) {
+                case 'wwr':
+                    paramName = '窗墙比';
+                    for (let i = 0; i <= 100; i += 5) {
+                        data.push({
+                            x: i,
+                            y: i * 0.4 + Math.sin(i * 0.1) * 10
+                        });
+                    }
+                    break;
+                case 'insulation':
+                    paramName = '保温厚度(mm)';
+                    for (let i = 0; i <= 100; i += 5) {
+                        data.push({
+                            x: i,
+                            y: 100 - Math.exp(-i * 0.03) * 60 + Math.sin(i * 0.1) * 5
+                        });
+                    }
+                    break;
+                case 'orientation':
+                    paramName = '朝向(°)';
+                    for (let i = 0; i <= 100; i += 5) {
+                        data.push({
+                            x: i,
+                            y: 50 + Math.sin((i / 100) * Math.PI * 2) * 40 + Math.random() * 10
+                        });
+                    }
+                    break;
+                case 'volume':
+                    paramName = '体形系数';
+                    for (let i = 0; i <= 100; i += 5) {
+                        data.push({
+                            x: i,
+                            y: 80 - i * 0.5 + Math.sin(i * 0.15) * 15
+                        });
+                    }
+                    break;
+            }
+
+            // Draw grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+
+            // Horizontal grid lines
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (h - padding * 2) * i / 5;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(w - padding, y);
+                ctx.stroke();
+
+                // Y axis labels
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'right';
+                ctx.fillText((100 - i * 20) + '%', padding - 5, y + 4);
+            }
+
+            // Vertical grid lines
+            for (let i = 0; i <= 5; i++) {
+                const x = padding + (w - padding * 2) * i / 5;
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, h - padding);
+                ctx.stroke();
+
+                // X axis labels
+                ctx.fillStyle = '#64748b';
+                ctx.font = '11px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText((i * 20) + '%', x, h - padding + 15);
+            }
+
+            // Draw curve
+            ctx.beginPath();
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 3;
+
+            data.forEach((point, i) => {
+                const x = padding + (w - padding * 2) * point.x / 100;
+                const y = padding + (h - padding * 2) * (1 - point.y / 100);
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+
+            // Fill under curve
+            ctx.lineTo(padding + (w - padding * 2), h - padding);
+            ctx.lineTo(padding, h - padding);
+            ctx.closePath();
+            
+            const gradient = ctx.createLinearGradient(0, padding, 0, h - padding);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Draw points
+            data.forEach((point, i) => {
+                if (i % 4 === 0) {
+                    const x = padding + (w - padding * 2) * point.x / 100;
+                    const y = padding + (h - padding * 2) * (1 - point.y / 100);
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+
+            // Title
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '13px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${paramName} 对性能的影响`, w / 2, 20);
+
+            // Axis labels
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px Microsoft YaHei';
+            ctx.fillText('参数变化 (%)', w / 2, h - 5);
+            
+            ctx.save();
+            ctx.translate(12, h / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('性能变化 (%)', 0, 0);
+            ctx.restore();
+
+            // Record sensitivity analysis
+            const historyEntry = {
+                id: Date.now(),
+                time: new Date().toISOString(),
+                type: 'sensitivity',
+                schemeName: paramName,
+                changes: { param: paramName }
+            };
+            if (GameState.optimizationHistory.filter(h => h.type === 'sensitivity').length < 4) {
+                GameState.optimizationHistory.push(historyEntry);
+            }
+        }
+
+        // ============= Main Canvas Drawing =============
+        function drawMainCanvas() {
+            const canvas = document.getElementById('mainCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Clear
+            ctx.fillStyle = '#0a0e1a';
+            ctx.fillRect(0, 0, w, h);
+
+            if (GameState.schemes.length === 0) {
+                drawEmptyState(ctx, w, h);
+                return;
+            }
+
+            drawRadarChart(ctx, w, h);
+        }
+
+        function drawEmptyState(ctx, w, h) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = '16px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText('暂无方案数据', w / 2, h / 2 - 10);
+            
+            ctx.font = '14px Microsoft YaHei';
+            ctx.fillText('创建或导入方案开始优化分析', w / 2, h / 2 + 15);
+        }
+
+        function drawRadarChart(ctx, w, h) {
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const radius = Math.min(w, h) * 0.35;
+
+            const metrics = ['日照', '采光', '能耗', '热工'];
+            const angleStep = (Math.PI * 2) / metrics.length;
+
+            // Draw grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+
+            for (let level = 1; level <= 5; level++) {
+                const r = radius * level / 5;
+                ctx.beginPath();
+                metrics.forEach((_, i) => {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Draw axes
+            metrics.forEach((metric, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+                ctx.strokeStyle = '#475569';
+                ctx.stroke();
+
+                // Labels
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '13px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const labelX = centerX + Math.cos(angle) * (radius + 25);
+                const labelY = centerY + Math.sin(angle) * (radius + 25);
+                ctx.fillText(metric, labelX, labelY);
+            });
+
+            // Draw scheme polygons
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+            
+            GameState.schemes.forEach((scheme, schemeIndex) => {
+                const p = scheme.performance;
+                const scores = [
+                    Math.min(100, (p.sunlight / 2500) * 100),
+                    Math.min(100, (p.daylight / 0.7) * 100),
+                    Math.min(100, Math.max(0, (1 - (p.energy - 40) / 100) * 100)),
+                    p.thermal
+                ];
+
+                const color = colors[schemeIndex % colors.length];
+
+                // Fill
+                ctx.beginPath();
+                scores.forEach((score, i) => {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const r = radius * score / 100;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.closePath();
+
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+                gradient.addColorStop(0, color + '40');
+                gradient.addColorStop(1, color + '10');
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                // Stroke
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Points
+                scores.forEach((score, i) => {
+                    const angle = i * angleStep - Math.PI / 2;
+                    const r = radius * score / 100;
+                    const x = centerX + Math.cos(angle) * r;
+                    const y = centerY + Math.sin(angle) * r;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+
+                // Legend
+                ctx.fillStyle = color;
+                ctx.font = '12px Microsoft YaHei';
+                ctx.textAlign = 'left';
+                ctx.fillText('● ' + scheme.name, 30, 30 + schemeIndex * 20);
+            });
+
+            // Score display
+            const totalScore = calculateTotalScore();
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 24px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.round(totalScore)}分`, centerX, centerY + 8);
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('综合评分', centerX, centerY + 25);
+        }
+
+        // ============= UI Helpers =============
+        function setViewMode(mode) {
+            document.getElementById('viewChartBtn').classList.toggle('active', mode === 'chart');
+            document.getElementById('viewListBtn').classList.toggle('active', mode === 'list');
+            drawMainCanvas();
+        }
+
+        function updateUI() {
+            updateLevelUI();
+            updateProgress();
+            updateComparison();
+            renderHistory();
+            renderSuggestions();
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'warning' ? '⚠' : type === 'error' ? '✕' : 'ℹ'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ============= Achievements =============
+        function checkAchievements() {
+            const newAchievements = [];
+
+            // First scheme
+            if (GameState.schemes.length >= 1 && !GameState.achievements.includes('first_scheme')) {
+                GameState.achievements.push('first_scheme');
+                newAchievements.push({ id: 'first_scheme', name: '起点', desc: '创建第一个方案' });
+            }
+
+            // Multiple schemes
+            if (GameState.schemes.length >= 3 && !GameState.achievements.includes('multi_schemes')) {
+                GameState.achievements.push('multi_schemes');
+                newAchievements.push({ id: 'multi_schemes', name: '方案库', desc: '同时管理3个方案' });
+            }
+
+            // First optimization
+            if (GameState.optimizationHistory.some(h => h.type === 'optimize') && !GameState.achievements.includes('first_optimize')) {
+                GameState.achievements.push('first_optimize');
+                newAchievements.push({ id: 'first_optimize', name: '优化师', desc: '完成首次优化' });
+            }
+
+            // High score
+            if (calculateTotalScore() >= 80 && !GameState.achievements.includes('high_score')) {
+                GameState.achievements.push('high_score');
+                newAchievements.push({ id: 'high_score', name: '优秀设计师', desc: '综合评分达到80分' });
+            }
+
+            // All levels complete
+            if (GameState.levelProgress.every(Boolean) && !GameState.achievements.includes('all_complete')) {
+                GameState.achievements.push('all_complete');
+                newAchievements.push({ id: 'all_complete', name: '大师级', desc: '完成所有关卡' });
+            }
+
+            if (newAchievements.length > 0) {
+                showAchievementNotification(newAchievements);
+            }
+
+            saveToStorage();
+        }
+
+        function showAchievementNotification(achievements) {
+            const section = document.getElementById('achievementSection');
+            section.style.display = 'block';
+
+            const list = document.getElementById('achievementList');
+            list.innerHTML = achievements.map(a => `
+                <div class="achievement-badge" style="margin-bottom: 8px; display: block;">
+                    🏆 ${a.name}: ${a.desc}
+                </div>
+            `).join('');
+
+            achievements.forEach(a => {
+                showToast(`🏆 解锁成就：${a.name}`, 'success');
+            });
+        }
+
+        // ============= Export/Reset =============
+        function exportSchemes() {
+            const data = {
+                schemes: GameState.schemes,
+                optimizationHistory: GameState.optimizationHistory,
+                achievements: GameState.achievements,
+                exportTime: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `game7_schemes_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast('方案已导出', 'success');
+        }
+
+        function resetGame() {
+            if (confirm('确定要重置所有数据吗？此操作不可撤销。')) {
+                localStorage.removeItem('game7_state');
+                location.reload();
+            }
+        }
+
+        // Make functions globally accessible
+        window.selectScheme = selectScheme;
+        window.cloneScheme = cloneScheme;
+        window.deleteScheme = deleteScheme;
+        window.closeModal = closeModal;
+        window.confirmCreateScheme = confirmCreateScheme;
+        window.applySuggestion = applySuggestion;
+    </script>
+    <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
+
+
+
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏7',
+        gameTitle: '方案优化迭代',
+        captureTarget: '#iterationCanvas, .canvas-area, body',
+        scoring: { type: 'evaluation', threshold: 75, total: 100, description: '优化后综合评分 ≥ 75 即达标' },
+        hideSelectors: ["#resetBtn"],
+        ranking: { enabled: true, semester: '2026春', course: '方案优化迭代', game: '游戏7' },
+        hooks: {
+            capture: () => false,
+            undo: () => false,
+            reset: () => (typeof window.resetAll === 'function' ? (window.resetAll(), true) : false),
+            exportFile: () => (typeof window.handleExport === 'function' ? (window.handleExport(), true) : false),
+            readScore: () => Number(window.iterationScore || (window.gameState && window.gameState.totalScore) || 0)
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '方案优化迭代', game: '游戏7' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
+</body>
+</html>
+
+
+

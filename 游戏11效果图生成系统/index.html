@@ -1,0 +1,3875 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏11：视觉效果艺术家 - 效果图生成系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #f59e0b;
+            --secondary-light: #fbbf24;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景动画 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        /* 头部导航 */
+        .header {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .level-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--gradient-1);
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .level-progress {
+            width: 150px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .level-progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* 主布局 */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 1.5rem;
+            max-width: 1600px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* 左侧工具栏 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .sidebar-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-header .icon {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .sidebar-content {
+            padding: 1rem;
+        }
+
+        /* 工具按钮 */
+        .tool-btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .tool-btn .icon {
+            font-size: 18px;
+        }
+
+        /* 关卡列表 */
+        .level-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .level-item {
+            padding: 0.75rem 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .level-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+        }
+
+        .level-item.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .level-item.completed {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .level-item .level-num {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .level-item.completed .level-num {
+            background: var(--success);
+        }
+
+        .level-item.active .level-num {
+            background: white;
+            color: var(--primary);
+        }
+
+        .level-item .level-info {
+            flex: 1;
+        }
+
+        .level-item .level-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .level-item .level-status {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .level-item.completed .level-status {
+            color: var(--success);
+        }
+
+        /* 中间内容区 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* 标签页 */
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-card-hover);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* 内容面板 */
+        .content-panel {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .panel-body {
+            padding: 1.5rem;
+        }
+
+        /* 提示词生成器 */
+        .prompt-generator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .prompt-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .option-chip {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .option-chip:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .option-chip.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* 提示词输出区 */
+        .prompt-output {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 1rem;
+        }
+
+        .prompt-text {
+            width: 100%;
+            min-height: 200px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: 'Noto Sans SC', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            resize: vertical;
+            outline: none;
+        }
+
+        .prompt-text::placeholder {
+            color: var(--text-muted);
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--bg-dark);
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* 右侧信息面板 */
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* 任务卡片 */
+        .task-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .task-header {
+            padding: 1rem 1.25rem;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .task-header .icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .task-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .task-body {
+            padding: 1.25rem;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item .check {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .task-item.completed .check {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-item.completed .check::after {
+            content: '✓';
+            color: white;
+        }
+
+        /* 模板库 */
+        .template-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .template-item {
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .template-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .template-item .template-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .template-item .template-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* 评分系统 */
+        .score-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+        }
+
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .score-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .score-bar {
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .score-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .score-item .label {
+            color: var(--text-secondary);
+        }
+
+        .score-item .value {
+            font-weight: 500;
+        }
+
+        /* AI工具指南模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            max-width: 900px;
+            width: 90%;
+            max-height: 85vh;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: calc(85vh - 80px);
+            overflow-y: auto;
+        }
+
+        /* 工具指南内容 */
+        .guide-section {
+            margin-bottom: 2rem;
+        }
+
+        .guide-section h3 {
+            font-size: 1rem;
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .guide-content {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .guide-content code {
+            background: var(--bg-card-hover);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: var(--secondary-light);
+        }
+
+        .guide-content pre {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .guide-content ul {
+            margin: 0.75rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .guide-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        .param-table th,
+        .param-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .param-table th {
+            background: var(--bg-card-hover);
+            font-weight: 600;
+        }
+
+        .param-table td code {
+            background: var(--bg-dark);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            color: var(--secondary-light);
+        }
+
+        /* 警告框样式 */
+        .alert-box {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .alert-box.info {
+            border-left: 4px solid var(--info);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .alert-box.warning {
+            border-left: 4px solid var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .alert-box.success {
+            border-left: 4px solid var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .alert-box.danger {
+            border-left: 4px solid var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* 历史记录 */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .history-item {
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .history-item .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-item .history-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .history-item .history-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .history-item .history-preview {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        /* 数据导入 */
+        .import-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .import-zone:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .import-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .import-zone .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .import-zone h4 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .import-zone p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .import-sources {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .import-source {
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .import-source:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .import-source .source-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .import-source .source-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .import-source .source-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* 数据预览 */
+        .data-preview {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .data-preview h4 {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .data-item {
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+
+        .data-item .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .data-item .value {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* 图片上传 */
+        .image-upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .image-upload-zone:hover {
+            border-color: var(--primary);
+        }
+
+        .image-upload-zone.has-image {
+            padding: 1rem;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+        }
+
+        .image-analysis {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border-radius: 8px;
+        }
+
+        .image-analysis h4 {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .analysis-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .analysis-tag {
+            padding: 0.4rem 0.75rem;
+            background: var(--primary);
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        /* 工具选择 */
+        .tool-selector {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-option {
+            flex: 1;
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tool-option:hover {
+            border-color: var(--primary);
+        }
+
+        .tool-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .tool-option .tool-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-option .tool-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* 导出选项 */
+        .export-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .export-option {
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .export-option:hover {
+            border-color: var(--primary);
+        }
+
+        .export-option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .export-option .export-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 提示词对比 */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .comparison-panel {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .comparison-panel h4 {
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* 批量生成 */
+        .batch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .batch-item {
+            padding: 1rem;
+            background: var(--bg-card-hover);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .batch-item .batch-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .batch-item .batch-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .batch-item .batch-prompt {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--bg-dark);
+            padding: 0.5rem;
+            border-radius: 6px;
+            max-height: 80px;
+            overflow: hidden;
+        }
+
+        /* Toast 通知 */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--danger);
+        }
+
+        .toast .toast-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast.success .toast-icon {
+            background: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            background: var(--danger);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar, .info-panel {
+                display: none;
+            }
+
+            .prompt-generator {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 关卡内容特殊样式 */
+        .level-content {
+            display: none;
+        }
+
+        .level-content.active {
+            display: block;
+        }
+
+        /* 关卡进度 */
+        .level-progress-section {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .level-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .level-progress-header h3 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-progress-header .badge {
+            padding: 0.25rem 0.75rem;
+            background: var(--success);
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .level-steps {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .level-step {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .level-step.current {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .level-step.completed {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        /* 完成动画 */
+        .completion-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .completion-animation.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .completion-animation .trophy {
+            font-size: 6rem;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .completion-animation h2 {
+            font-size: 2rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .completion-animation p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* 视频提示词 */
+        .video-path-editor {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .path-point {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .path-point .point-num {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .path-point input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+        }
+
+        .path-point input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+    </style>
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b">
+    <link rel="stylesheet" href="../shared-feishu-submission.css?v=20260619-feishu1">
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- 头部 -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🎨</div>
+                <div class="logo-text">
+                    <h1>视觉效果艺术家</h1>
+                    <span>效果图生成系统 · 游戏11</span>
+                </div>
+            </div>
+            <div class="level-badge">
+                <span>🎯</span>
+                <span>当前关卡</span>
+                <div class="level-progress">
+                    <div class="level-progress-fill" id="totalProgress" style="width: 0%"></div>
+                </div>
+                <span id="progressText">0/5</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧工具栏 -->
+        <aside class="sidebar">
+            <!-- 数据导入 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div class="icon">📥</div>
+                    <span>数据导入</span>
+                </div>
+                <div class="sidebar-content">
+                    <button class="tool-btn" onclick="showImportModal()">
+                        <span class="icon">📁</span>
+                        导入JSON文件
+                    </button>
+                    <button class="tool-btn" onclick="loadSampleData()">
+                        <span class="icon">📋</span>
+                        加载示例数据
+                    </button>
+                    <div id="importedDataInfo" style="display: none; margin-top: 1rem; padding: 0.75rem; background: var(--bg-dark); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">已导入数据</div>
+                        <div id="dataSource" style="font-size: 0.85rem; font-weight: 500;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工具选择 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div class="icon">🛠️</div>
+                    <span>AI工具指南</span>
+                </div>
+                <div class="sidebar-content">
+                    <button class="tool-btn" onclick="showGuide('doubao')">
+                        <span class="icon">🤖</span>
+                        豆包
+                    </button>
+                    <button class="tool-btn" onclick="showGuide('jimeng-image')">
+                        <span class="icon">🎨</span>
+                        即梦（图片）
+                    </button>
+                    <button class="tool-btn" onclick="showGuide('midjourney')">
+                        <span class="icon">🖼️</span>
+                        Midjourney
+                    </button>
+                    <button class="tool-btn" onclick="showGuide('nanobanana')">
+                        <span class="icon">🍌</span>
+                        nano banana
+                    </button>
+                    <button class="tool-btn" onclick="showGuide('jimeng-video')">
+                        <span class="icon">🎬</span>
+                        即梦（视频）
+                    </button>
+                </div>
+            </div>
+
+            <!-- 历史记录 -->
+            <div class="sidebar-section" style="flex: 1;">
+                <div class="sidebar-header">
+                    <div class="icon">📜</div>
+                    <span>历史记录</span>
+                </div>
+                <div class="sidebar-content" style="max-height: 300px; overflow-y: auto;">
+                    <div class="history-list" id="historyList">
+                        <div class="empty-state" style="padding: 1rem;">
+                            <div class="icon" style="font-size: 2rem;">📭</div>
+                            <p style="font-size: 0.8rem;">暂无历史记录</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间内容区 -->
+        <main class="main-content">
+            <!-- 标签页 -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="generator">提示词生成</button>
+                <button class="tab-btn" data-tab="guide">工具指南</button>
+                <button class="tab-btn" data-tab="optimizer">优化系统</button>
+                <button class="tab-btn" data-tab="history">历史管理</button>
+            </nav>
+
+            <!-- 提示词生成 -->
+            <div class="content-panel tab-content active" id="tab-generator">
+                <!-- 关卡进度 -->
+                <div class="level-progress-section">
+                    <div class="level-progress-header">
+                        <h3>🏆 关卡进度</h3>
+                        <span class="badge" id="currentLevelBadge">开始学习</span>
+                    </div>
+                    <div class="level-steps">
+                        <div class="level-step current" data-level="1">关卡1<br>基础入门</div>
+                        <div class="level-step" data-level="2">关卡2<br>风格控制</div>
+                        <div class="level-step" data-level="3">关卡3<br>多视角</div>
+                        <div class="level-step" data-level="4">关卡4<br>风格迁移</div>
+                        <div class="level-step" data-level="5">关卡5<br>综合实战</div>
+                    </div>
+                </div>
+
+                <!-- 关卡1：提示词基础入门 -->
+                <div class="level-content active" id="level-1">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🎯</span>
+                            关卡1：提示词基础入门
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="showLevelInfo(1)">
+                            📖 任务说明
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="prompt-generator">
+                            <div class="prompt-options">
+                                <div class="option-group">
+                                    <div class="option-label">🏛️ 建筑风格</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="style" data-value="modern">现代主义</div>
+                                        <div class="option-chip" data-type="style" data-value="minimalist">极简主义</div>
+                                        <div class="option-chip" data-type="style" data-value="traditional">传统中式</div>
+                                        <div class="option-chip" data-type="style" data-value="futuristic">未来主义</div>
+                                        <div class="option-chip" data-type="style" data-value="organic">有机建筑</div>
+                                        <div class="option-chip" data-type="style" data-value="brutalist">粗野主义</div>
+                                    </div>
+                                </div>
+
+                                <div class="option-group">
+                                    <div class="option-label">📷 视角选择</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="view" data-value="eye-level">人视</div>
+                                        <div class="option-chip" data-type="view" data-value="bird">鸟瞰</div>
+                                        <div class="option-chip" data-type="view" data-value="closeup">近景</div>
+                                        <div class="option-chip" data-type="view" data-value="distant">远景</div>
+                                        <div class="option-chip" data-type="view" data-value="drone">航拍</div>
+                                    </div>
+                                </div>
+
+                                <div class="option-group">
+                                    <div class="option-label">🌅 时间氛围</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="time" data-value="sunset">黄昏</div>
+                                        <div class="option-chip" data-type="time" data-value="morning">清晨</div>
+                                        <div class="option-chip" data-type="time" data-value="noon">正午</div>
+                                        <div class="option-chip" data-type="time" data-value="night">夜晚</div>
+                                        <div class="option-chip" data-type="time" data-value="blue-hour">蓝调时刻</div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-block" onclick="generatePrompt(1)">
+                                    ✨ 生成提示词
+                                </button>
+                            </div>
+
+                            <div class="prompt-output">
+                                <textarea class="prompt-text" id="prompt-1" placeholder="生成的提示词将显示在这里...&#10;&#10;尝试选择不同的风格、视角和时间，生成专属的建筑效果图提示词！"></textarea>
+                                <div class="prompt-actions">
+                                    <button class="btn btn-primary btn-sm" onclick="copyPrompt('prompt-1')">
+                                        📋 复制提示词
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="saveToHistory('prompt-1', '基础提示词')">
+                                        💾 保存
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="openInMJ()">
+                                        🚀 在Midjourney打开
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关卡2：风格与细节控制 -->
+                <div class="level-content" id="level-2">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🎯</span>
+                            关卡2：风格与细节控制
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="showLevelInfo(2)">
+                            📖 任务说明
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="prompt-generator">
+                            <div class="prompt-options">
+                                <div class="option-group">
+                                    <div class="option-label">🎨 材质选择</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="material" data-value="glass">玻璃幕墙</div>
+                                        <div class="option-chip" data-type="material" data-value="concrete">清水混凝土</div>
+                                        <div class="option-chip" data-type="material" data-value="wood">木质饰面</div>
+                                        <div class="option-chip" data-type="material" data-value="metal">金属板</div>
+                                        <div class="option-chip" data-type="material" data-value="stone">石材</div>
+                                        <div class="option-chip" data-type="material" data-value="brick">砖砌</div>
+                                    </div>
+                                </div>
+
+                                <div class="option-group">
+                                    <div class="option-label">🌈 色彩方案</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="color" data-value="neutral">中性灰</div>
+                                        <div class="option-chip" data-type="color" data-value="warm">暖色调</div>
+                                        <div class="option-chip" data-type="color" data-value="cool">冷色调</div>
+                                        <div class="option-chip" data-type="color" data-value="vibrant">活力色</div>
+                                        <div class="option-chip" data-type="color" data-value="monochrome">黑白</div>
+                                    </div>
+                                </div>
+
+                                <div class="option-group">
+                                    <div class="option-label">☀️ 光线设置</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="light" data-value="golden">黄金时刻</div>
+                                        <div class="option-chip" data-type="light" data-value="soft">柔和散射</div>
+                                        <div class="option-chip" data-type="light" data-value="dramatic">戏剧光影</div>
+                                        <div class="option-chip" data-type="light" data-value="overcast">阴天漫射</div>
+                                        <div class="option-chip" data-type="light" data-value="backlight">逆光</div>
+                                    </div>
+                                </div>
+
+                                <div class="option-group">
+                                    <div class="option-label">🌿 环境细节</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="env" data-value="garden">庭院绿化</div>
+                                        <div class="option-chip" data-type="env" data-value="water">水景</div>
+                                        <div class="option-chip" data-type="env" data-value="urban">城市背景</div>
+                                        <div class="option-chip" data-type="env" data-value="nature">自然山景</div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-block" onclick="generatePrompt(2)">
+                                    ✨ 生成优化提示词
+                                </button>
+                            </div>
+
+                            <div class="prompt-output">
+                                <textarea class="prompt-text" id="prompt-2" placeholder="生成包含材质、色彩、光线和环境细节的专业提示词..."></textarea>
+                                <div class="prompt-actions">
+                                    <button class="btn btn-primary btn-sm" onclick="copyPrompt('prompt-2')">
+                                        📋 复制提示词
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="saveToHistory('prompt-2', '风格细节提示词')">
+                                        💾 保存
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="optimizePrompt('prompt-2')">
+                                        ⚡ 智能优化
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关卡3：多视角构图训练 -->
+                <div class="level-content" id="level-3">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🎯</span>
+                            关卡3：多视角构图训练
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="showLevelInfo(3)">
+                            📖 任务说明
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div class="batch-grid">
+                            <div class="batch-item">
+                                <div class="batch-label">视角1</div>
+                                <div class="batch-name">🦅 整体鸟瞰</div>
+                                <div class="batch-prompt" id="batch-3-1">点击生成...</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">视角2</div>
+                                <div class="batch-name">🏛️ 主立面人视</div>
+                                <div class="batch-prompt" id="batch-3-2">点击生成...</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">视角3</div>
+                                <div class="batch-name">🚪 入口近景</div>
+                                <div class="batch-prompt" id="batch-3-3">点击生成...</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-block" onclick="generateBatchPrompts(3)" style="margin-bottom: 1.5rem;">
+                            🎯 一键生成三个视角提示词
+                        </button>
+
+                        <div class="prompt-output">
+                            <textarea class="prompt-text" id="prompt-3" placeholder="三个视角的提示词将汇总显示在这里，方便批量复制使用..."></textarea>
+                            <div class="prompt-actions">
+                                <button class="btn btn-primary btn-sm" onclick="copyPrompt('prompt-3')">
+                                    📋 复制全部
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="saveToHistory('prompt-3', '多视角提示词组')">
+                                    💾 保存
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="exportPrompts('prompt-3', 'json')">
+                                    📥 导出JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关卡4：图片参考与风格迁移 -->
+                <div class="level-content" id="level-4">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🎯</span>
+                            关卡4：图片参考与风格迁移
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="showLevelInfo(4)">
+                            📖 任务说明
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div>
+                                <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">📷 上传参考图片</h4>
+                                <div class="image-upload-zone" id="imageUploadZone" onclick="document.getElementById('imageInput').click()">
+                                    <div class="icon">🖼️</div>
+                                    <h4>点击或拖拽上传图片</h4>
+                                    <p>支持 JPG、PNG 格式</p>
+                                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                </div>
+
+                                <div class="image-analysis" id="imageAnalysis" style="display: none;">
+                                    <h4>🔍 图片特征分析</h4>
+                                    <div class="analysis-tags" id="analysisTags"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">✨ 生成提示词</h4>
+                                <div class="option-group">
+                                    <div class="option-label">提取特征应用到</div>
+                                    <div class="option-grid">
+                                        <div class="option-chip selected" data-type="apply" data-value="style">风格</div>
+                                        <div class="option-chip" data-type="apply" data-value="composition">构图</div>
+                                        <div class="option-chip" data-type="apply" data-value="color">色调</div>
+                                        <div class="option-chip" data-type="apply" data-value="all">全部</div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-block" onclick="generateFromReference()" style="margin-top: 1rem;">
+                                    🎨 基于参考生成提示词
+                                </button>
+
+                                <div class="prompt-output" style="margin-top: 1rem;">
+                                    <textarea class="prompt-text" id="prompt-4" placeholder="基于参考图片的分析结果生成专属提示词..." style="min-height: 150px;"></textarea>
+                                    <div class="prompt-actions">
+                                        <button class="btn btn-primary btn-sm" onclick="copyPrompt('prompt-4')">
+                                            📋 复制
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" onclick="saveToHistory('prompt-4', '参考风格提示词')">
+                                            💾 保存
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关卡5：综合实战 -->
+                <div class="level-content" id="level-5">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🎯</span>
+                            关卡5：综合实战 - 完整效果图套图
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="showLevelInfo(5)">
+                            📖 任务说明
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(99, 102, 241, 0.2);">
+                            <h4 style="font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span>🚀</span> 快速生成完整套图提示词
+                            </h4>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                                基于已导入的设计数据，一键生成5张不同视角的效果图提示词
+                            </p>
+                            <button class="btn btn-primary" onclick="generate全套提示词()" id="generate全套Btn">
+                                🎯 生成5张套图提示词
+                            </button>
+                        </div>
+
+                        <div class="batch-grid" style="grid-template-columns: repeat(5, 1fr);">
+                            <div class="batch-item">
+                                <div class="batch-label">01</div>
+                                <div class="batch-name">🦅 整体鸟瞰</div>
+                                <div class="batch-prompt" id="view-1">-</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">02</div>
+                                <div class="batch-name">🏛️ 主立面人视</div>
+                                <div class="batch-prompt" id="view-2">-</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">03</div>
+                                <div class="batch-name">🚪 入口近景</div>
+                                <div class="batch-prompt" id="view-3">-</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">04</div>
+                                <div class="batch-name">🛋️ 室内空间</div>
+                                <div class="batch-prompt" id="view-4">-</div>
+                            </div>
+                            <div class="batch-item">
+                                <div class="batch-label">05</div>
+                                <div class="batch-name">🌃 夜景氛围</div>
+                                <div class="batch-prompt" id="view-5">-</div>
+                            </div>
+                        </div>
+
+                        <div class="prompt-output" style="margin-top: 1.5rem;">
+                            <textarea class="prompt-text" id="prompt-5" placeholder="完整套图的5张提示词将汇总显示在这里..." style="min-height: 250px;"></textarea>
+                            <div class="prompt-actions">
+                                <button class="btn btn-primary btn-sm" onclick="copyPrompt('prompt-5')">
+                                    📋 复制全部
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="saveToHistory('prompt-5', '完整套图提示词')">
+                                    💾 保存
+                                </button>
+                                <button class="btn btn-success btn-sm" onclick="exportPrompts('prompt-5', 'json')">
+                                    📥 导出JSON
+                                </button>
+                                <button class="btn btn-warning btn-sm" onclick="exportPrompts('prompt-5', 'txt')">
+                                    📝 导出TXT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工具指南 -->
+            <div class="content-panel tab-content" id="tab-guide">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>📚</span>
+                        AI工具使用指南
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="tool-selector">
+                        <div class="tool-option selected" onclick="switchGuide('doubao')">
+                            <div class="tool-icon">🤖</div>
+                            <div class="tool-name">豆包</div>
+                        </div>
+                        <div class="tool-option" onclick="switchGuide('jimeng-image')">
+                            <div class="tool-icon">🎨</div>
+                            <div class="tool-name">即梦（图片）</div>
+                        </div>
+                        <div class="tool-option" onclick="switchGuide('midjourney')">
+                            <div class="tool-icon">🖼️</div>
+                            <div class="tool-name">Midjourney</div>
+                        </div>
+                        <div class="tool-option" onclick="switchGuide('nanobanana')">
+                            <div class="tool-icon">🍌</div>
+                            <div class="tool-name">nano banana</div>
+                        </div>
+                        <div class="tool-option" onclick="switchGuide('jimeng-video')">
+                            <div class="tool-icon">🎬</div>
+                            <div class="tool-name">即梦（视频）</div>
+                        </div>
+                    </div>
+
+                    <div id="guideContent">
+                        <!-- 豆包指南 -->
+                        <div class="guide-section" id="guide-doubao">
+                            <h3>🤖 豆包 AI 绘图</h3>
+                            <div class="guide-content">
+                                <p>豆包是字节跳动推出的智能AI助手，具备强大的文生图功能，<strong>支持中文输入</strong>，能够生成高质量的建筑效果图。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">📌 提示词语言要求</h4>
+                                <div class="alert-box info">
+                                    <strong>✅ 必须使用中文提示词</strong><br>
+                                    豆包AI针对中文进行了深度优化，使用中文描述能获得最佳效果
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">使用方式</h4>
+                                <pre>直接输入中文自然语言描述，豆包会自动生成对应的图片</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">中文提示词技巧</h4>
+                                <ul>
+                                    <li><strong>详细描述建筑风格</strong>：现代主义、简约风格、工业风等</li>
+                                    <li><strong>说明材料质感</strong>：玻璃幕墙、清水混凝土、红砖外立面等</li>
+                                    <li><strong>指定视角</strong>：鸟瞰视角、人视角度、侧立面等</li>
+                                    <li><strong>描述光线条件</strong>：黄昏暖光、晨光、正午强光等</li>
+                                    <li><strong>添加环境氛围</strong>：绿化景观、城市天际线、山景等</li>
+                                    <li><strong>指定构图和比例</strong>：16:9比例、宽幅构图、竖幅构图</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图中文提示词示例</h4>
+                                <pre>一栋现代主义风格的办公大楼，采用玻璃幕墙外立面设计，线条简约流畅，
+黄昏时分，温暖的阳光照射在建筑表面，天空呈现橙红色渐变，
+建筑周围环绕着精心设计的绿化景观，包括草坪、树木和小径，
+鸟瞰视角，展现建筑与环境的整体关系，
+高清建筑效果图，写实风格，16:9宽幅比例</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用中文提示词关键词</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>风格：</strong>现代主义、简约风格、工业风格、新中式、欧式古典<br>
+                                    <strong>材质：</strong>玻璃幕墙、清水混凝土、红砖、石材、金属板<br>
+                                    <strong>视角：</strong>鸟瞰视角、人视角度、侧立面、正立面<br>
+                                    <strong>时间：</strong>清晨、正午、黄昏、夜晚<br>
+                                    <strong>光线：</strong>自然光、暖光、冷光、柔和光线<br>
+                                    <strong>构图：</strong>宽幅构图、竖幅构图、全景视图
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">优势特点</h4>
+                                <ul>
+                                    <li><strong>中文理解能力强</strong>，语义准确，无需英文翻译</li>
+                                    <li><strong>生成速度快</strong>，几秒出图，效率高</li>
+                                    <li><strong>支持多种艺术风格</strong>，可灵活切换</li>
+                                    <li><strong>可以直接在网页端或APP中使用</strong>，操作简单</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 即梦图片指南 -->
+                        <div class="guide-section" id="guide-jimeng-image" style="display: none;">
+                            <h3>🎨 即梦AI 图片生成</h3>
+                            <div class="guide-content">
+                                <p>即梦AI是字节跳动旗下的一站式AI创意平台，<strong>专为中文用户优化</strong>，支持文生图、图生图、智能画布等功能。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">📌 提示词语言要求</h4>
+                                <div class="alert-box info">
+                                    <strong>✅ 必须使用中文提示词</strong><br>
+                                    即梦AI专为中文用户设计，使用中文描述能获得最佳效果<br>
+                                    <strong>⚙️ 重要：生成时需选择的参数选项</strong>
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">生成时必须选择的参数</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <strong>画面比例：</strong>建议选择 16:9（宽幅）或 4:3（标准）<br>
+                                    <strong>画质设置：</strong>建议选择 "4K超高清" 或 "2K高清"<br>
+                                    <strong>风格强度：</strong>根据需要选择 "中"（平衡）或 "高"（艺术感强）<br>
+                                    <strong>生成数量：</strong>建议选择 4张，从中挑选最佳效果
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">功能特点</h4>
+                                <ul>
+                                    <li><strong>文生图:</strong> 输入中文文字描述，生成高质量图片</li>
+                                    <li><strong>图生图:</strong> 上传参考图片，进行创意改造</li>
+                                    <li><strong>智能画布:</strong> 多图融合，局部重绘，一键扩图</li>
+                                    <li><strong>做同款:</strong> 复用社区优秀作品的提示词</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">中文提示词编写技巧</h4>
+                                <pre>基础格式: [主体描述] + [风格] + [视角] + [光线] + [环境]
+
+中文示例:
+现代风格写字楼，玻璃幕墙外立面，简约线条设计，
+人视角度，午后阳光，城市天际线背景，
+写实建筑效果图，4K超高清</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图中文提示词示例</h4>
+                                <pre>一栋现代简约风格的商业综合体，采用大面积玻璃幕墙设计，
+配以金属线条装饰，外立面干净利落，
+午后时光，阳光从侧面照射，在玻璃表面形成光影变化，
+背景是繁华的城市天际线，远处可以看到高层建筑群，
+人视角度，写实建筑效果图，4K超高清，16:9比例</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">编辑功能</h4>
+                                <ul>
+                                    <li>背景替换：更换建筑周围环境</li>
+                                    <li>风格迁移：保留主体，改变艺术风格</li>
+                                    <li>局部重绘：修改图片特定区域</li>
+                                    <li>姿势保持：修改背景，保持建筑形态</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">参数设置参考</h4>
+                                <table class="param-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>说明</th>
+                                            <th>建议值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>画面比例</td>
+                                            <td>宽高比</td>
+                                            <td>16:9, 4:3, 1:1</td>
+                                        </tr>
+                                        <tr>
+                                            <td>画质</td>
+                                            <td>分辨率</td>
+                                            <td>4K超高清 / 2K高清</td>
+                                        </tr>
+                                        <tr>
+                                            <td>风格强度</td>
+                                            <td>风格化程度</td>
+                                            <td>低 / 中 / 高</td>
+                                        </tr>
+                                        <tr>
+                                            <td>生成数量</td>
+                                            <td>每次生成张数</td>
+                                            <td>4张（推荐）</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用中文关键词库</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>建筑风格：</strong>现代简约、工业风、科技感、新中式、欧式风格<br>
+                                    <strong>建筑类型：</strong>写字楼、商业综合体、住宅、酒店、文化建筑<br>
+                                    <strong>外立面：</strong>玻璃幕墙、金属板、石材、清水混凝土、红砖<br>
+                                    <strong>视角：</strong>鸟瞰、人视、侧立面、正立面、仰视<br>
+                                    <strong>光线：</strong>自然光、暖光、冷光、晨光、黄昏光<br>
+                                    <strong>氛围：</strong>商务感、艺术感、生活化、未来感
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- nano banana指南 -->
+                        <div class="guide-section" id="guide-nanobanana" style="display: none;">
+                            <h3>🍌 Nano Banana AI</h3>
+                            <div class="guide-content">
+                                <p>Nano Banana 是基于 Google Gemini 2.5 Flash 技术的极速AI图像生成工具，专注于快速生成和角色一致性，<strong>支持中文提示词</strong>。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">📌 提示词语言要求</h4>
+                                <div class="alert-box info">
+                                    <strong>✅ 支持中文提示词</strong><br>
+                                    Nano Banana支持中英文双语输入，中文描述能获得良好效果
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">核心优势</h4>
+                                <ul>
+                                    <li><strong>极速生成:</strong> 1-2秒出图，比其他工具快5-10倍</li>
+                                    <li><strong>角色一致性:</strong> 跨多张图片保持人物/建筑完全一致</li>
+                                    <li><strong>多图融合:</strong> 轻松组合不同图片元素</li>
+                                    <li><strong>精准编辑:</strong> 只修改想要的部分，其余保持不变</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">中文提示词编写技巧</h4>
+                                <pre>自然语言描述，越具体效果越好
+
+中文格式建议:
+[建筑类型], [风格流派], [材质质感], [视角], [光照条件], 
+[周围环境], [构图方式], [艺术风格], [质量要求]</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图中文提示词示例</h4>
+                                <pre>现代简约主义办公楼，采用清水混凝土外立面设计，
+配以大面积玻璃幕墙，建筑线条简洁有力，
+鸟瞰视角，黄金时刻光照，暖阳洒在建筑表面，
+背景是城市天际线，远处有高层建筑群，
+超写实建筑渲染，精细的建筑细节，
+4K超高清，16:9宽幅比例</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">英文提示词示例（备选）</h4>
+                                <pre>Modern minimalist office building, concrete facade with glass curtain wall,
+Bird's eye view, golden hour lighting, warm sunset glow,
+City skyline background, distant skyscrapers,
+Hyper-realistic architectural rendering, fine architectural details,
+4K ultra HD, 16:9 widescreen</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图推荐设置</h4>
+                                <pre>模型: Nano Banana 2 (4K)
+提示词: 现代简约主义办公楼，清水混凝土立面，玻璃幕墙，
+鸟瞰视角，黄金时刻光照，城市背景，
+超写实建筑渲染，精细建筑细节，4K超高清</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">场景编辑模式</h4>
+                                <ul>
+                                    <li><strong>局部重绘:</strong> 精准修改建筑的某一部分</li>
+                                    <li><strong>无损扩图:</strong> 突破原始尺寸限制</li>
+                                    <li><strong>多图拼接:</strong> 合并多个参考图的设计元素</li>
+                                    <li><strong>AI消除:</strong> 移除不需要的元素</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用中文关键词</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>建筑风格：</strong>现代简约、工业风、科技感、新中式<br>
+                                    <strong>材质：</strong>玻璃幕墙、清水混凝土、金属板、石材、红砖<br>
+                                    <strong>视角：</strong>鸟瞰、人视、侧立面、正立面<br>
+                                    <strong>时间：</strong>清晨、正午、黄昏、夜晚<br>
+                                    <strong>光线：</strong>自然光、暖光、冷光、黄金时刻<br>
+                                    <strong>构图：</strong>16:9、4:3、1:1、宽幅、竖幅
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Midjourney 指南 -->
+                        <div class="guide-section" id="guide-midjourney">
+                            <h3>🎯 Midjourney 基础使用</h3>
+                            <div class="guide-content">
+                                <p>Midjourney 是一款基于 Discord 的 AI 图像生成工具，以其高质量和艺术感强的输出而闻名。<strong>必须使用英文提示词</strong>。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">📌 提示词语言要求</h4>
+                                <div class="alert-box warning">
+                                    <strong>⚠️ 必须使用英文提示词</strong><br>
+                                    Midjourney只支持英文提示词，不支持中文输入<br>
+                                    <strong>⚙️ 必须携带参数</strong><br>
+                                    生成建筑效果图时，必须添加合适的参数才能获得最佳效果
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">基础命令格式</h4>
+                                <pre>/imagine prompt: [英文提示词] [参数]</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">必用参数说明</h4>
+                                <table class="param-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>说明</th>
+                                            <th>示例</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><code>--ar</code></td>
+                                            <td>宽高比（必选）</td>
+                                            <td><code>--ar 16:9</code>（宽幅）<br><code>--ar 4:3</code>（标准）<br><code>--ar 3:2</code>（电影感）</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--v</code></td>
+                                            <td>版本号（推荐）</td>
+                                            <td><code>--v 6</code>（最新版本）<br><code>--v 5.2</code></td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--s</code></td>
+                                            <td>风格化程度（推荐）</td>
+                                            <td><code>--s 200</code>（适中）<br><code>--s 100</code>（写实）<br><code>--s 500</code>（艺术）</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--no</code></td>
+                                            <td>排除元素（推荐）</td>
+                                            <td><code>--no people</code>（无人物）<br><code>--no cars</code>（无车辆）</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--style</code></td>
+                                            <td>风格预设（可选）</td>
+                                            <td><code>--style raw</code>（减少风格化）<br><code>--style raw --v 6.0</code></td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--q</code></td>
+                                            <td>质量参数（可选）</td>
+                                            <td><code>--q 2</code>（高质量）<br><code>--q 1</code>（标准）</td>
+                                        </tr>
+                                        <tr>
+                                            <td><code>--chaos</code></td>
+                                            <td>变化程度（可选）</td>
+                                            <td><code>--chaos 10</code>（稳定）<br><code>--chaos 50</code>（多样）</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图英文提示词模板</h4>
+                                <pre>[建筑类型], [风格], [材质], [视角], [时间], [光线], [环境], 
+[构图], [氛围], [渲染风格], [细节描述], --ar 16:9 --v 6 --s 200 --no people</pre>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图英文提示词示例</h4>
+                                <pre>Modern minimalist office building, concrete facade with glass curtain wall, 
+clean geometric lines, bird's eye view, golden hour lighting, warm sunset glow, 
+city skyline background with distant skyscrapers, wide angle shot, 
+hyper-realistic architectural rendering, fine architectural details, 
+4K ultra HD, photorealistic, --ar 16:9 --v 6 --s 200 --no people</pre>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">优化建议</h4>
+                                <ul>
+                                    <li><strong>使用逗号分隔</strong>：用逗号分隔不同的描述元素</li>
+                                    <li><strong>关键词放前面</strong>：重要的关键词放在前面</li>
+                                    <li><strong>使用 --style raw</strong>：减少过度风格化，适合建筑效果图</li>
+                                    <li><strong>添加 --ar 16:9</strong>：获得电影感宽幅构图</li>
+                                    <li><strong>使用 --no people</strong>：排除人物干扰，专注建筑本身</li>
+                                    <li><strong>控制风格化</strong>：建筑效果图推荐使用 --s 100-200，避免过度艺术化</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用英文关键词</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>建筑风格：</strong>Modern minimalist, Brutalist, Industrial, Contemporary, Futuristic<br>
+                                    <strong>材质：</strong>Glass curtain wall, Concrete facade, Metal cladding, Stone, Brick<br>
+                                    <strong>视角：</strong>Bird's eye view, Eye-level, Aerial, Wide angle, Close-up<br>
+                                    <strong>时间：</strong>Dawn, Morning, Noon, Golden hour, Sunset, Twilight, Night<br>
+                                    <strong>光线：</strong>Natural light, Warm light, Cool light, Soft light, Dramatic lighting<br>
+                                    <strong>构图：</strong>16:9 aspect ratio, 4:3, Wide angle, Symmetrical composition
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用参数组合</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>写实建筑效果图：</strong>--ar 16:9 --v 6 --s 100 --no people --style raw<br>
+                                    <strong>艺术化建筑表现：</strong>--ar 16:9 --v 6 --s 300 --chaos 20<br>
+                                    <strong>高清细节渲染：</strong>--ar 16:9 --v 6 --s 200 --q 2 --no people<br>
+                                    <strong>多样化方案：</strong>--ar 16:9 --v 6 --s 200 --chaos 50
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 即梦视频指南 -->
+                        <div class="guide-section" id="guide-jimeng-video" style="display: none;">
+                            <h3>🎬 即梦AI 视频生成</h3>
+                            <div class="guide-content">
+                                <p>即梦AI是字节跳动旗下的一站式AI创意平台，<strong>专为中文用户优化</strong>，支持图生视频、视频编辑等功能。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">📌 提示词语言要求</h4>
+                                <div class="alert-box info">
+                                    <strong>✅ 必须使用中文提示词</strong><br>
+                                    即梦AI专为中文用户设计，使用中文描述能获得最佳效果<br>
+                                    <strong>⚙️ 重要：生成时需选择的参数选项</strong>
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">生成时必须选择的参数</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <strong>视频时长：</strong>建议选择 5-10秒（建筑漫游）或 10-15秒（全景展示）<br>
+                                    <strong>运动强度：</strong>建议选择 "低"（平滑）或 "中"（适中）<br>
+                                    <strong>分辨率：</strong>建议选择 "720P" 或 "1080P"（高清）<br>
+                                    <strong>生成数量：</strong>建议选择 2个视频，从中挑选最佳效果
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">图生视频功能</h4>
+                                <ul>
+                                    <li><strong>上传参考图:</strong> 上传建筑效果图或平面图作为基础</li>
+                                    <li><strong>输入中文描述:</strong> 描述想要的运动和变化</li>
+                                    <li><strong>调整参数:</strong> 设置运动强度、时长等</li>
+                                    <li><strong>生成视频:</strong> 自动生成建筑漫游视频</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">中文视频描述提示词模板</h4>
+                                <pre>[运动方式]: 缓慢平移 / 缓慢推进 / 鸟瞰飞行
+[起始位置]: 从建筑的某个位置开始
+[运动路径]: 沿着某个路径移动
+[时间氛围]: 在某个时间，呈现某种氛围
+[画质要求]: 电影级画质，流畅的动画效果</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑漫游中文提示词示例</h4>
+                                <pre>缓慢推进镜头，从建筑入口进入大厅，
+镜头平滑向前移动，经过现代化的中庭空间，
+透过巨大的落地窗，可以看到外面的城市天际线，
+阳光从高处洒下，在地面形成光影变化，
+镜头继续向前，展示建筑的内部空间层次，
+电影级画质，流畅的动画效果，10秒时长</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用运动方式描述</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>缓慢推进：</strong>模拟人走进建筑的视角<br>
+                                    <strong>缓慢平移：</strong>展示建筑立面的全貌<br>
+                                    <strong>鸟瞰飞行：</strong>从高处俯瞰建筑和环境<br>
+                                    <strong>环绕旋转：</strong>围绕建筑中心旋转展示<br>
+                                    <strong>提升视角：</strong>从低处逐渐上升到高处
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">参数设置参考</h4>
+                                <table class="param-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>说明</th>
+                                            <th>建议值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>视频时长</td>
+                                            <td>视频持续时间</td>
+                                            <td>5-10秒（漫游）<br>10-15秒（全景）</td>
+                                        </tr>
+                                        <tr>
+                                            <td>运动强度</td>
+                                            <td>镜头运动速度</td>
+                                            <td>低（平滑）<br>中（适中）</td>
+                                        </tr>
+                                        <tr>
+                                            <td>分辨率</td>
+                                            <td>视频清晰度</td>
+                                            <td>720P（快速）<br>1080P（高清）</td>
+                                        </tr>
+                                        <tr>
+                                            <td>生成数量</td>
+                                            <td>每次生成视频数</td>
+                                            <td>2个（推荐）</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用中文关键词</h4>
+                                <div style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px;">
+                                    <strong>运动方式：</strong>缓慢推进、缓慢平移、鸟瞰飞行、环绕旋转、提升视角<br>
+                                    <strong>时间：</strong>清晨、正午、黄昏、夜晚<br>
+                                    <strong>光线：</strong>自然光、暖光、冷光、柔和光线<br>
+                                    <strong>氛围：</strong>商务感、艺术感、生活化、未来感<br>
+                                    <strong>质量：</strong>电影级画质、高清、流畅动画
+                                </div>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">视频生成技巧</h4>
+                                <ul>
+                                    <li><strong>控制运动强度</strong>：建筑漫游建议使用低或中强度，避免过度晃动</li>
+                                    <li><strong>选择合适时长</strong>：5-10秒适合单一空间展示，10-15秒适合多场景切换</li>
+                                    <li><strong>描述运动路径</strong>：详细描述镜头的运动轨迹，让AI理解意图</li>
+                                    <li><strong>添加时间氛围</strong>：描述时间和光线，增强视频的情感表达</li>
+                                    <li><strong>参考图质量</strong>：上传高清的建筑效果图，作为视频生成的基础</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Stable Diffusion 指南 -->
+                        <div class="guide-section" id="guide-stable-diffusion" style="display: none;">
+                            <h3>⚡ Stable Diffusion WebUI 使用</h3>
+                            <div class="guide-content">
+                                <p>Stable Diffusion 是一款开源的本地化 AI 图像生成工具，支持高度自定义和 ControlNet 控制。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">提示词格式</h4>
+                                <pre>Positive Prompt (正向提示词):
+[正面的描述元素]
+
+Negative Prompt (反向提示词):
+[要排除的内容]</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">常用参数</h4>
+                                <table class="param-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>说明</th>
+                                            <th>建议值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Steps</td>
+                                            <td>采样步数</td>
+                                            <td>20-50</td>
+                                        </tr>
+                                        <tr>
+                                            <td>CFG Scale</td>
+                                            <td>提示词引导强度</td>
+                                            <td>7-12</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sampler</td>
+                                            <td>采样器</td>
+                                            <td>DPM++ 2M Karras</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Model</td>
+                                            <td>模型选择</td>
+                                            <td>建筑推荐 RealisticVision</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">ControlNet 使用</h4>
+                                <ul>
+                                    <li><strong>Canny:</strong> 边缘检测控制，适合建筑线稿上色</li>
+                                    <li><strong>Depth:</strong> 深度图控制，保持空间结构</li>
+                                    <li><strong>Normal:</strong> 法线图控制，保持材质质感</li>
+                                    <li><strong>Seg:</strong> 语义分割，控制区域内容</li>
+                                    <li><strong>Lineart:</strong> 线稿提取，保留建筑轮廓</li>
+                                </ul>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图推荐设置</h4>
+                                <pre>Model: RealisticVision v2.0 / SDXL
+Sampler: DPM++ 2M Karras
+Steps: 30-40
+CFG Scale: 7-8
+Resolution: 1024x768 或 1536x1024</pre>
+                            </div>
+                        </div>
+
+                        <!-- DALL-E 指南 -->
+                        <div class="guide-section" id="guide-dalle" style="display: none;">
+                            <h3>🎨 DALL-E 使用技巧</h3>
+                            <div class="guide-content">
+                                <p>DALL-E 是 OpenAI 开发的 AI 图像生成工具，集成在 ChatGPT 中使用。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">使用方式</h4>
+                                <ul>
+                                    <li>通过 ChatGPT Plus 访问</li>
+                                    <li>在对话中直接描述想要的图像</li>
+                                    <li>支持生成、编辑和变体功能</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">提示词技巧</h4>
+                                <ul>
+                                    <li>描述要具体，包含风格、角度、光线等</li>
+                                    <li>使用艺术风格术语（如 "watercolor", "oil painting"）</li>
+                                    <li>指定图像比例（如 "16:9 aspect ratio"）</li>
+                                    <li>添加质量修饰词（如 "photorealistic", "high detail"）</li>
+                                </ul>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑效果图提示词示例</h4>
+                                <pre>A modern glass office building exterior, minimalist design, 
+golden hour lighting, warm sunset sky, surrounded by 
+landscaped gardens, photorealistic architectural rendering,
+wide angle shot, 16:9 aspect ratio, high detail</pre>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">编辑功能</h4>
+                                <ul>
+                                    <li>选中图像区域进行局部修改</li>
+                                    <li>可以添加或移除元素</li>
+                                    <li>支持调整阴影和反射</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Runway 指南 -->
+                        <div class="guide-section" id="guide-runway" style="display: none;">
+                            <h3>🎬 Runway 图生视频</h3>
+                            <div class="guide-content">
+                                <p>Runway 是一个 AI 视频生成平台，支持图生视频和视频编辑功能。</p>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">Gen-2/Gen-3 图生视频</h4>
+                                <pre>1. 上传参考图像
+2. 编写视频描述提示词
+3. 调整运动强度和时长
+4. 生成视频</pre>
+                                
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑漫游提示词模板</h4>
+                                <pre>[运动描述]: Camera slowly pans/dollys/fly-through
+[起始位置]: starting from [位置]
+[运动路径]: moving through [路径描述]
+[时间氛围]: at [时间], with [氛围描述]
+[画质要求]: cinematic quality, smooth motion</pre>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">参数设置</h4>
+                                <table class="param-table">
+                                    <thead>
+                                        <tr>
+                                            <th>参数</th>
+                                            <th>说明</th>
+                                            <th>建议值</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Motion Strength</td>
+                                            <td>运动强度</td>
+                                            <td>Low-Medium</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Duration</td>
+                                            <td>视频时长</td>
+                                            <td>4-10 秒</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Resolution</td>
+                                            <td>分辨率</td>
+                                            <td>1280x768</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h4 style="margin-top: 1rem; color: var(--secondary-light);">建筑漫游示例</h4>
+                                <pre>Slow dolly forward through a modern atrium, 
+golden sunlight streaming through floor-to-ceiling 
+glass windows, dust particles visible in light beams, 
+architectural detail shots, cinematic quality</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 优化系统 -->
+            <div class="content-panel tab-content" id="tab-optimizer">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>⚡</span>
+                        提示词优化系统
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">📝 输入提示词</h4>
+                            <div class="prompt-output">
+                                <textarea class="prompt-text" id="optimizeInput" placeholder="粘贴需要优化的提示词..." style="min-height: 200px;"></textarea>
+                            </div>
+                            <button class="btn btn-primary btn-block" onclick="optimizePromptText()" style="margin-top: 1rem;">
+                                ⚡ 开始优化
+                            </button>
+                        </div>
+
+                        <div>
+                            <h4 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">✨ 优化结果</h4>
+                            <div class="prompt-output">
+                                <textarea class="prompt-text" id="optimizeOutput" placeholder="优化后的提示词将显示在这里..." style="min-height: 200px;"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                                <button class="btn btn-primary btn-sm" onclick="copyPrompt('optimizeOutput')">
+                                    📋 复制
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="saveToHistory('optimizeOutput', '优化提示词')">
+                                    💾 保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="score-card" style="margin-top: 1.5rem;">
+                        <div class="score-header">
+                            <div class="score-title">📊 提示词评分</div>
+                            <div class="score-value" id="totalScore">0</div>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-bar-fill" id="scoreBar" style="width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);"></div>
+                        </div>
+                        <div class="score-items">
+                            <div class="score-item">
+                                <span class="label">完整性</span>
+                                <span class="value" id="scoreCompleteness">-</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">清晰度</span>
+                                <span class="value" id="scoreClarity">-</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">专业性</span>
+                                <span class="value" id="scoreProfessional">-</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="label">优化建议</span>
+                                <span class="value" id="scoreSuggestion" style="color: var(--primary-light);">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: 0.9rem; margin: 1.5rem 0 1rem; color: var(--text-secondary);">📚 提示词模板库</h4>
+                    <div class="template-grid">
+                        <div class="template-item" onclick="applyTemplate('modern-exterior')">
+                            <div class="template-name">🌆 现代建筑外景</div>
+                            <div class="template-desc">适用于现代风格建筑外观渲染</div>
+                        </div>
+                        <div class="template-item" onclick="applyTemplate('interior-living')">
+                            <div class="template-name">🏠 室内居住空间</div>
+                            <div class="template-desc">客厅、卧室等居住空间渲染</div>
+                        </div>
+                        <div class="template-item" onclick="applyTemplate('landscape')">
+                            <div class="template-name">🏞️ 景观鸟瞰</div>
+                            <div class="template-desc">总平面规划和景观鸟瞰图</div>
+                        </div>
+                        <div class="template-item" onclick="applyTemplate('night-scene')">
+                            <div class="template-name">🌃 夜景氛围</div>
+                            <div class="template-desc">建筑夜景灯光效果渲染</div>
+                        </div>
+                        <div class="template-item" onclick="applyTemplate('concept-sketch')">
+                            <div class="template-name">✏️ 概念草图</div>
+                            <div class="template-desc">建筑方案概念阶段草图风</div>
+                        </div>
+                        <div class="template-item" onclick="applyTemplate('aerial')">
+                            <div class="template-name">🚁 航拍视角</div>
+                            <div class="template-desc">大场景航拍视角渲染</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史管理 -->
+            <div class="content-panel tab-content" id="tab-history">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>📜</span>
+                        历史记录管理
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="exportAllHistory()">
+                            📥 导出全部
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearAllHistory()">
+                            🗑️ 清空
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="historyFullList">
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <h3>暂无历史记录</h3>
+                            <p>保存的提示词将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧信息面板 -->
+        <aside class="info-panel">
+            <!-- 当前任务 -->
+            <div class="task-card">
+                <div class="task-header">
+                    <div class="icon">📋</div>
+                    <h3>当前任务</h3>
+                </div>
+                <div class="task-body">
+                    <ul class="task-list" id="taskList">
+                        <li class="task-item completed">
+                            <div class="check"></div>
+                            <span>了解AI绘画工具</span>
+                        </li>
+                        <li class="task-item completed">
+                            <div class="check"></div>
+                            <span>选择建筑风格</span>
+                        </li>
+                        <li class="task-item completed">
+                            <div class="check"></div>
+                            <span>选择视角</span>
+                        </li>
+                        <li class="task-item">
+                            <div class="check"></div>
+                            <span>选择时间氛围</span>
+                        </li>
+                        <li class="task-item">
+                            <div class="check"></div>
+                            <span>生成提示词</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div class="icon">⚡</div>
+                    <span>快捷操作</span>
+                </div>
+                <div class="sidebar-content">
+                    <button class="tool-btn" onclick="switchLevel(1)">
+                        <span class="icon">1️⃣</span>
+                        关卡1
+                    </button>
+                    <button class="tool-btn" onclick="switchLevel(2)">
+                        <span class="icon">2️⃣</span>
+                        关卡2
+                    </button>
+                    <button class="tool-btn" onclick="switchLevel(3)">
+                        <span class="icon">3️⃣</span>
+                        关卡3
+                    </button>
+                    <button class="tool-btn" onclick="switchLevel(4)">
+                        <span class="icon">4️⃣</span>
+                        关卡4
+                    </button>
+                    <button class="tool-btn" onclick="switchLevel(5)">
+                        <span class="icon">5️⃣</span>
+                        关卡5
+                    </button>
+                </div>
+            </div>
+
+            <!-- 提示词小贴士 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div class="icon">💡</div>
+                    <span>小贴士</span>
+                </div>
+                <div class="sidebar-content">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+                        <p style="margin-bottom: 0.75rem;">
+                            <strong>💡 专业提示：</strong>在Midjourney中使用 <code>--ar 16:9</code> 可以获得电影感的建筑效果图。
+                        </p>
+                        <p>
+                            <strong>⚡ 优化技巧：</strong>使用反向提示词（Negative Prompt）可以排除不需要的元素，如 <code>--no people</code>。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据来源 -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <div class="icon">🔗</div>
+                    <span>数据联动</span>
+                </div>
+                <div class="sidebar-content">
+                    <div style="font-size: 0.85rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                            <span style="color: var(--success);">✓</span>
+                            <span>游戏2: 平面布局系统</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                            <span style="color: var(--success);">✓</span>
+                            <span>游戏3: 体块设计系统</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;">
+                            <span style="color: var(--success);">✓</span>
+                            <span>游戏4: 立面造型系统</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 导入模态框 -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📥 导入设计数据</h2>
+                <button class="modal-close" onclick="closeModal('importModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">📁</div>
+                    <h4>点击或拖拽上传JSON文件</h4>
+                    <p>支持从游戏2/3/4导出的设计数据</p>
+                    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+                </div>
+
+                <div class="import-sources">
+                    <div class="import-source" onclick="loadDemoData('game2')">
+                        <div class="source-icon">📐</div>
+                        <div class="source-name">游戏2</div>
+                        <div class="source-desc">平面布局数据</div>
+                    </div>
+                    <div class="import-source" onclick="loadDemoData('game3')">
+                        <div class="source-icon">📦</div>
+                        <div class="source-name">游戏3</div>
+                        <div class="source-desc">体块设计数据</div>
+                    </div>
+                    <div class="import-source" onclick="loadDemoData('game4')">
+                        <div class="source-icon">🏛️</div>
+                        <div class="source-name">游戏4</div>
+                        <div class="source-desc">立面造型数据</div>
+                    </div>
+                </div>
+
+                <div id="previewData" style="display: none; margin-top: 1.5rem;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 1rem;">📋 数据预览</h4>
+                    <div class="data-preview">
+                        <div class="data-grid" id="dataPreviewGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关卡信息模态框 -->
+    <div class="modal-overlay" id="levelInfoModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="levelInfoTitle">关卡信息</h2>
+                <button class="modal-close" onclick="closeModal('levelInfoModal')">×</button>
+            </div>
+            <div class="modal-body" id="levelInfoContent">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成动画 -->
+    <div class="completion-animation" id="completionAnimation">
+        <div class="trophy">🏆</div>
+        <h2>恭喜通关！</h2>
+        <p>你已完成本关卡的所有任务</p>
+        <button class="btn btn-primary" onclick="hideCompletionAnimation()" style="margin-top: 2rem;">
+            继续学习
+        </button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-icon">✓</div>
+        <div class="toast-message">操作成功</div>
+    </div>
+
+    <script>
+        // 状态管理
+        const state = {
+            currentLevel: 1,
+            completedLevels: [],
+            importedData: null,
+            currentTool: 'midjourney',
+            history: [],
+            selectedOptions: {
+                style: 'modern',
+                view: 'eye-level',
+                time: 'sunset',
+                material: 'glass',
+                color: 'neutral',
+                light: 'golden',
+                env: 'garden',
+                apply: 'style'
+            }
+        };
+
+        // 提示词模板
+        const promptTemplates = {
+            styles: {
+                modern: 'modern architecture, contemporary design, clean lines',
+                minimalist: 'minimalist design, simple geometry, understated elegance',
+                traditional: 'traditional architecture, classic design, cultural elements',
+                futuristic: 'futuristic architecture, sci-fi design, innovative forms',
+                organic: 'organic architecture, biomorphic design, nature-inspired',
+                brutalist: 'brutalist architecture, raw concrete, bold geometry'
+            },
+            views: {
+                'eye-level': 'eye-level view, human perspective, street-level photography',
+                bird: 'bird\'s eye view, aerial perspective, top-down shot',
+                closeup: 'close-up view, detailed shot, focal length 85mm',
+                distant: 'distant view, long shot, environmental context',
+                drone: 'drone footage, cinematic aerial, tracking shot'
+            },
+            times: {
+                sunset: 'golden hour, warm sunset light, orange sky',
+                morning: 'morning light, soft sunlight, fresh atmosphere',
+                noon: 'bright daylight, clear sky, high noon',
+                night: 'night scene, illuminated building, city lights',
+                'blue-hour': 'blue hour, twilight, ambient lighting'
+            },
+            materials: {
+                glass: 'glass curtain wall, reflective surface, transparent elements',
+                concrete: 'exposed concrete, raw concrete texture, brutalist feel',
+                wood: 'wood cladding, timber elements, warm natural materials',
+                metal: 'metal panels, steel structure, industrial aesthetic',
+                stone: 'stone facade, natural stone, textured surface',
+                brick: 'brick masonry, terracotta brick, classic texture'
+            },
+            colors: {
+                neutral: 'neutral color palette, gray tones, understated elegance',
+                warm: 'warm color scheme, earth tones, cozy atmosphere',
+                cool: 'cool color tones, blue undertones, modern feel',
+                vibrant: 'vibrant colors, bold accent, dynamic energy',
+                monochrome: 'monochrome palette, black and white, timeless'
+            },
+            lights: {
+                golden: 'golden hour lighting, warm tones, dramatic shadows',
+                soft: 'soft diffused light, overcast conditions, even lighting',
+                dramatic: 'dramatic lighting, high contrast, cinematic',
+                overcast: 'overcast sky, soft shadows, peaceful mood',
+                backlight: 'backlighting, silhouette effect, rim light'
+            },
+            environments: {
+                garden: 'landscaped gardens, greenery, outdoor space',
+                water: 'water features, reflection pool, fountain',
+                urban: 'urban context, city backdrop, street scene',
+                nature: 'natural landscape, mountain backdrop, scenic'
+            }
+        };
+
+        // 关卡信息
+        const levelInfo = {
+            1: {
+                title: '关卡1：提示词基础入门',
+                objectives: [
+                    '了解AI绘画工具的基本使用方法',
+                    '选择一个建筑风格（现代主义）',
+                    '选择一个视角（人视）',
+                    '选择一个时间（黄昏）',
+                    '生成基础提示词并尝试使用'
+                ],
+                tips: [
+                    '现代主义风格强调简洁的线条和功能性',
+                    '人视视角是最常用的效果图视角',
+                    '黄昏时刻能创造出温暖而戏剧性的氛围'
+                ]
+            },
+            2: {
+                title: '关卡2：风格与细节控制',
+                objectives: [
+                    '导入游戏4的立面设计数据',
+                    '选择材料和色彩方案',
+                    '设置光线和环境细节',
+                    '生成优化提示词',
+                    '对比不同风格的效果'
+                ],
+                tips: [
+                    '材质描述越具体，效果越好',
+                    '色彩方案决定整体氛围',
+                    '光线设置影响阴影和立体感'
+                ]
+            },
+            3: {
+                title: '关卡3：多视角构图训练',
+                objectives: [
+                    '从游戏2导入平面图数据',
+                    '生成鸟瞰、人视、近景三个视角的提示词',
+                    '学习构图关键词',
+                    '在Midjourney中生成三个视角的效果图'
+                ],
+                tips: [
+                    '鸟瞰图展示整体布局',
+                    '人视图展示立面效果',
+                    '近景图展示细部设计'
+                ]
+            },
+            4: {
+                title: '关卡4：图片参考与风格迁移',
+                objectives: [
+                    '上传建筑参考图片',
+                    '系统自动分析图片特征',
+                    '生成基于参考图片的提示词',
+                    '应用到自己的设计上'
+                ],
+                tips: [
+                    '选择高质量的参考图',
+                    '分析图片的风格、构图、色调',
+                    '将分析结果应用到自己的项目'
+                ]
+            },
+            5: {
+                title: '关卡5：综合实战 - 完整效果图套图',
+                objectives: [
+                    '从游戏2/3/4导入完整设计数据',
+                    '生成5张不同视角的效果图提示词',
+                    '包含：整体鸟瞰、主立面人视、入口近景、室内空间、夜景氛围',
+                    '使用不同AI工具生成效果图',
+                    '整理效果图并导出提示词清单'
+                ],
+                tips: [
+                    '完整套图需要多个视角互补',
+                    '夜景需要特殊的灯光描述',
+                    '导出提示词清单方便后续修改'
+                ]
+            }
+        };
+
+        // 提示词模板库
+        const templateLibrary = {
+            'modern-exterior': `Modern [building type] exterior architecture, [material] facade, clean geometric forms, 
+glass curtain wall, steel structure, minimalist design, professional architectural photography,
+golden hour lighting, soft shadows, [environment], --ar 16:9 --v 6 --style raw`,
+            
+            'interior-living': `[style] living room interior design, modern furniture, natural light from large windows,
+warm color palette, wooden flooring, cozy atmosphere, interior architecture photography,
+soft diffused lighting, shallow depth of field, --ar 16:9 --v 6`,
+            
+            'landscape': `Aerial bird's eye view of [project name] site plan, landscape architecture,
+ pedestrian paths, green spaces, water features, outdoor amenities, 
+professional masterplan rendering, top-down perspective, clear day lighting, --ar 16:9`,
+            
+            'night-scene': `[building type] at night, illuminated architecture, dramatic lighting design,
+ LED facade lighting, reflection on glass, city lights in background,
+night photography, moody atmosphere, cinematic quality, --ar 16:9 --v 6`,
+            
+            'concept-sketch': `Architectural concept sketch, hand-drawn style, [building type] proposal,
+ watercolor rendering, expressive lines, conceptual visualization,
+marker sketch aesthetic, presentation quality, --ar 16:9`,
+            
+            'aerial': `Drone aerial shot of [project], cinematic composition, sweeping camera movement,
+ bird's eye perspective, [setting/surroundings], dramatic sky,
+4K architectural photography, professional lighting, --ar 16:9 --v 6`
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            setupEventListeners();
+            updateProgress();
+        });
+
+        // 加载本地存储
+        function loadFromStorage() {
+            const saved = localStorage.getItem('visualArtistHistory');
+            if (saved) {
+                state.history = JSON.parse(saved);
+                renderHistoryList();
+            }
+            
+            const savedLevel = localStorage.getItem('visualArtistLevel');
+            if (savedLevel) {
+                state.currentLevel = parseInt(savedLevel);
+                state.completedLevels = JSON.parse(localStorage.getItem('visualArtistCompleted') || '[]');
+                switchLevel(state.currentLevel);
+            }
+        }
+
+        // 保存到本地存储
+        function saveToStorage() {
+            localStorage.setItem('visualArtistHistory', JSON.stringify(state.history));
+            localStorage.setItem('visualArtistLevel', state.currentLevel.toString());
+            localStorage.setItem('visualArtistCompleted', JSON.stringify(state.completedLevels));
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 标签页切换
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    switchTab(tab);
+                });
+            });
+
+            // 选项芯片
+            document.querySelectorAll('.option-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const type = chip.dataset.type;
+                    const value = chip.dataset.value;
+                    selectOption(type, value);
+                });
+            });
+
+            // 拖拽上传
+            const dropZone = document.getElementById('dropZone');
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('dragover');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type === 'application/json') {
+                        handleFileImport({ target: { files: [file] } });
+                    }
+                });
+            }
+        }
+
+        // 切换标签页
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            document.querySelectorAll('.tab-content').forEach(panel => {
+                panel.classList.toggle('active', panel.id === `tab-${tab}`);
+            });
+        }
+
+        // 选择选项
+        function selectOption(type, value) {
+            state.selectedOptions[type] = value;
+            
+            // 更新UI
+            document.querySelectorAll(`[data-type="${type}"]`).forEach(chip => {
+                chip.classList.toggle('selected', chip.dataset.value === value);
+            });
+        }
+
+        // 生成提示词
+        function generatePrompt(level) {
+            let prompt = '';
+            
+            if (level === 1) {
+                const style = state.selectedOptions.style;
+                const view = state.selectedOptions.view;
+                const time = state.selectedOptions.time;
+                
+                prompt = `Architectural visualization: ${promptTemplates.styles[style]}, 
+${promptTemplates.views[view]}, 
+${promptTemplates.times[time]},
+professional architectural photography, high detail, 8K quality,
+--ar 16:9 --v 6 --style raw`;
+            } else if (level === 2) {
+                const style = state.selectedOptions.style;
+                const view = state.selectedOptions.view;
+                const time = state.selectedOptions.time;
+                const material = state.selectedOptions.material;
+                const color = state.selectedOptions.color;
+                const light = state.selectedOptions.light;
+                const env = state.selectedOptions.env;
+                
+                prompt = `Architectural visualization: ${promptTemplates.styles[style]}, 
+${promptTemplates.materials[material]}, ${promptTemplates.colors[color]} color scheme,
+${promptTemplates.views[view]}, 
+${promptTemplates.times[time]}, ${promptTemplates.lights[light]},
+${promptTemplates.environments[env]},
+professional architectural photography, exterior rendering, ultra detailed, 8K,
+--ar 16:9 --v 6 --s 200 --style raw`;
+            }
+            
+            document.getElementById(`prompt-${level}`).value = prompt;
+            showToast('提示词生成成功！');
+        }
+
+        // 批量生成提示词
+        function generateBatchPrompts(level) {
+            if (level === 3) {
+                const prompts = [
+                    `Architectural bird's eye view, aerial perspective, ${promptTemplates.styles[state.selectedOptions.style] || 'modern architecture'},
+${promptTemplates.materials[state.selectedOptions.material] || 'glass facade'},
+${promptTemplates.environments[state.selectedOptions.env] || 'landscaped gardens'},
+masterplan overview, site context, professional aerial photography, --ar 16:9 --v 6 --style raw`,
+                    
+                    `Architectural elevation view, ${promptTemplates.views['eye-level']}, 
+${promptTemplates.styles[state.selectedOptions.style] || 'modern architecture'},
+${promptTemplates.materials[state.selectedOptions.material] || 'glass curtain wall'},
+${promptTemplates.times[state.selectedOptions.time] || 'golden hour'},
+${promptTemplates.lights[state.selectedOptions.light] || 'dramatic lighting'},
+facade detail, street-level perspective, professional photography, --ar 16:9 --v 6`,
+                    
+                    `Architectural close-up view, entrance detail, focal point composition,
+${promptTemplates.materials[state.selectedOptions.material] || 'glass and steel'} materials,
+${promptTemplates.styles[state.selectedOptions.style] || 'contemporary design'},
+warm welcome atmosphere, ${promptTemplates.lights['soft']}, 
+human scale detail, shallow depth of field, --ar 4:3 --v 6`
+                ];
+                
+                document.getElementById('batch-3-1').textContent = prompts[0].substring(0, 80) + '...';
+                document.getElementById('batch-3-2').textContent = prompts[1].substring(0, 80) + '...';
+                document.getElementById('batch-3-3').textContent = prompts[2].substring(0, 80) + '...';
+                
+                document.getElementById('prompt-3').value = `【视角1：整体鸟瞰】\n${prompts[0]}\n\n【视角2：主立面人视】\n${prompts[1]}\n\n【视角3：入口近景】\n${prompts[2]}`;
+                
+                showToast('三个视角提示词生成成功！');
+            }
+        }
+
+        // 生成全套提示词
+        function generate全套提示词() {
+            const style = state.selectedOptions.style || 'modern';
+            const hasData = state.importedData !== null;
+            
+            const dataInfo = hasData ? `${state.importedData.name || '住宅项目'}, ` : '';
+            
+            const prompts = [
+                `【01 整体鸟瞰】\n${dataInfo}Architectural aerial bird's eye view, comprehensive site overview,
+${promptTemplates.styles[style]}, modern masterplan, landscape integration,
+${promptTemplates.environments[state.selectedOptions.env || 'garden']},
+clear day lighting, professional aerial photography, 8K resolution, --ar 16:9 --v 6`,
+                
+                `【02 主立面人视】\n${dataInfo}Main elevation eye-level view, street perspective,
+${promptTemplates.styles[style]}, ${promptTemplates.materials[state.selectedOptions.material || 'glass']} facade,
+${promptTemplates.times[state.selectedOptions.time || 'sunset']}, ${promptTemplates.lights[state.selectedOptions.light || 'golden']},
+human scale, architectural photography, --ar 16:9 --v 6`,
+                
+                `【03 入口近景】\n${dataInfo}Main entrance close-up, focal point composition,
+welcoming atmosphere, ${promptTemplates.materials[state.selectedOptions.material || 'glass']} canopy,
+${promptTemplates.lights['soft']}, warm lighting, shallow DOF,
+detailed material texture, --ar 4:3 --v 6`,
+                
+                `【04 室内空间】\n${dataInfo}Interior space visualization, ${promptTemplates.styles[style]} interior design,
+${promptTemplates.colors[state.selectedOptions.color || 'warm']} color scheme,
+abundant natural light, large windows, ${promptTemplates.materials[state.selectedOptions.material || 'wood']} accents,
+cozy living environment, --ar 16:9 --v 6`,
+                
+                `【05 夜景氛围】\n${dataInfo}Night scene atmospheric rendering, illuminated architecture,
+dramatic facade lighting, LED strips, light beams,
+${promptTemplates.environments[state.selectedOptions.env || 'urban']} background,
+moody atmosphere, cinematic quality, --ar 16:9 --v 6`
+            ];
+            
+            // 更新单个小窗口
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-${i}`).textContent = prompts[i-1].substring(prompts[i-1].indexOf('\n') + 1, 100) + '...';
+            }
+            
+            document.getElementById('prompt-5').value = prompts.join('\n\n');
+            showToast('5张套图提示词生成成功！');
+        }
+
+        // 图片上传处理
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const zone = document.getElementById('imageUploadZone');
+                zone.classList.add('has-image');
+                zone.innerHTML = `<img src="${e.target.result}" class="image-preview" alt="Preview">`;
+                
+                // 模拟图片分析
+                analyzeImage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 图片分析
+        function analyzeImage() {
+            const analysis = document.getElementById('imageAnalysis');
+            const tags = document.getElementById('analysisTags');
+            
+            // 模拟分析结果
+            const features = [
+                { label: '风格', value: '现代主义' },
+                { label: '色调', value: '暖色调' },
+                { label: '材质', value: '玻璃幕墙' },
+                { label: '构图', value: '三分法' },
+                { label: '氛围', value: '温馨' }
+            ];
+            
+            tags.innerHTML = features.map(f => 
+                `<span class="analysis-tag">${f.label}: ${f.value}</span>`
+            ).join('');
+            
+            analysis.style.display = 'block';
+        }
+
+        // 基于参考生成
+        function generateFromReference() {
+            const apply = state.selectedOptions.apply;
+            const style = state.selectedOptions.style;
+            
+            let basePrompt = `Based on reference image style transfer:\n`;
+            
+            if (apply === 'style' || apply === 'all') {
+                basePrompt += `${promptTemplates.styles[style]}, reference image artistic style\n`;
+            }
+            if (apply === 'color' || apply === 'all') {
+                basePrompt += `${promptTemplates.colors[state.selectedOptions.color || 'warm']} color grading, reference image palette\n`;
+            }
+            if (apply === 'composition' || apply === 'all') {
+                basePrompt += `reference image composition, rule of thirds, balanced framing\n`;
+            }
+            
+            basePrompt += `${promptTemplates.views['eye-level']}, ${promptTemplates.times[state.selectedOptions.time || 'sunset']},
+professional architectural rendering, high quality, --ar 16:9 --v 6 --iw 1.5`;
+            
+            document.getElementById('prompt-4').value = basePrompt;
+            showToast('基于参考的提示词生成成功！');
+        }
+
+        // 优化提示词
+        function optimizePromptText() {
+            const input = document.getElementById('optimizeInput').value;
+            if (!input.trim()) {
+                showToast('请输入需要优化的提示词', 'error');
+                return;
+            }
+            
+            // 模拟优化
+            const improvements = [
+                '添加专业术语提升描述准确性',
+                '优化关键词顺序，突出重点',
+                '补充光线和环境细节',
+                '添加渲染参数提升输出质量'
+            ];
+            
+            let optimized = input;
+            
+            // 添加常用优化
+            if (!input.includes('8K') && !input.includes('4K')) {
+                optimized += ', ultra detailed, 8K quality';
+            }
+            if (!input.includes('--ar')) {
+                optimized += ' --ar 16:9';
+            }
+            if (!input.includes('--v')) {
+                optimized += ' --v 6';
+            }
+            if (!input.includes('professional')) {
+                optimized = 'Professional architectural visualization: ' + optimized;
+            }
+            
+            document.getElementById('optimizeOutput').value = optimized;
+            
+            // 更新评分
+            updateScore(input);
+            
+            showToast('提示词优化完成！');
+        }
+
+        // 更新评分
+        function updateScore(prompt) {
+            let completeness = 0;
+            let clarity = 0;
+            let professional = 0;
+            
+            // 完整性评分
+            if (prompt.length > 50) completeness += 30;
+            if (prompt.length > 100) completeness += 20;
+            if (['建筑', 'architecture', 'building'].some(k => prompt.includes(k))) completeness += 25;
+            if (['视角', 'view', 'perspective', '鸟瞰', '人视'].some(k => prompt.includes(k))) completeness += 25;
+            
+            // 清晰度评分
+            if (prompt.includes(',') || prompt.includes('\n')) clarity += 40;
+            if (['现代', '传统', '极简', 'modern', 'traditional', 'minimalist'].some(k => prompt.includes(k))) clarity += 30;
+            if (['光线', 'lighting', '时间', 'time', '时刻'].some(k => prompt.includes(k))) clarity += 30;
+            
+            // 专业性评分
+            if (['渲染', 'rendering', 'photography', '摄影'].some(k => prompt.includes(k))) professional += 35;
+            if (['--ar', '--v', '--s'].some(k => prompt.includes(k))) professional += 35;
+            if (['材质', 'material', 'facade', '幕墙'].some(k => prompt.includes(k))) professional += 30;
+            
+            const total = Math.round((completeness + clarity + professional) / 3);
+            
+            document.getElementById('totalScore').textContent = total;
+            document.getElementById('scoreBar').style.width = `${total}%`;
+            document.getElementById('scoreCompleteness').textContent = completeness;
+            document.getElementById('scoreClarity').textContent = clarity;
+            document.getElementById('scoreProfessional').textContent = professional;
+            
+            let suggestion = '优秀';
+            if (total < 60) suggestion = '建议添加更多细节描述';
+            else if (total < 80) suggestion = '可添加光线和环境设置';
+            else suggestion = '提示词已相当完善';
+            
+            document.getElementById('scoreSuggestion').textContent = suggestion;
+        }
+
+        // 应用模板
+        function applyTemplate(templateName) {
+            const template = templateLibrary[templateName];
+            if (template) {
+                const applyTo = document.getElementById('optimizeInput') || document.getElementById('prompt-1');
+                applyTo.value = template;
+                showToast('模板已应用！');
+            }
+        }
+
+        // 复制提示词
+        function copyPrompt(elementId) {
+            const text = document.getElementById(elementId).value;
+            if (!text.trim()) {
+                showToast('没有内容可复制', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板！');
+            }).catch(() => {
+                // 降级处理
+                const textarea = document.getElementById(elementId);
+                textarea.select();
+                document.execCommand('copy');
+                showToast('已复制到剪贴板！');
+            });
+        }
+
+        // 保存到历史
+        function saveToHistory(elementId, title) {
+            const text = document.getElementById(elementId).value;
+            if (!text.trim()) {
+                showToast('没有内容可保存', 'error');
+                return;
+            }
+            
+            const record = {
+                id: Date.now(),
+                title: title || '未命名提示词',
+                content: text,
+                date: new Date().toLocaleString('zh-CN'),
+                level: state.currentLevel
+            };
+            
+            state.history.unshift(record);
+            if (state.history.length > 50) {
+                state.history = state.history.slice(0, 50);
+            }
+            
+            saveToStorage();
+            renderHistoryList();
+            showToast('已保存到历史记录！');
+        }
+
+        // 渲染历史列表
+        function renderHistoryList() {
+            const list = document.getElementById('historyList');
+            const fullList = document.getElementById('historyFullList');
+            
+            if (state.history.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state" style="padding: 1rem;">
+                        <div class="icon" style="font-size: 2rem;">📭</div>
+                        <p style="font-size: 0.8rem;">暂无历史记录</p>
+                    </div>
+                `;
+                fullList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <h3>暂无历史记录</h3>
+                        <p>保存的提示词将显示在这里</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = state.history.slice(0, 5).map(item => `
+                <div class="history-item" onclick="loadHistory(${item.id})">
+                    <div class="history-header">
+                        <div class="history-title">${item.title}</div>
+                    </div>
+                    <div class="history-preview">${item.content.substring(0, 50)}...</div>
+                </div>
+            `).join('');
+            
+            fullList.innerHTML = state.history.map(item => `
+                <div class="history-item" onclick="loadHistory(${item.id})">
+                    <div class="history-header">
+                        <div class="history-title">${item.title}</div>
+                        <div class="history-date">${item.date}</div>
+                    </div>
+                    <div class="history-preview">${item.content.substring(0, 100)}...</div>
+                    <div class="history-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); copyHistory(${item.id})">📋 复制</button>
+                        <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); deleteHistory(${item.id})">🗑️ 删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 加载历史记录
+        function loadHistory(id) {
+            const record = state.history.find(h => h.id === id);
+            if (record) {
+                const textarea = document.getElementById(`prompt-${state.currentLevel}`) || document.getElementById('optimizeInput');
+                textarea.value = record.content;
+                showToast('已加载历史记录！');
+            }
+        }
+
+        // 复制历史记录
+        function copyHistory(id) {
+            const record = state.history.find(h => h.id === id);
+            if (record) {
+                navigator.clipboard.writeText(record.content);
+                showToast('已复制！');
+            }
+        }
+
+        // 删除历史记录
+        function deleteHistory(id) {
+            state.history = state.history.filter(h => h.id !== id);
+            saveToStorage();
+            renderHistoryList();
+            showToast('已删除');
+        }
+
+        // 导出提示词
+        function exportPrompts(elementId, format) {
+            const text = document.getElementById(elementId).value;
+            if (!text.trim()) {
+                showToast('没有内容可导出', 'error');
+                return;
+            }
+            
+            let content, filename, type;
+            
+            if (format === 'json') {
+                const prompts = text.split(/\n\n【/).filter(p => p.trim());
+                const data = prompts.map((p, i) => {
+                    const lines = p.split('\n');
+                    return {
+                        index: i + 1,
+                        title: lines[0].replace(/【|】/g, ''),
+                        prompt: lines.slice(1).join('\n')
+                    };
+                });
+                content = JSON.stringify(data, null, 2);
+                filename = `提示词清单_${Date.now()}.json`;
+                type = 'application/json';
+            } else {
+                content = text;
+                filename = `提示词清单_${Date.now()}.txt`;
+                type = 'text/plain';
+            }
+            
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('导出成功！');
+        }
+
+        // 导出全部历史
+        function exportAllHistory() {
+            if (state.history.length === 0) {
+                showToast('没有历史记录可导出', 'error');
+                return;
+            }
+            
+            const content = JSON.stringify(state.history, null, 2);
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `提示词历史记录_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('全部历史已导出！');
+        }
+
+        // 清空历史
+        function clearAllHistory() {
+            if (confirm('确定要清空所有历史记录吗？')) {
+                state.history = [];
+                saveToStorage();
+                renderHistoryList();
+                showToast('历史记录已清空');
+            }
+        }
+
+        // 切换关卡
+        function switchLevel(level) {
+            state.currentLevel = level;
+            saveToStorage();
+            
+            // 更新UI
+            document.querySelectorAll('.level-step').forEach(step => {
+                step.classList.toggle('current', parseInt(step.dataset.level) === level);
+            });
+            
+            document.querySelectorAll('.level-content').forEach(content => {
+                content.classList.toggle('active', parseInt(content.id.split('-')[1]) === level);
+            });
+            
+            document.getElementById('currentLevelBadge').textContent = `关卡${level}`;
+            
+            updateProgress();
+        }
+
+        // 更新进度
+        function updateProgress() {
+            const progress = (state.completedLevels.length / 5) * 100;
+            document.getElementById('totalProgress').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${state.completedLevels.length}/5`;
+            
+            document.querySelectorAll('.level-step').forEach(step => {
+                const level = parseInt(step.dataset.level);
+                step.classList.toggle('completed', state.completedLevels.includes(level));
+            });
+        }
+
+        // 完成关卡
+        function completeLevel(level) {
+            if (!state.completedLevels.includes(level)) {
+                state.completedLevels.push(level);
+                saveToStorage();
+                updateProgress();
+                showCompletionAnimation();
+            }
+        }
+
+        // 显示完成动画
+        function showCompletionAnimation() {
+            document.getElementById('completionAnimation').classList.add('show');
+        }
+
+        // 隐藏完成动画
+        function hideCompletionAnimation() {
+            document.getElementById('completionAnimation').classList.remove('show');
+        }
+
+        // 显示导入模态框
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('active');
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // 处理文件导入
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    state.importedData = data;
+                    previewData(data);
+                    showToast('数据导入成功！');
+                } catch (error) {
+                    showToast('文件格式错误，请上传JSON文件', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 加载示例数据
+        function loadDemoData(game) {
+            const demoData = {
+                game2: {
+                    source: '游戏2: 平面布局系统',
+                    name: '现代住宅楼',
+                    floors: 12,
+                    units: 48,
+                    totalArea: '8500㎡',
+                    zones: ['居住区', '公共区', '配套区']
+                },
+                game3: {
+                    source: '游戏3: 体块设计系统',
+                    name: 'L型体块组合',
+                    form: 'L形平面',
+                    height: '36米',
+                    volumes: ['主楼体块', '裙房体块']
+                },
+                game4: {
+                    source: '游戏4: 立面造型系统',
+                    name: '玻璃幕墙立面',
+                    style: '现代主义',
+                    materials: ['玻璃幕墙', '铝合金百叶', '石材基座'],
+                    features: ['横向线条', '遮阳百叶', '入口雨棚']
+                }
+            };
+            
+            state.importedData = demoData[game];
+            previewData(demoData[game]);
+            showToast('示例数据加载成功！');
+        }
+
+        // 加载样本数据
+        function loadSampleData() {
+            state.importedData = {
+                source: '综合示例数据',
+                name: '文化中心设计方案',
+                type: '公共建筑',
+                floors: 4,
+                totalArea: '12000㎡',
+                style: '现代主义',
+                materials: ['玻璃幕墙', 'GRC板', '石材'],
+                features: ['波浪形屋面', '共享中庭', '景观退台']
+            };
+            previewData(state.importedData);
+            showToast('样本数据加载成功！');
+        }
+
+        // 预览数据
+        function previewData(data) {
+            const preview = document.getElementById('previewData');
+            const grid = document.getElementById('dataPreviewGrid');
+            const source = document.getElementById('dataSource');
+            
+            source.textContent = data.source || '未知来源';
+            document.getElementById('importedDataInfo').style.display = 'block';
+            
+            let html = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (key !== 'source') {
+                    const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                    html += `
+                        <div class="data-item">
+                            <div class="label">${key}</div>
+                            <div class="value">${displayValue}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            grid.innerHTML = html;
+            preview.style.display = 'block';
+            closeModal('importModal');
+        }
+
+        // 显示工具指南
+        function showGuide(tool) {
+            switchTab('guide');
+            switchGuide(tool);
+        }
+
+        // 切换指南
+        function switchGuide(tool) {
+            state.currentTool = tool;
+            
+            document.querySelectorAll('.tool-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.querySelector('.tool-name').textContent.toLowerCase().includes(tool));
+            });
+            
+            document.querySelectorAll('.guide-section').forEach(section => {
+                section.style.display = section.id === `guide-${tool}` ? 'block' : 'none';
+            });
+        }
+
+        // 显示关卡信息
+        function showLevelInfo(level) {
+            const info = levelInfo[level];
+            document.getElementById('levelInfoTitle').textContent = info.title;
+            document.getElementById('levelInfoContent').innerHTML = `
+                <h4 style="color: var(--primary-light); margin-bottom: 1rem;">学习目标</h4>
+                <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+                    ${info.objectives.map(obj => `<li style="margin-bottom: 0.5rem;">${obj}</li>`).join('')}
+                </ul>
+                <h4 style="color: var(--secondary-light); margin-bottom: 1rem;">💡 技巧提示</h4>
+                <ul style="padding-left: 1.5rem;">
+                    ${info.tips.map(tip => `<li style="margin-bottom: 0.5rem; color: var(--text-secondary);">${tip}</li>`).join('')}
+                </ul>
+            `;
+            document.getElementById('levelInfoModal').classList.add('active');
+        }
+
+        // 在Midjourney打开
+        function openInMJ() {
+            const prompt = document.getElementById('prompt-1')?.value;
+            if (!prompt) {
+                showToast('请先生成提示词', 'error');
+                return;
+            }
+            
+            // 复制提示词并提示用户
+            navigator.clipboard.writeText(prompt).then(() => {
+                showToast('提示词已复制，请到Midjourney使用 /imagine 命令粘贴');
+            });
+        }
+
+        // Toast提示
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.querySelector('.toast-message').textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 点击模态框外部关闭
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+    <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
+
+
+
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏11',
+        gameTitle: '效果图生成系统',
+        captureTarget: '#renderCanvas, .canvas-area, body',
+        scoring: { type: 'evaluation', threshold: 70, total: 100, description: '效果图综合评分 ≥ 70 即达标' },
+        hideSelectors: [],
+        ranking: { enabled: true, semester: '2026春', course: '效果图生成', game: '游戏11' },
+        hooks: {
+            capture: () => false,
+            undo: () => false,
+            reset: () => (typeof clearAllHistory === 'function' ? (clearAllHistory(), true) : false),
+            exportFile: () => (typeof exportAllHistory === 'function' ? (exportAllHistory(), true) : false),
+            readScore: () => Number(window.renderScore || (window.gameState && window.gameState.totalScore) || 0)
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '效果图生成', game: '游戏11' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
+</body>
+</html>
+
+
+

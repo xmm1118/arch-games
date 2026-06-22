@@ -1,0 +1,653 @@
+/**
+ * 统一飞书作业提交组件样式。
+ * 用途：为全项目游戏页面提供学生信息采集、游客提示与提交流程弹窗的统一外观。
+ */
+
+:root {
+  --feishu-primary: #2563eb;
+  --feishu-primary-dark: #1d4ed8;
+  --feishu-success: #16a34a;
+  --feishu-warning: #d97706;
+  --feishu-danger: #dc2626;
+  --feishu-bg: rgba(15, 23, 42, 0.72);
+  --feishu-card: #ffffff;
+  --feishu-text: #0f172a;
+  --feishu-subtle: #475569;
+  --feishu-border: rgba(148, 163, 184, 0.35);
+  --feishu-shadow: 0 18px 48px rgba(15, 23, 42, 0.24);
+}
+
+.feishu-submit-entry {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 99990;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    var(--feishu-primary),
+    var(--feishu-primary-dark)
+  );
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.35);
+}
+
+/**
+ * 排行榜 FAB 入口按钮样式。
+ * 用途：默认只显示一个圆形按钮，点击后展开排行榜面板，避免遮挡页面。
+ * 位置：右侧中间偏下（避开左下角共享工具条和右下角作业提交按钮）。
+ */
+.feishu-ranking-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 150px;
+  z-index: 99988;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--feishu-primary),
+    var(--feishu-primary-dark)
+  );
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.feishu-ranking-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.45);
+}
+
+.feishu-ranking-fab:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+/**
+ * 排行榜面板样式（可折叠）。
+ * 用途：默认隐藏（折叠状态），点击 FAB 后展开显示。
+ * 位置：FAB 按钮上方展开，避免与其他功能按钮重叠。
+ */
+.feishu-ranking-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 210px;
+  z-index: 99989;
+  width: min(360px, calc(100vw - 32px));
+  max-height: min(68vh, 640px);
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--feishu-text);
+  box-shadow: var(--feishu-shadow);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease,
+    transform 0.25s ease;
+}
+
+/* 排行榜展开状态 */
+.feishu-ranking-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.feishu-ranking-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feishu-ranking-panel__title-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.feishu-ranking-panel__eyebrow {
+  color: var(--feishu-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.feishu-ranking-panel__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.feishu-ranking-panel__tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.feishu-ranking-tab {
+  min-height: 34px;
+  padding: 8px 12px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--feishu-subtle);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feishu-ranking-tab.is-active {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--feishu-primary);
+}
+
+.feishu-ranking-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 14px;
+  color: var(--feishu-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.feishu-ranking-panel__self {
+  margin-top: 14px;
+}
+
+.feishu-ranking-panel__self-card {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.08),
+    rgba(29, 78, 216, 0.14)
+  );
+}
+
+.feishu-ranking-panel__self-label {
+  color: var(--feishu-subtle);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.feishu-ranking-panel__self-value {
+  margin-top: 6px;
+  color: var(--feishu-primary);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.feishu-ranking-panel__self-meta {
+  margin-top: 8px;
+  color: var(--feishu-subtle);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.feishu-ranking-panel__list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.feishu-ranking-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.feishu-ranking-item.is-self {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.feishu-ranking-item__rank {
+  color: var(--feishu-primary);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.feishu-ranking-item__main {
+  min-width: 0;
+}
+
+.feishu-ranking-item__name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feishu-ranking-item__meta {
+  margin-top: 4px;
+  color: var(--feishu-subtle);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.feishu-ranking-item__score {
+  color: var(--feishu-success);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.feishu-ranking-panel__empty {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--feishu-subtle);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.feishu-submit-entry:hover {
+  transform: translateY(-1px);
+}
+
+.feishu-submit-entry:focus-visible,
+.feishu-modal button:focus-visible,
+.feishu-modal input:focus-visible,
+.feishu-modal select:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.22);
+  outline-offset: 2px;
+}
+
+.feishu-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  z-index: 99995;
+  min-width: 240px;
+  max-width: min(92vw, 520px);
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: var(--feishu-shadow);
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
+
+.feishu-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.feishu-toast[data-tone="success"] {
+  background: rgba(22, 163, 74, 0.94);
+}
+
+.feishu-toast[data-tone="warning"] {
+  background: rgba(217, 119, 6, 0.94);
+}
+
+.feishu-toast[data-tone="danger"] {
+  background: rgba(220, 38, 38, 0.94);
+}
+
+.feishu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99992;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--feishu-bg);
+}
+
+.feishu-modal-overlay.is-open {
+  display: flex;
+}
+
+.feishu-modal {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--feishu-card);
+  color: var(--feishu-text);
+  box-shadow: var(--feishu-shadow);
+  box-sizing: border-box;
+}
+
+.feishu-modal__body {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.feishu-modal * {
+  box-sizing: border-box;
+}
+
+.feishu-modal__header,
+.feishu-modal__footer {
+  padding: 20px 24px;
+}
+
+.feishu-modal__header {
+  border-bottom: 1px solid var(--feishu-border);
+}
+
+
+
+.feishu-modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--feishu-border);
+}
+
+.feishu-modal__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--feishu-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feishu-modal__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.feishu-modal__desc {
+  margin: 10px 0 0;
+  color: var(--feishu-subtle);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.feishu-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.feishu-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 520px) {
+  .feishu-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feishu-field {
+  display: grid;
+  gap: 8px;
+}
+
+.feishu-field__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--feishu-text);
+}
+
+.feishu-field__hint {
+  color: var(--feishu-subtle);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.feishu-field input,
+.feishu-field select,
+.feishu-field textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--feishu-text);
+  font-size: 14px;
+}
+
+.feishu-field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.feishu-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.feishu-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--feishu-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.feishu-summary {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.feishu-summary__card {
+  padding: 16px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.feishu-summary__title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.feishu-summary__meta {
+  display: grid;
+  gap: 8px;
+  color: var(--feishu-subtle);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.feishu-summary__preview {
+  display: grid;
+  gap: 10px;
+}
+
+.feishu-summary__preview img {
+  width: 100%;
+  max-width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border: 1px solid var(--feishu-border);
+  border-radius: 14px;
+  background: #e2e8f0;
+}
+
+.feishu-file-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.feishu-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--feishu-border);
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.feishu-status-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.feishu-status-note[data-tone="info"] {
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--feishu-primary);
+}
+
+.feishu-status-note[data-tone="warning"] {
+  background: rgba(217, 119, 6, 0.08);
+  color: var(--feishu-warning);
+}
+
+.feishu-status-note[data-tone="success"] {
+  background: rgba(22, 163, 74, 0.08);
+  color: var(--feishu-success);
+}
+
+.feishu-modal button {
+  min-height: 44px;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feishu-btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--feishu-primary),
+    var(--feishu-primary-dark)
+  );
+  color: #ffffff;
+}
+
+.feishu-btn-secondary {
+  background: #eff6ff;
+  color: var(--feishu-primary);
+}
+
+.feishu-btn-ghost {
+  background: #f8fafc;
+  color: var(--feishu-subtle);
+}
+
+.feishu-btn-danger {
+  background: #fef2f2;
+  color: var(--feishu-danger);
+}
+
+.feishu-hidden {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .feishu-submit-entry {
+    right: 16px;
+    bottom: 16px;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .feishu-ranking-fab {
+    right: 16px;
+    bottom: 140px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .feishu-ranking-panel {
+    right: 16px;
+    left: 16px;
+    bottom: 200px;
+    width: auto;
+    max-height: min(52vh, 520px);
+    padding: 16px;
+  }
+
+  .feishu-ranking-panel__header {
+    flex-direction: column;
+  }
+
+  .feishu-modal {
+    width: min(100%, 100%);
+    border-radius: 20px;
+  }
+
+  .feishu-modal__header,
+  .feishu-modal__body,
+  .feishu-modal__footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .feishu-grid--2 {
+    grid-template-columns: 1fr;
+  }
+
+  .feishu-modal__footer {
+    justify-content: stretch;
+  }
+
+  .feishu-modal__footer button {
+    width: 100%;
+  }
+}

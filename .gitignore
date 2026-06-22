@@ -1,0 +1,46 @@
+# Local editor metadata
+.trae/
+
+# Dependency directories
+node_modules/
+
+# Read-only source archive
+原始文件/
+
+# Runtime logs
+*.log
+
+# Local maintenance scripts (not part of source)
+.tools/
+
+# Temporary backups and recovery artifacts
+*.bak
+*.backup
+*.failed
+*.tmp
+*.temp
+**/index_backup*.html
+**/index.html.backup*
+**/index_working.html
+**/index_clean.html
+**/截图/
+**/示例方案/
+**/关卡数据/
+
+# Generated documentation / local explanation notes (not for public site)
+*.md
+!README.md
+!history.md
+!游戏评分标准.md
+
+# Deployment config not used on GitHub Pages
+.vercel/
+.vercelignore
+vercel.json
+
+# Temporary helper files
+*飞书集成代码*.txt
+
+# OS files
+Thumbs.db
+Desktop.ini

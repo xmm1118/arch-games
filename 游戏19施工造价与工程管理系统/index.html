@@ -1,0 +1,965 @@
+﻿﻿﻿﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑师成长之路 - 游戏19：施工造价与工程管理系统</title>
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b">
+    <style>
+        :root {
+            --panel-gap: 16px;
+            --panel-radius: 24px;
+            --page-padding: 16px;
+            --header-height: 96px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        body {
+            color: #18212f;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+        }
+
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: var(--header-height);
+            padding: 18px 24px;
+        }
+
+        .header-left,
+        .header-center,
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .title-stack h1 {
+            margin: 0;
+            font-size: 26px;
+        }
+
+        .title-stack p {
+            margin: 6px 0 0;
+            color: #60708a;
+            font-size: 14px;
+        }
+
+        .game-badge,
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-weight: 700;
+        }
+
+        .header-center {
+            flex-wrap: wrap;
+            justify-content: center;
+            color: #60708a;
+            text-align: center;
+        }
+
+        .header-actions {
+            justify-content: flex-end;
+        }
+
+        .btn {
+            min-height: 44px;
+            border: 1px solid rgba(76, 102, 192, 0.14);
+            border-radius: 14px;
+            padding: 0 16px;
+            background: rgba(255, 255, 255, 0.84);
+            color: #18212f;
+            cursor: pointer;
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, #4f6ef7, #6886ff);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr) 320px;
+            gap: var(--panel-gap);
+            padding: var(--page-padding);
+        }
+
+        .panel,
+        .workspace {
+            border-radius: var(--panel-radius);
+            padding: 18px;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .panel-title {
+            margin: 0 0 12px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .nav-list,
+        .quick-list,
+        .task-list,
+        .data-board,
+        .rule-list,
+        .score-list,
+        .guide-grid,
+        .hero-tags {
+            display: grid;
+            gap: 12px;
+        }
+
+        .nav-button,
+        .quick-button {
+            width: 100%;
+            min-height: 48px;
+            border: 1px solid rgba(76, 102, 192, 0.14);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            color: #18212f;
+            text-align: left;
+            padding: 14px 16px;
+            cursor: pointer;
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, #4f6ef7, #6886ff);
+            color: #fff;
+        }
+
+        .nav-button small,
+        .quick-button small {
+            display: block;
+            margin-top: 6px;
+            color: inherit;
+            opacity: 0.78;
+        }
+
+        .hero-card {
+            padding: 24px;
+        }
+
+        .hero-card h2 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        .hero-card p {
+            margin: 0;
+            line-height: 1.7;
+            color: #60708a;
+        }
+
+        .hero-tags {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            margin-top: 18px;
+        }
+
+        .hero-tag,
+        .data-item,
+        .rule-item,
+        .score-item,
+        .task-item {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(76, 102, 192, 0.14);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--panel-gap);
+            margin-top: 16px;
+        }
+
+        .card {
+            border-radius: var(--panel-radius);
+            padding: 18px;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+        }
+
+        .task-item {
+            display: grid;
+            grid-template-columns: 24px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+        }
+
+        .task-item input {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .task-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .task-detail,
+        .score-desc {
+            color: #60708a;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .score-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(76, 102, 192, 0.14);
+        }
+
+        .score-value {
+            font-size: 38px;
+            font-weight: 800;
+        }
+
+        .score-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(79, 110, 247, 0.12);
+            color: #3554d4;
+            font-weight: 700;
+        }
+
+        .guide-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(24, 33, 47, 0.36);
+            backdrop-filter: blur(10px);
+        }
+
+        .guide-modal.active {
+            display: flex;
+        }
+
+        .guide-dialog {
+            width: min(900px, 100%);
+            max-height: 88vh;
+            overflow: auto;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(76, 102, 192, 0.14);
+            box-shadow: 0 24px 60px rgba(47, 69, 145, 0.18);
+        }
+
+        .guide-header,
+        .guide-footer {
+            padding: 20px 24px;
+        }
+
+        .guide-header {
+            border-bottom: 1px solid rgba(76, 102, 192, 0.14);
+        }
+
+        .guide-header h2 {
+            margin: 0 0 8px;
+        }
+
+        .guide-header p {
+            margin: 0;
+            color: #60708a;
+            line-height: 1.7;
+        }
+
+        .guide-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            padding: 20px 24px 0;
+        }
+
+        .guide-card {
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(246, 249, 255, 0.92);
+            border: 1px solid rgba(76, 102, 192, 0.14);
+        }
+
+        .guide-card h3 {
+            margin: 0 0 8px;
+        }
+
+        .guide-card p {
+            margin: 0;
+            color: #60708a;
+            line-height: 1.7;
+        }
+
+        .guide-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .content-grid,
+            .guide-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px;
+            }
+
+            .header-left,
+            .header-center,
+            .header-actions {
+                width: 100%;
+            }
+
+            .header-actions {
+                justify-content: stretch;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+            }
+
+            .main-layout {
+                padding: 12px;
+            }
+
+            .guide-footer {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="../shared-feishu-submission.css?v=20260619-feishu1">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="app-header">
+            <div class="header-left">
+                <div class="game-badge">🏗️ 游戏 19</div>
+                <div class="title-stack">
+                    <h1>施工造价与工程管理系统</h1>
+                    <p>从设计到落地的工程实践工作台，覆盖算量、造价、施工组织与现场管理。</p>
+                </div>
+            </div>
+            <div class="header-center">
+                <span>当前阶段：<strong id="phaseName">第一阶段 · 工程量计算</strong></span>
+                <span class="status-chip" id="progressChip">进行中</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn" type="button" onclick="showGuideModal()">📘 查看引导</button>
+                <button class="btn primary" type="button" onclick="exportLearningSummary()">📤 导出摘要</button>
+            </div>
+        </header>
+
+        <main class="main-layout">
+            <aside class="panel">
+                <section>
+                    <h2 class="panel-title">🧭 阶段导航</h2>
+                    <div class="nav-list" id="navList"></div>
+                </section>
+
+                <section>
+                    <h2 class="panel-title">⚙️ 快捷操作</h2>
+                    <div class="quick-list">
+                        <button class="quick-button" type="button" onclick="markAllCurrentTasks(false)">
+                            🔁 重置本阶段任务
+                            <small>清空当前阶段的任务完成状态</small>
+                        </button>
+                        <button class="quick-button" type="button" onclick="markAllCurrentTasks(true)">
+                            ✅ 完成本阶段任务
+                            <small>用于课堂演示或快速切换到下一阶段</small>
+                        </button>
+                        <button class="quick-button" type="button" onclick="showGuideModal()">
+                            💡 查看统一要求
+                            <small>先看流程，再看评分，最后完成阶段产出</small>
+                        </button>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="workspace">
+                <div class="hero-card">
+                    <h2 id="heroTitle">📐 第一阶段 · 工程量计算</h2>
+                    <p id="heroDescription">围绕识图算量、规则应用和清单编制，理解从设计图纸到工程量清单的完整转化过程。</p>
+                    <div class="hero-tags" id="heroTags"></div>
+                </div>
+
+                <div class="content-grid">
+                    <section class="card">
+                        <h3>📋 本阶段任务</h3>
+                        <div class="task-list" id="taskList"></div>
+                    </section>
+                    <section class="card">
+                        <h3>📦 工作台数据</h3>
+                        <div class="data-board" id="dataBoard"></div>
+                    </section>
+                    <section class="card">
+                        <h3>📚 知识点提示</h3>
+                        <p class="score-desc" id="knowledgeText"></p>
+                    </section>
+                    <section class="card">
+                        <h3>🛠️ 推荐操作顺序</h3>
+                        <div class="rule-list" id="workflowList"></div>
+                    </section>
+                </div>
+            </section>
+
+            <aside class="panel">
+                <section>
+                    <h2 class="panel-title">🏅 本阶段得分</h2>
+                    <div class="score-head">
+                        <div class="score-value" id="scoreValue">0</div>
+                        <span class="score-badge" id="scoreBadge">待开始</span>
+                    </div>
+                    <p class="score-desc" id="scoreDescription">完成任务、理解规则并形成阶段成果后，这里会显示统一评分结果。</p>
+                </section>
+
+                <section>
+                    <h2 class="panel-title">🧮 评分规则</h2>
+                    <div class="score-list">
+                        <div class="score-item"><strong>完成度</strong> 40 分</div>
+                        <div class="score-item"><strong>计算准确性</strong> 30 分</div>
+                        <div class="score-item"><strong>规范与管理逻辑</strong> 20 分</div>
+                        <div class="score-item"><strong>阶段总结与表达</strong> 10 分</div>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="panel-title">📐 参考规范</h2>
+                    <div class="rule-list" id="standardsList"></div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <div class="guide-modal" id="guideModal" aria-hidden="true">
+        <div class="guide-dialog">
+            <div class="guide-header">
+                <h2>📘 欢迎进入游戏19：施工造价与工程管理系统</h2>
+                <p>本页按统一视觉规范 2.0 重建，适合作为施工、造价与管理学习页的工作台模板，支持手机端和平板端直接完成主要操作。</p>
+            </div>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3>🧭 先做什么</h3>
+                    <p>先从左侧选择阶段，再在中间完成任务与数据梳理，最后到右侧查看评分和参考规范。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>🏅 怎么得分</h3>
+                    <p>每一阶段统一按完成度、计算准确性、规范理解与表达总结进行评分，满分 100 分。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>📚 学什么</h3>
+                    <p>重点学习工程量计算、造价编制、施工组织和现场管理，从设计图纸走向落地实施。</p>
+                </div>
+                <div class="guide-card">
+                    <h3>✨ 风格要求</h3>
+                    <p>保留 emoji 作为教学识别元素，但整体采用浅色、卡片化、移动端可操作的高级教育产品风。</p>
+                </div>
+            </div>
+            <div class="guide-footer">
+                <button class="btn" type="button" onclick="hideGuideModal()">稍后查看</button>
+                <button class="btn primary" type="button" onclick="hideGuideModal()">开始学习</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * @typedef {Object} PhaseTask
+         * @property {string} title 任务标题。
+         * @property {string} detail 任务说明。
+         * @property {boolean} done 是否完成。
+         */
+
+        /**
+         * @typedef {Object} PhaseDataItem
+         * @property {string} label 数据标签。
+         * @property {string} value 数据内容。
+         */
+
+        /**
+         * @typedef {Object} PhaseConfig
+         * @property {number} id 阶段编号。
+         * @property {string} title 阶段标题。
+         * @property {string} shortTitle 短标题。
+         * @property {string} description 阶段说明。
+         * @property {string[]} tags 主题标签。
+         * @property {string} knowledge 知识点说明。
+         * @property {PhaseTask[]} tasks 任务列表。
+         * @property {PhaseDataItem[]} data 数据列表。
+         * @property {string[]} workflow 推荐流程。
+         * @property {string[]} standards 参考规范。
+         */
+
+        /**
+         * 阶段配置数据，来自游戏19项目说明。
+         * 为了便于纯前端独立运行，这里内置示例数据驱动页面。
+         * @type {PhaseConfig[]}
+         */
+        const PHASES = [
+            {
+                id: 1,
+                title: "📐 第一阶段 · 工程量计算",
+                shortTitle: "工程量计算",
+                description: "围绕识图算量、规则应用和清单编制，理解从设计图纸到工程量清单的完整转化过程。",
+                tags: ["📏 识图算量", "📋 清单编制", "🧱 定额基础"],
+                knowledge: "建议先识读图纸，再分构件统计工程量，最后校核是否符合计量规则与清单逻辑。",
+                tasks: [
+                    { title: "识读结构与建筑图纸", detail: "区分墙、梁、板、柱的计量对象与统计边界。", done: false },
+                    { title: "完成主体工程量统计", detail: "按层或按构件分类统计工程量。", done: false },
+                    { title: "编制清单草表", detail: "将工程量映射到对应清单项目。", done: false }
+                ],
+                data: [
+                    { label: "示例建筑面积", value: "6800 ㎡" },
+                    { label: "主体结构", value: "框架结构" },
+                    { label: "统计构件数", value: "24 项" }
+                ],
+                workflow: ["1. 读图分项", "2. 计量校核", "3. 清单归类", "4. 输出摘要"],
+                standards: ["《建设工程工程量清单计价规范》GB 50500", "《房屋建筑与装饰工程工程量计算规范》GB 50854"]
+            },
+            {
+                id: 2,
+                title: "💰 第二阶段 · 造价编制",
+                shortTitle: "造价编制",
+                description: "基于工程量、定额和单价信息，完成项目造价的初步编制与成本分析。",
+                tags: ["💵 直接费", "🧮 定额套用", "📊 成本分析"],
+                knowledge: "重点关注工程量与单价的对应关系，并区分直接费、间接费、利润与税金的构成。",
+                tasks: [
+                    { title: "套用人工材料机械单价", detail: "对主体构件和主要分部分项套用单价。", done: false },
+                    { title: "计算分部分项造价", detail: "形成可复核的阶段性造价表。", done: false },
+                    { title: "输出成本分析结论", detail: "找出造价高点与优化方向。", done: false }
+                ],
+                data: [
+                    { label: "人工单价", value: "220 元/工日" },
+                    { label: "混凝土单价", value: "480 元/m³" },
+                    { label: "阶段目标", value: "形成概算草表" }
+                ],
+                workflow: ["1. 定额匹配", "2. 单价计算", "3. 汇总造价", "4. 成本分析"],
+                standards: ["《建设工程造价咨询规范》GB/T 51095", "《建设项目工程总承包计价规范》T/CCEAS"]
+            },
+            {
+                id: 3,
+                title: "📅 第三阶段 · 施工组织",
+                shortTitle: "施工组织",
+                description: "学习施工组织设计、流水施工和关键线路安排，把设计方案转换为可实施的现场计划。",
+                tags: ["📈 横道图", "🚧 关键线路", "👷 施工顺序"],
+                knowledge: "施工组织的关键是资源安排与工期逻辑，要能说明为什么这样排工序、如何降低等待时间。",
+                tasks: [
+                    { title: "确定施工工序", detail: "完成基础、主体、围护、装修的大致顺序安排。", done: false },
+                    { title: "绘制简化进度计划", detail: "形成横道图或关键线路草案。", done: false },
+                    { title: "识别工期风险", detail: "说明关键工序和可能延误点。", done: false }
+                ],
+                data: [
+                    { label: "总工期目标", value: "240 天" },
+                    { label: "主要分区", value: "3 个施工段" },
+                    { label: "流水方式", value: "节拍流水" }
+                ],
+                workflow: ["1. 划分施工段", "2. 排定工序", "3. 标记关键线路", "4. 复核工期"],
+                standards: ["《建设工程项目管理规范》GB/T 50326", "《建筑施工组织设计规范》GB/T 50502"]
+            },
+            {
+                id: 4,
+                title: "🧯 第四阶段 · 现场管理",
+                shortTitle: "现场管理",
+                description: "围绕材料进场、工序衔接、质量安全和验收交付，理解工程过程管理的实际重点。",
+                tags: ["📦 材料进场", "🛡️ 质量安全", "✅ 验收交付"],
+                knowledge: "现场管理强调问题预判和过程控制，既要保证进度，也要同步关注质量、安全与资料闭环。",
+                tasks: [
+                    { title: "编制现场协调清单", detail: "明确材料、机械、班组和场地协调重点。", done: false },
+                    { title: "设置质量安全检查点", detail: "给出阶段性巡检和整改要点。", done: false },
+                    { title: "输出验收交付摘要", detail: "列出分部分项验收和竣工交付节点。", done: false }
+                ],
+                data: [
+                    { label: "检查频率", value: "每周 2 次" },
+                    { label: "关键工序", value: "模板、钢筋、混凝土" },
+                    { label: "交付节点", value: "分部验收 + 竣工验收" }
+                ],
+                workflow: ["1. 排查风险", "2. 落实检查", "3. 记录整改", "4. 完成交付"],
+                standards: ["《建筑工程施工质量验收统一标准》GB 50300", "《建筑施工安全检查标准》JGJ 59"]
+            }
+        ];
+
+        /**
+         * 当前页面运行状态。
+         * @type {{currentPhaseId:number}}
+         */
+        const state = {
+            currentPhaseId: 1
+        };
+
+        /**
+         * 获取当前阶段对象。
+         * @returns {PhaseConfig}
+         */
+        function getCurrentPhase() {
+            return PHASES.find((phase) => phase.id === state.currentPhaseId) || PHASES[0];
+        }
+
+        /**
+         * 计算当前阶段完成进度。
+         * @param {PhaseConfig} phase 当前阶段对象。
+         * @returns {number}
+         */
+        function getPhaseProgress(phase) {
+            const total = phase.tasks.length || 1;
+            const finished = phase.tasks.filter((task) => task.done).length;
+            return Math.round((finished / total) * 100);
+        }
+
+        /**
+         * 根据完成进度生成状态标签。
+         * @param {number} progress 当前进度。
+         * @returns {string}
+         */
+        function getProgressLabel(progress) {
+            /** 条件分支：根据完成度返回更直观的阶段状态。 */
+            if (progress === 100) {
+                return "已完成";
+            }
+            if (progress >= 34) {
+                return "进行中";
+            }
+            return "待开始";
+        }
+
+        /**
+         * 计算当前阶段得分。
+         * @param {number} progress 当前进度。
+         * @returns {number}
+         */
+        function getScore(progress) {
+            const completion = Math.round(progress * 0.4);
+            const accuracy = progress >= 34 ? 18 : 6;
+            const logic = progress >= 67 ? 14 : 6;
+            const summary = progress === 100 ? 10 : 2;
+            return completion + accuracy + logic + summary;
+        }
+
+        /**
+         * 渲染左侧阶段导航。
+         * @returns {void}
+         */
+        function renderPhaseNav() {
+            const navList = document.getElementById("navList");
+            navList.innerHTML = "";
+
+            /** 循环逻辑：为每一个阶段生成独立导航按钮。 */
+            PHASES.forEach((phase) => {
+                const progress = getPhaseProgress(phase);
+                const button = document.createElement("button");
+                button.className = `nav-button${phase.id === state.currentPhaseId ? " active" : ""}`;
+                button.type = "button";
+                button.innerHTML = `${phase.title}<small>${phase.shortTitle} · ${getProgressLabel(progress)} · ${progress}%</small>`;
+                button.addEventListener("click", () => selectPhase(phase.id));
+                navList.appendChild(button);
+            });
+        }
+
+        /**
+         * 渲染中间工作区内容。
+         * @returns {void}
+         */
+        function renderPhaseContent() {
+            const phase = getCurrentPhase();
+            const heroTitle = document.getElementById("heroTitle");
+            const heroDescription = document.getElementById("heroDescription");
+            const heroTags = document.getElementById("heroTags");
+            const taskList = document.getElementById("taskList");
+            const dataBoard = document.getElementById("dataBoard");
+            const knowledgeText = document.getElementById("knowledgeText");
+            const workflowList = document.getElementById("workflowList");
+
+            heroTitle.textContent = phase.title;
+            heroDescription.textContent = phase.description;
+            knowledgeText.textContent = phase.knowledge;
+
+            heroTags.innerHTML = "";
+            taskList.innerHTML = "";
+            dataBoard.innerHTML = "";
+            workflowList.innerHTML = "";
+
+            /** 循环逻辑：输出阶段标签，帮助首屏快速理解主题。 */
+            phase.tags.forEach((tag) => {
+                const item = document.createElement("div");
+                item.className = "hero-tag";
+                item.textContent = tag;
+                heroTags.appendChild(item);
+            });
+
+            /** 循环逻辑：输出任务列表，并绑定复选框事件。 */
+            phase.tasks.forEach((task, index) => {
+                const wrapper = document.createElement("label");
+                wrapper.className = "task-item";
+                const checked = task.done ? "checked" : "";
+                wrapper.innerHTML = `
+                    <input type="checkbox" data-task-index="${index}" ${checked}>
+                    <div>
+                        <div class="task-title">${task.title}</div>
+                        <p class="task-detail">${task.detail}</p>
+                    </div>
+                `;
+                wrapper.querySelector("input").addEventListener("change", () => toggleTask(index));
+                taskList.appendChild(wrapper);
+            });
+
+            /** 循环逻辑：输出阶段核心数据。 */
+            phase.data.forEach((item) => {
+                const row = document.createElement("div");
+                row.className = "data-item";
+                row.innerHTML = `<strong>${item.label}</strong><br>${item.value}`;
+                dataBoard.appendChild(row);
+            });
+
+            /** 循环逻辑：输出推荐工作流程。 */
+            phase.workflow.forEach((item) => {
+                const row = document.createElement("div");
+                row.className = "rule-item";
+                row.textContent = item;
+                workflowList.appendChild(row);
+            });
+        }
+
+        /**
+         * 渲染右侧评分与规范区。
+         * @returns {void}
+         */
+        function renderScorePanel() {
+            const phase = getCurrentPhase();
+            const progress = getPhaseProgress(phase);
+            const score = getScore(progress);
+            const standardsList = document.getElementById("standardsList");
+            const scoreValue = document.getElementById("scoreValue");
+            const scoreBadge = document.getElementById("scoreBadge");
+            const scoreDescription = document.getElementById("scoreDescription");
+            const progressChip = document.getElementById("progressChip");
+            const phaseName = document.getElementById("phaseName");
+
+            scoreValue.textContent = String(score);
+            scoreBadge.textContent = getProgressLabel(progress);
+            progressChip.textContent = getProgressLabel(progress);
+            phaseName.textContent = phase.title.replace(/^[^\u4e00-\u9fa5A-Za-z0-9]+/, "");
+            scoreDescription.textContent = `当前阶段已完成 ${phase.tasks.filter((task) => task.done).length}/${phase.tasks.length} 项任务。建议优先补齐任务清单，再形成阶段总结。`;
+
+            standardsList.innerHTML = "";
+
+            /** 循环逻辑：输出阶段参考规范列表。 */
+            phase.standards.forEach((item) => {
+                const row = document.createElement("div");
+                row.className = "rule-item";
+                row.textContent = item;
+                standardsList.appendChild(row);
+            });
+        }
+
+        /**
+         * 统一渲染整页内容。
+         * @returns {void}
+         */
+        function renderAll() {
+            renderPhaseNav();
+            renderPhaseContent();
+            renderScorePanel();
+        }
+
+        /**
+         * 切换当前阶段。
+         * @param {number} phaseId 阶段编号。
+         * @returns {void}
+         */
+        function selectPhase(phaseId) {
+            state.currentPhaseId = phaseId;
+            renderAll();
+        }
+
+        /**
+         * 切换当前阶段任务状态。
+         * @param {number} taskIndex 任务索引。
+         * @returns {void}
+         */
+        function toggleTask(taskIndex) {
+            const phase = getCurrentPhase();
+            phase.tasks[taskIndex].done = !phase.tasks[taskIndex].done;
+            renderAll();
+        }
+
+        /**
+         * 批量设置当前阶段任务状态。
+         * @param {boolean} done 是否标记为完成。
+         * @returns {void}
+         */
+        function markAllCurrentTasks(done) {
+            const phase = getCurrentPhase();
+
+            /** 循环逻辑：统一更新本阶段所有任务的完成状态。 */
+            phase.tasks.forEach((task) => {
+                task.done = done;
+            });
+
+            renderAll();
+        }
+
+        /**
+         * 显示引导弹窗。
+         * @returns {void}
+         */
+        function showGuideModal() {
+            const modal = document.getElementById("guideModal");
+            modal.classList.add("active");
+            modal.setAttribute("aria-hidden", "false");
+        }
+
+        /**
+         * 关闭引导弹窗。
+         * @returns {void}
+         */
+        function hideGuideModal() {
+            const modal = document.getElementById("guideModal");
+            modal.classList.remove("active");
+            modal.setAttribute("aria-hidden", "true");
+        }
+
+        /**
+         * 导出阶段学习摘要。
+         * @returns {void}
+         */
+        function exportLearningSummary() {
+            const phase = getCurrentPhase();
+            const progress = getPhaseProgress(phase);
+            const score = getScore(progress);
+            const finished = phase.tasks.filter((task) => task.done).map((task) => `- ${task.title}`).join("\n") || "- 暂无已完成任务";
+            const content = [
+                `# ${phase.title}`,
+                "",
+                `阶段说明：${phase.description}`,
+                `当前进度：${progress}%`,
+                `当前得分：${score}`,
+                "",
+                "已完成任务：",
+                finished,
+                "",
+                "推荐流程：",
+                ...phase.workflow.map((item) => `- ${item}`)
+            ].join("\n");
+
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `游戏19-${phase.shortTitle}-学习摘要.txt`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        /**
+         * 初始化页面。
+         * @returns {void}
+         */
+        function init() {
+            renderAll();
+            showGuideModal();
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+    <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
+
+
+
+
+<!-- sgt-injected:start -->
+<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script>
+    /**
+     * 共享工具条接入配置
+     * 提供统一截图、导出、撤销、重置与评分判定能力
+     * 详见《游戏评分标准.md》
+     *
+     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+     */
+    window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: '游戏19',
+        gameTitle: '施工造价与工程管理系统',
+        captureTarget: '.canvas-area, .workspace, body',
+        scoring: { type: 'completion', threshold: 3, total: 4, description: '完成 3 个阶段任务即达标' },
+        hideSelectors: [],
+        ranking: { enabled: true, semester: '2026春', course: '施工造价与工程管理', game: '游戏19' },
+        hooks: {
+            capture: () => false,
+            undo: () => false,
+            reset: () => (typeof resetAllCurrentTasks === 'function' ? (resetAllCurrentTasks(), true) : false),
+            exportFile: () => (typeof exportLearningSummary === 'function' ? (exportLearningSummary(), true) : false),
+            readScore: () => { try { if (typeof PHASES !== 'undefined' && PHASES) { return PHASES.filter(p => (p.tasks || []).every(t => t.done)).length; } } catch(e) {} return 0; }
+        }
+    };
+    /**
+     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+     */
+    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+        {},
+        window.FEISHU_SUBMISSION_CONFIG || {},
+        {
+            ranking: { enabled: true, semester: '2026春', courseName: '施工造价与工程管理', game: '游戏19' }
+        }
+    );
+</script>
+<!-- sgt-injected:end -->
+
+</body>
+</html>
+
+
