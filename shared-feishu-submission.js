@@ -1467,8 +1467,37 @@
    */
   function sendDraftToMiaoda(payload, targetUrl) {
     var config = getRuntimeConfig();
+    var messagePayload = {
+      type: "FEISHU_SUBMISSION_DRAFT",
+      payload: payload,
+    };
 
-    // 将提交数据存储到 localStorage，供妙搭页面读取
+    /**
+     * 检查当前页面是否在 iframe 中。
+     * @returns {boolean}
+     */
+    function isInIframe() {
+      try {
+        return global.self !== global.top;
+      } catch (e) {
+        return true;
+      }
+    }
+
+    // 情况1：当前页面在 iframe 中，直接向父页面发送数据
+    if (isInIframe()) {
+      try {
+        global.parent.postMessage(messagePayload, "*");
+        showToast("已向妙搭页面发送提交数据。", "success");
+      } catch (e) {
+        console.warn("[feishu-submission] postMessage 到父页面失败:", e);
+        showToast("数据发送失败，请联系管理员。", "warning");
+      }
+      return;
+    }
+
+    // 情况2：当前页面不在 iframe 中，打开新窗口
+    // 将数据存储到 localStorage，供新窗口读取
     try {
       localStorage.setItem(STORAGE_KEYS.draft, JSON.stringify(payload));
       localStorage.setItem(
@@ -1479,12 +1508,7 @@
       console.warn("[feishu-submission] 无法存储草稿到 localStorage:", e);
     }
 
-    // 尝试通过 postMessage 发送数据
     var submitWindow = global.open(targetUrl, config.submitWindowName);
-    var messagePayload = {
-      type: "FEISHU_SUBMISSION_DRAFT",
-      payload: payload,
-    };
     var attempt = 0;
 
     if (!submitWindow) {
