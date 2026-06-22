@@ -1414,16 +1414,36 @@
       '<div class="feishu-status-note" data-tone="' +
         (config.miaodaSubmitUrl ? "info" : "warning") +
         '">' +
-        (config.miaodaSubmitUrl
-          ? "点击“跳转妙搭提交”后，将把当前草稿发送到妙搭页面；若尚未登录飞书，登录只会发生在妙搭提交页。"
-          : "当前尚未配置妙搭提交地址。系统会先缓存草稿和 submission.json，待你配置妙搭 URL 后可再次提交。") +
+        (function() {
+          if (!config.miaodaSubmitUrl) {
+            return "当前尚未配置妙搭提交地址。系统会先缓存草稿和 submission.json，待你配置妙搭 URL 后可再次提交。";
+          }
+          try {
+            var inIframe = global.self !== global.top;
+            if (inIframe) {
+              return "点击\u201c提交\u201d后，数据将直接发送到妙搭页面（当前在iframe嵌入模式）。";
+            } else {
+              return "点击\u201c跳转妙搭提交\u201d后，将打开妙搭页面并发送数据（当前在独立网页模式）。";
+            }
+          } catch (e) {
+            return "点击\u201c跳转妙搭提交\u201d后，将把当前草稿发送到妙搭页面。";
+          }
+        })() +
         "</div>",
       "</div>",
     ].join("");
     shell.footer.innerHTML = [
       '<button type="button" class="feishu-btn-ghost" data-action="back">返回游戏</button>',
       '<button type="button" class="feishu-btn-secondary" data-action="edit">修改资料</button>',
-      '<button type="button" class="feishu-btn-primary" data-action="submit">跳转妙搭提交</button>',
+      '<button type="button" class="feishu-btn-primary" data-action="submit">' +
+        (function() {
+          try {
+            return (global.self !== global.top) ? "提交" : "跳转妙搭提交";
+          } catch (e) {
+            return "跳转妙搭提交";
+          }
+        })() +
+        '</button>',
     ].join("");
 
     shell.footer.querySelector("[data-action='back']").onclick =
