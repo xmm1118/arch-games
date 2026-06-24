@@ -3628,9 +3628,6 @@
           state.score += levelScore;
           state.stars += levelStars;
 
-          /** 将碳排放计算得分暴露到 window 对象，供共享工具条 readScore hook 读取 */
-          window.carbonScore = state.score;
-
           // 更新UI
           document.getElementById("score").textContent = state.score;
           document.getElementById("stars").textContent = state.stars;
@@ -3693,9 +3690,6 @@
 
       function finishGame() {
         state.score += 500; // 通关奖励
-
-        /** 将碳排放计算得分暴露到 window 对象，供共享工具条 readScore hook 读取 */
-        window.carbonScore = state.score;
 
         document.getElementById("score").textContent = state.score;
 
@@ -4287,14 +4281,11 @@
       );
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-  
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -4332,6 +4323,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+  
 
 </body>
 </html>

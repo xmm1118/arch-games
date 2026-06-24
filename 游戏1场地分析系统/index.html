@@ -1749,6 +1749,7 @@
             .panel-card { box-shadow: none; border: 1px solid #ddd; }
         }
     </style>
+    <link rel="stylesheet" href="../shared-premium-theme.css?v=20260619b" />
     <link rel="stylesheet" href="../shared-feishu-submission.css?v=20260619-feishu1">
 </head>
 <body>
@@ -1831,6 +1832,7 @@
                         <button class="btn btn-secondary" onclick="showHint(GameState.currentLevel)">查看本关提示</button>
                         <button class="btn btn-secondary" onclick="scrollToSection('canvasSection')">前往主操作区</button>
                         <button class="btn btn-secondary" onclick="resetGame()">重置进度</button>
+                        <button class="btn btn-secondary" onclick="if(window.FeishuSubmissionBridge){FeishuSubmissionBridge.toggleRankingPanel()}else{alert('排行榜功能加载中，请稍后再试')}">🏆 排行榜</button>
                     </div>
                 </div>
                 <div class="sidebar-card nav-card-wrapper">
@@ -1883,6 +1885,7 @@
         <button class="mobile-nav-btn" onclick="scrollToSection('canvasSection')">✍️ 操作</button>
         <button class="mobile-nav-btn" onclick="scrollToSection('infoPanel')">📋 任务</button>
         <button class="mobile-nav-btn" onclick="showHint(GameState.currentLevel)">💡 提示</button>
+        <button class="mobile-nav-btn" onclick="if(window.FeishuSubmissionBridge){FeishuSubmissionBridge.toggleRankingPanel()}else{alert('排行榜功能加载中，请稍后再试')}">🏆 排行</button>
     </nav>
 
     <!-- 提示弹窗 -->
@@ -4639,8 +4642,6 @@
         
         // 保存反馈
         GameState.currentFeedback = feedback;
-        // 暴露评分到 window 供共享工具条读取
-        window.evaluationScore = feedback.score;
         
         // 更新弹窗内容
         const levelNames = {
@@ -5689,14 +5690,11 @@
     window.addEventListener('DOMContentLoaded', init);
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -5734,6 +5732,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

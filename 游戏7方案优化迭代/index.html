@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2146,8 +2146,6 @@
 
         function updateScoreDisplay() {
             const totalScore = calculateTotalScore();
-            /** 将综合评分暴露到 window 对象，供共享工具条 readScore hook 读取 */
-            window.iterationScore = totalScore;
             document.getElementById('totalScore').textContent = Math.round(totalScore);
             document.querySelector('.score-circle').style.setProperty('--score', totalScore);
 
@@ -2684,14 +2682,11 @@
         window.applySuggestion = applySuggestion;
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -2729,6 +2724,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

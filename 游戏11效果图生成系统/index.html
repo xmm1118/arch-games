@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -3384,7 +3384,6 @@ professional architectural rendering, high quality, --ar 16:9 --v 6 --iw 1.5`;
             if (['材质', 'material', 'facade', '幕墙'].some(k => prompt.includes(k))) professional += 30;
             
             const total = Math.round((completeness + clarity + professional) / 3);
-            window.renderScore = total;
             
             document.getElementById('totalScore').textContent = total;
             document.getElementById('scoreBar').style.width = `${total}%`;
@@ -3823,14 +3822,11 @@ professional architectural rendering, high quality, --ar 16:9 --v 6 --iw 1.5`;
         });
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -3868,6 +3864,9 @@ professional architectural rendering, high quality, --ar 16:9 --v 6 --iw 1.5`;
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

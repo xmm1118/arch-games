@@ -1,335 +1,212 @@
 /**
- * 通用浮动元素拖拽工具
- * --------------------------------------------------
- * 为浮动按钮/面板提供拖拽移动与靠边吸附能力，避免遮挡页面内容。
+ * @file shared-draggable.js
+ * @description 通用拖拽工具 - 为浮动按钮提供拖拽+靠边吸附+位置持久化功能
+ * @version 1.0.0
  *
- * 设计目标：
- *   1. 支持鼠标和触摸事件，兼容移动端。
- *   2. 拖拽结束后自动吸附到最近的屏幕边缘。
- *   3. 位置持久化到 localStorage，刷新后保持用户选择的位置。
- *   4. 使用移动距离区分点击和拖拽（移动超过 5px 才认为是拖拽）。
+ * 功能：
+ * - 鼠标/触摸拖拽移动元素
+ * - 移动距离超过5px才触发拖拽（区分点击和拖拽）
+ * - 靠边自动吸附
+ * - localStorage 位置持久化
  *
  * 使用方式：
- *   <script src="../shared-draggable.js"></script>
- *   <script>
- *     SharedDraggable.make(element, {
- *       storageKey: 'my-button-position',  // 存储键
- *       snapThreshold: 30,                 // 吸附阈值（像素）
- *       edgeOffset: 16,                    // 边缘偏移量
- *     });
- *   </script>
+ *   SharedDraggable.make(element, storageKey)
  */
 
-(function initSharedDraggable() {
+(function initSharedDraggable(global) {
   "use strict";
 
-  /** 默认配置 */
-  var DEFAULT_OPTIONS = {
-    /** localStorage 键名，用于持久化位置 */
-    storageKey: "",
-    /** 吸附阈值：元素中心距边缘小于此值时自动吸附（像素） */
-    snapThreshold: 30,
-    /** 边缘偏移量：吸附后距离屏幕边缘的距离（像素） */
-    edgeOffset: 16,
-    /** 启动拖拽的最小移动距离（像素） */
-    dragThreshold: 5,
-  };
+  /** 吸附阈值（像素） */
+  var SNAP_THRESHOLD = 8;
+  /** 移动距离阈值（像素）- 超过此距离才触发拖拽 */
+  var MOVE_THRESHOLD = 5;
 
   /**
-   * 读取 localStorage 中的 JSON 值。
-   * @param {string} key 键名
-   * @param {*} fallback 兜底值
-   * @returns {*} 解析后的值
+   * 启用元素的拖拽功能
+   * @param {HTMLElement} element - 要拖拽的元素
+   * @param {string} storageKey - localStorage 中的存储键名
+   * @returns {{ resetPosition: Function }} 控制对象
    */
-  function readJson(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) {
-      return fallback;
+  function make(element, storageKey) {
+    if (!element) return { resetPosition: function () {} };
+
+    var isDragging = false;
+    var startX = 0;
+    var startY = 0;
+    var startLeft = 0;
+    var startTop = 0;
+    var hasMoved = false;
+
+    /** 从 localStorage 恢复位置 */
+    restorePosition();
+
+    /** 绑定事件（初始化时绑定一次，不再移除） */
+    element.addEventListener("mousedown", onMouseDown);
+    element.addEventListener("touchstart", onTouchStart, { passive: false });
+
+    return { resetPosition: resetPosition };
+
+    /** ========== 事件处理 ========== */
+
+    function onMouseDown(e) {
+      if (e.button !== 0) return;
+      startDrag(e.clientX, e.clientY);
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
     }
-  }
 
-  /**
-   * 写入 localStorage 的 JSON 值。
-   * @param {string} key 键名
-   * @param {*} value 值
-   * @returns {void}
-   */
-  function writeJson(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      // 存储空间不足时静默失败
+    function onMouseMove(e) {
+      moveDrag(e.clientX, e.clientY);
     }
-  }
 
-  /**
-   * 计算吸附后的最终位置。
-   * @param {number} x 当前 X 坐标
-   * @param {number} y 当前 Y 坐标
-   * @param {number} elWidth 元素宽度
-   * @param {number} elHeight 元素高度
-   * @param {object} options 配置
-   * @returns {{x: number, y: number}}
-   */
-  function calcSnapPosition(x, y, elWidth, elHeight, options) {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    var threshold = options.snapThreshold;
-    var offset = options.edgeOffset;
+    function onMouseUp() {
+      endDrag();
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    }
 
-    var centerX = x + elWidth / 2;
-    var centerY = y + elHeight / 2;
+    function onTouchStart(e) {
+      if (e.touches.length !== 1) return;
+      var t = e.touches[0];
+      startDrag(t.clientX, t.clientY);
+      document.addEventListener("touchmove", onTouchMove, { passive: false });
+      document.addEventListener("touchend", onTouchEnd);
+    }
 
-    var distLeft = centerX;
-    var distRight = vw - centerX;
-    var distTop = centerY;
-    var distBottom = vh - centerY;
+    function onTouchMove(e) {
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      var t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+    }
 
-    var snappedX = x;
-    var snappedY = y;
+    function onTouchEnd() {
+      endDrag();
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+    }
 
-    // 找到最小距离的方向并吸附
-    var minDist = Math.min(distLeft, distRight, distTop, distBottom);
+    /** ========== 拖拽逻辑 ========== */
 
-    if (minDist <= threshold) {
-      if (minDist === distLeft) {
-        snappedX = offset;
-      } else if (minDist === distRight) {
-        snappedX = vw - elWidth - offset;
-      } else if (minDist === distTop) {
-        snappedY = offset;
-      } else if (minDist === distBottom) {
-        snappedY = vh - elHeight - offset;
+    function startDrag(x, y) {
+      var rect = element.getBoundingClientRect();
+      isDragging = true;
+      hasMoved = false;
+      startX = x;
+      startY = y;
+      startLeft = rect.left;
+      startTop = rect.top;
+      element.style.transition = "none";
+    }
+
+    function moveDrag(x, y) {
+      if (!isDragging) return;
+      var dx = x - startX;
+      var dy = y - startY;
+      if (!hasMoved && Math.sqrt(dx * dx + dy * dy) < MOVE_THRESHOLD) {
+        return;
       }
-    }
-
-    // 确保不超出屏幕边界
-    snappedX = Math.max(offset, Math.min(snappedX, vw - elWidth - offset));
-    snappedY = Math.max(offset, Math.min(snappedY, vh - elHeight - offset));
-
-    return { x: snappedX, y: snappedY };
-  }
-
-  /**
-   * 为元素启用拖拽功能。
-   * @param {HTMLElement} element 需要拖拽的元素
-   * @param {object} [options] 配置选项
-   * @returns {{destroy: Function, setPosition: Function}} 控制接口
-   */
-  function makeDraggable(element, options) {
-    var opts = Object.assign({}, DEFAULT_OPTIONS, options || {});
-
-    // 拖拽状态
-    var state = {
-      isPressed: false,
-      isDragging: false,
-      startClientX: 0,
-      startClientY: 0,
-      startElementX: 0,
-      startElementY: 0,
-    };
-
-    // 保存原始样式
-    var originalPosition = element.style.position;
-    var originalTop = element.style.top;
-    var originalLeft = element.style.left;
-    var originalRight = element.style.right;
-    var originalBottom = element.style.bottom;
-
-    /**
-     * 应用位置到元素。
-     * @param {number} x X 坐标
-     * @param {number} y Y 坐标
-     * @returns {void}
-     */
-    function applyPosition(x, y) {
-      element.style.left = x + "px";
-      element.style.top = y + "px";
+      hasMoved = true;
+      var newLeft = startLeft + dx;
+      var newTop = startTop + dy;
+      element.style.position = "fixed";
+      element.style.left = newLeft + "px";
+      element.style.top = newTop + "px";
       element.style.right = "auto";
       element.style.bottom = "auto";
-      element.style.position = "fixed";
     }
 
-    /**
-     * 获取当前元素位置。
-     * @returns {{x: number, y: number}}
-     */
-    function getCurrentPosition() {
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      if (!hasMoved) return;
+      snapToEdge();
+      savePosition();
+    }
+
+    /** ========== 吸附逻辑 ========== */
+
+    function snapToEdge() {
       var rect = element.getBoundingClientRect();
-      return { x: rect.left, y: rect.top };
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var left = rect.left;
+      var top = rect.top;
+      var right = vw - rect.right;
+      var bottom = vh - rect.bottom;
+
+      var snapped = false;
+      var snapLeft = left;
+      var snapTop = top;
+
+      // 只有当元素靠近边缘时才吸附
+      if (left < SNAP_THRESHOLD) {
+        snapLeft = 0;
+        snapped = true;
+      } else if (right < SNAP_THRESHOLD) {
+        snapLeft = vw - rect.width;
+        snapped = true;
+      }
+
+      if (top < SNAP_THRESHOLD) {
+        snapTop = 0;
+        snapped = true;
+      } else if (bottom < SNAP_THRESHOLD) {
+        snapTop = vh - rect.height;
+        snapped = true;
+      }
+
+      if (snapped) {
+        element.style.transition = "left 0.2s ease, top 0.2s ease";
+        element.style.left = snapLeft + "px";
+        element.style.top = snapTop + "px";
+      }
     }
 
-    /**
-     * 处理指针按下。
-     * @param {MouseEvent|TouchEvent} e 事件对象
-     * @returns {void}
-     */
-    function onPointerDown(e) {
-      // 忽略右键点击
-      if (e.type === "mousedown" && e.button !== 0) {
-        return;
-      }
+    /** ========== 持久化 ========== */
 
-      state.isPressed = true;
-      state.isDragging = false;
-
-      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      state.startClientX = clientX;
-      state.startClientY = clientY;
-
-      var pos = getCurrentPosition();
-      state.startElementX = pos.x;
-      state.startElementY = pos.y;
-    }
-
-    /**
-     * 处理指针移动。
-     * @param {MouseEvent|TouchEvent} e 事件对象
-     * @returns {void}
-     */
-    function onPointerMove(e) {
-      if (!state.isPressed) {
-        return;
-      }
-
-      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      var deltaX = clientX - state.startClientX;
-      var deltaY = clientY - state.startClientY;
-      var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-      // 未达到拖拽阈值，认为是点击
-      if (!state.isDragging && distance < opts.dragThreshold) {
-        return;
-      }
-
-      // 开始拖拽
-      if (!state.isDragging) {
-        state.isDragging = true;
-        element.style.transition = "none";
-        element.style.cursor = "grabbing";
-      }
-
-      e.preventDefault();
-
-      var newX = state.startElementX + deltaX;
-      var newY = state.startElementY + deltaY;
-      applyPosition(newX, newY);
-    }
-
-    /**
-     * 处理指针抬起。
-     * @returns {void}
-     */
-    function onPointerUp() {
-      if (!state.isPressed) {
-        return;
-      }
-
-      var wasDragging = state.isDragging;
-      state.isPressed = false;
-      state.isDragging = false;
-      element.style.cursor = "grab";
-
-      if (wasDragging) {
-        // 恢复过渡动画
-        element.style.transition = "";
-
-        // 计算吸附位置
+    function savePosition() {
+      try {
         var rect = element.getBoundingClientRect();
-        var finalPos = calcSnapPosition(
-          rect.left,
-          rect.top,
-          rect.width,
-          rect.height,
-          opts,
-        );
-        applyPosition(finalPos.x, finalPos.y);
-
-        // 持久化位置
-        if (opts.storageKey) {
-          writeJson(opts.storageKey, finalPos);
-        }
-
-        // 阻止后续 click 事件
-        element.addEventListener(
-          "click",
-          function preventClick(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            element.removeEventListener("click", preventClick, true);
-          },
-          true,
-        );
-      }
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+        var data = {
+          left: rect.left / vw,
+          top: rect.top / vh,
+          vw: vw,
+          vh: vh,
+        };
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      } catch (e) {}
     }
 
-    // 在元素上绑定 mousedown
-    element.addEventListener("mousedown", onPointerDown);
-    element.addEventListener(
-      "touchstart",
-      function (e) {
-        onPointerDown(e);
-      },
-      { passive: true },
-    );
-
-    // 在 document 上绑定 mousemove 和 mouseup（不移除，保持持续可用）
-    document.addEventListener("mousemove", onPointerMove, { passive: false });
-    document.addEventListener("mouseup", onPointerUp);
-    document.addEventListener("touchmove", onPointerMove, { passive: false });
-    document.addEventListener("touchend", onPointerUp);
-
-    // 添加拖拽视觉提示
-    element.style.cursor = "grab";
-    element.style.touchAction = "none";
-
-    // 初始化位置
-    var storedPosition = opts.storageKey
-      ? readJson(opts.storageKey, null)
-      : null;
-    if (storedPosition) {
-      applyPosition(storedPosition.x, storedPosition.y);
+    function restorePosition() {
+      try {
+        var raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        if (!data || typeof data.left !== "number") return;
+        element.style.position = "fixed";
+        element.style.left = data.left * window.innerWidth + "px";
+        element.style.top = data.top * window.innerHeight + "px";
+        element.style.right = "auto";
+        element.style.bottom = "auto";
+      } catch (e) {}
     }
 
-    return {
-      /**
-       * 销毁拖拽功能，恢复元素原始状态。
-       * @returns {void}
-       */
-      destroy: function destroy() {
-        element.removeEventListener("mousedown", onPointerDown);
-        document.removeEventListener("mousemove", onPointerMove);
-        document.removeEventListener("mouseup", onPointerUp);
-        document.removeEventListener("touchmove", onPointerMove);
-        document.removeEventListener("touchend", onPointerUp);
-        element.style.cursor = "";
-        element.style.touchAction = "";
-        element.style.position = originalPosition;
-        element.style.top = originalTop;
-        element.style.left = originalLeft;
-        element.style.right = originalRight;
-        element.style.bottom = originalBottom;
-      },
-      /**
-       * 手动设置元素位置。
-       * @param {number} x X 坐标
-       * @param {number} y Y 坐标
-       * @returns {void}
-       */
-      setPosition: function setPosition(x, y) {
-        applyPosition(x, y);
-      },
-    };
+    function resetPosition() {
+      try {
+        localStorage.removeItem(storageKey);
+      } catch (e) {}
+      element.style.position = "";
+      element.style.left = "";
+      element.style.top = "";
+      element.style.right = "";
+      element.style.bottom = "";
+      element.style.transition = "";
+    }
   }
 
-  /**
-   * 暴露全局 API。
-   */
-  window.SharedDraggable = {
-    make: makeDraggable,
-  };
-})();
+  /** ========== 全局导出 ========== */
+  global.SharedDraggable = { make: make };
+})(window);

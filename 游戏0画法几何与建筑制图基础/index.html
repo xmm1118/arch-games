@@ -1,4 +1,4 @@
-﻿﻿﻿<!doctype html>
+﻿﻿﻿﻿﻿﻿﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -555,10 +555,95 @@
 
       .projection-single-canvas {
         width: 100%;
-        height: 280px;
+        height: 360px;
         display: block;
         border-radius: 12px;
         background: var(--canvas-surface);
+      }
+
+      .projection-mode-switch {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      .projection-mode-btn {
+        padding: 3px 10px;
+        border: none;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        line-height: 1.4;
+      }
+
+      .projection-mode-btn + .projection-mode-btn {
+        border-left: 1px solid rgba(59, 130, 246, 0.15);
+      }
+
+      .projection-mode-btn.active {
+        background: var(--accent-primary);
+        color: #fff;
+      }
+
+      .projection-zoom-switch {
+        display: inline-flex;
+        gap: 0;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-left: 6px;
+        vertical-align: middle;
+      }
+
+      .projection-zoom-btn {
+        width: 24px;
+        height: 22px;
+        border: none;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        line-height: 1;
+        padding: 0;
+      }
+
+      .projection-zoom-btn:hover {
+        background: rgba(59, 130, 246, 0.12);
+        color: var(--accent-primary);
+      }
+
+      .projection-zoom-btn + .projection-zoom-btn {
+        border-left: 1px solid rgba(59, 130, 246, 0.15);
+      }
+
+      .projection-zoom-value {
+        padding: 0 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent-primary);
+        background: rgba(59, 130, 246, 0.06);
+        display: flex;
+        align-items: center;
+        min-width: 32px;
+        justify-content: center;
+        border-left: 1px solid rgba(59, 130, 246, 0.12);
+        border-right: 1px solid rgba(59, 130, 246, 0.12);
       }
 
       /* 右侧信息面板 */
@@ -1489,6 +1574,30 @@
       <header class="header">
         <h1>📐 画法几何与建筑制图基础</h1>
         <div class="controls">
+          <div
+            class="level-selector"
+            style="display: flex; align-items: center; gap: 8px"
+          >
+            <label
+              for="levelSelect"
+              style="font-size: 13px; color: var(--text-secondary)"
+              >当前关卡:</label
+            >
+            <select
+              id="levelSelect"
+              class="btn btn-secondary"
+              style="padding: 6px 10px; font-size: 13px; cursor: pointer"
+            ></select>
+            <span
+              id="currentLevelDisplay"
+              style="
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--accent-primary);
+              "
+              >关卡 0-1</span
+            >
+          </div>
           <button class="btn btn-secondary" id="undoBtn">↶ 撤销</button>
           <button class="btn btn-secondary" id="redoBtn">↷ 重做</button>
           <button class="btn btn-secondary" id="resetBtn">🔄 重置</button>
@@ -1498,7 +1607,7 @@
 
       <!-- 左侧工具栏 -->
       <aside class="sidebar">
-        <div class="tool-section">
+        <div class="tool-section" data-context="coordinate-system">
           <h3>📍 坐标系统</h3>
           <div class="axis-toggle">
             <button class="axis-btn active" data-axis="3d">3D (XYZ)</button>
@@ -1538,10 +1647,31 @@
           </div>
           <button class="tool-btn" id="createPointBtn">➕ 创建点</button>
           <button class="tool-btn" id="createLineBtn">📏 创建连线</button>
+          <button
+            class="tool-btn"
+            id="cancelLineBtn"
+            style="display: none; margin-top: 6px"
+          >
+            ❌ 取消连线
+          </button>
+          <div
+            id="coordModeHint"
+            style="
+              margin-top: 10px;
+              padding: 8px;
+              background: rgba(59, 130, 246, 0.08);
+              border-radius: 6px;
+              font-size: 12px;
+              color: var(--text-secondary);
+              line-height: 1.6;
+            "
+          >
+            3D (XYZ)：创建点/移动点可在 XYZ 空间，支持 Z 坐标输入。
+          </div>
         </div>
 
         <!-- 体块创建工具 -->
-        <div class="tool-section">
+        <div class="tool-section" data-context="solid-create">
           <h3>📦 体块创建工具</h3>
           <p
             style="
@@ -1568,11 +1698,14 @@
             <button class="tool-btn" data-create-solid="pyramid">
               🔻 四棱锥
             </button>
+            <button class="tool-btn" id="booleanSubtractBtn">
+              ➖ 布尔切割
+            </button>
           </div>
         </div>
 
         <!-- 体块列表管理 -->
-        <div class="tool-section">
+        <div class="tool-section" data-context="solid-list">
           <h3>📋 体块列表</h3>
           <div class="solid-list" id="solidList">
             <div
@@ -1588,7 +1721,7 @@
           </div>
         </div>
 
-        <div class="tool-section">
+        <div class="tool-section" data-context="axo">
           <h3>🎨 轴测图类型</h3>
           <div class="axo-select">
             <button class="axo-btn active" data-axo="iso">正等轴测</button>
@@ -1598,7 +1731,7 @@
           </div>
         </div>
 
-        <div class="tool-section">
+        <div class="tool-section" data-context="section">
           <h3>✂️ 剖面图生成</h3>
 
           <!-- 剖面图生成步骤引导 -->
@@ -1756,7 +1889,7 @@
           </div>
         </div>
 
-        <div class="tool-section">
+        <div class="tool-section" data-context="display">
           <h3>⚙️ 显示设置</h3>
           <button class="tool-btn active" id="toggleGridBtn">
             📐 显示网格
@@ -1790,7 +1923,11 @@
                 🔴 顶点模式：点击顶点选中，在右侧面板输入世界坐标后点击"应用"
               </li>
               <li>📍 坐标系统：局部坐标 + 整体偏移 = 世界坐标</li>
-              <li>🔄 右键拖拽旋转视图，滚轮缩放视图</li>
+              <li>
+                🔄 2D/3D 切换：2D 模式仅在 XY 平面操作，Z 固定为 0；3D
+                模式支持完整 XYZ 空间
+              </li>
+              <li>🖱️ 右键拖拽旋转视图，滚轮缩放视图</li>
             </ul>
           </div>
         </div>
@@ -1834,9 +1971,36 @@
         <div class="projection-module-panel hidden" id="projectionModulePanel">
           <div class="projection-module-header">
             <div>
-              <strong>单图三视图</strong>
+              <strong
+                >投影教学
+                <span class="projection-mode-switch">
+                  <button
+                    class="projection-mode-btn active"
+                    data-mode="three"
+                    id="projModeThree"
+                  >
+                    三视图
+                  </button>
+                  <button
+                    class="projection-mode-btn"
+                    data-mode="two"
+                    id="projModeTwo"
+                  >
+                    两视图
+                  </button>
+                </span>
+                <span class="projection-zoom-switch">
+                  <button class="projection-zoom-btn" id="projZoomOut">
+                    −
+                  </button>
+                  <span class="projection-zoom-value" id="projZoomValue"
+                    >1.0×</span
+                  >
+                  <button class="projection-zoom-btn" id="projZoomIn">+</button>
+                </span>
+              </strong>
               <span
-                >三个投影框内只显示形体，按高对正、长平齐、宽相当自动排版，并尽量放大便于课堂对比。</span
+                >坐标轴固定在各视图中央，物体随实际移动在坐标轴上位移，便于课堂对比。</span
               >
             </div>
             <div class="projection-module-badge">可拖动</div>
@@ -1852,8 +2016,49 @@
 
       <!-- 右侧信息面板 -->
       <aside class="info-panel">
+        <!-- 当前任务卡片 -->
+        <div class="info-card" id="currentTaskCard" data-context="task">
+          <h4>🎯 当前任务</h4>
+          <div
+            style="
+              font-size: 12px;
+              color: var(--text-secondary);
+              line-height: 1.8;
+            "
+          >
+            <div>
+              <strong id="taskLevelTitle">关卡 0-1: 初识三维点</strong>
+            </div>
+            <div>
+              目标:
+              <span id="taskGoal">在三维空间中创建第一个点</span>
+            </div>
+            <div>
+              步骤:
+              <ul
+                id="taskSteps"
+                style="
+                  padding-left: 16px;
+                  margin-top: 4px;
+                  list-style-type: decimal;
+                "
+              >
+                <li>点击创建点按钮或在画布空白处点击</li>
+              </ul>
+            </div>
+            <div>
+              进度:
+              <span
+                id="taskProgress"
+                style="color: var(--accent-primary); font-weight: 600"
+                >0/1</span
+              >
+            </div>
+          </div>
+        </div>
+
         <!-- 选择模式工具栏 -->
-        <div class="info-card">
+        <div class="info-card" data-context="selection-mode">
           <h4>🎯 选择模式</h4>
           <div class="selection-mode-bar">
             <button class="selection-mode-btn active" data-mode="solid">
@@ -1877,7 +2082,12 @@
         </div>
 
         <!-- 选中顶点坐标编辑 -->
-        <div class="info-card" id="vertexEditCard" style="display: none">
+        <div
+          class="info-card"
+          id="vertexEditCard"
+          style="display: none"
+          data-context="vertex-edit"
+        >
           <h4>🔴 顶点坐标编辑</h4>
           <div class="selection-info" id="vertexInfo">
             <div class="selection-info-item">
@@ -1905,7 +2115,12 @@
         </div>
 
         <!-- 选中边信息 -->
-        <div class="info-card" id="edgeInfoCard" style="display: none">
+        <div
+          class="info-card"
+          id="edgeInfoCard"
+          style="display: none"
+          data-context="edge-info"
+        >
           <h4>📏 边线信息</h4>
           <div class="selection-info">
             <div class="selection-info-item">
@@ -1928,7 +2143,12 @@
         </div>
 
         <!-- 选中面信息 -->
-        <div class="info-card" id="faceInfoCard" style="display: none">
+        <div
+          class="info-card"
+          id="faceInfoCard"
+          style="display: none"
+          data-context="face-info"
+        >
           <h4>🔲 面信息</h4>
           <div class="selection-info">
             <div class="selection-info-item">
@@ -1947,7 +2167,7 @@
         </div>
 
         <!-- 选中体块信息 -->
-        <div class="info-card" id="solidInfoCard">
+        <div class="info-card" id="solidInfoCard" data-context="solid-info">
           <h4>📦 选中体块信息</h4>
           <div class="selection-info" id="solidInfo">
             <div class="selection-info-item">
@@ -2155,7 +2375,7 @@
         </div>
 
         <!-- 原有选中点坐标编辑 (保留用于独立点) -->
-        <div class="info-card">
+        <div class="info-card" data-context="point-edit">
           <h4>📍 选中独立点坐标编辑</h4>
           <div class="coord-edit-group" id="pointCoordEditGroup">
             <div class="coord-edit-item x">
@@ -2180,7 +2400,7 @@
           </button>
         </div>
 
-        <div class="info-card">
+        <div class="info-card" data-context="point-list">
           <h4>📋 点列表</h4>
           <div class="point-list" id="pointList">
             <div
@@ -2196,7 +2416,7 @@
           </div>
         </div>
 
-        <div class="info-card">
+        <div class="info-card" data-context="stats">
           <h4>📊 统计信息</h4>
           <div
             style="
@@ -2228,7 +2448,7 @@
           </div>
         </div>
 
-        <div class="info-card">
+        <div class="info-card" data-context="shortcuts">
           <h4>⌨️ 快捷键提示</h4>
           <div
             style="
@@ -2329,6 +2549,8 @@
             showGrid: true, // 显示网格
             showAxes: true, // 显示坐标轴
             showProjectionModule: false, // 显示投影+坐标混合三视图模块
+            projectionMode: "three", // 投影模式：'three'=三视图，'two'=两视图（正立面+平面图）
+            projectionZoom: 1.0, // 投影缩放倍率：0.5~3.0，值越大视口越小（放大），步长0.25
             wireframeMode: false, // 线框模式
             cutPlane: null, // 剖切面
             cutPosition: 0, // 剖切位置
@@ -2806,17 +3028,15 @@
           const state = this.store.getState();
           const newSolids = state.solids.filter((s) => s.id !== solidId);
 
-          // 如果删除的是当前选中的体块，清空选中状态
-          const newState = { solids: newSolids };
-          if (state.selectedSolidId === solidId) {
-            newState.selectedSolidId = null;
-            newState.selectedVertex = null;
-            newState.selectedEdge = null;
-            newState.selectedFace = null;
-            newState.selectedVertices = [];
-          }
-
-          this.store.setState(newState);
+          // 删除体块后清空相关选中状态
+          this.store.setState({
+            solids: newSolids,
+            selectedSolidId: null,
+            selectedVertex: null,
+            selectedEdge: null,
+            selectedFace: null,
+            selectedVertices: [],
+          });
         }
 
         resetAll() {
@@ -3100,9 +3320,9 @@
               this.viewRenderers[view].setSize(width, height);
 
               const aspect = width / height;
-              const frustumSize = 10;
-              this.viewCameras[view].left = -frustumSize * aspect;
-              this.viewCameras[view].right = frustumSize * aspect;
+              const frustumSize2 = 10;
+              this.viewCameras[view].left = -frustumSize2 * aspect;
+              this.viewCameras[view].right = frustumSize2 * aspect;
               this.viewCameras[view].updateProjectionMatrix();
             }
           });
@@ -3253,9 +3473,6 @@
           const sourceFront = document.getElementById("canvasFront");
           const sourceLeft = document.getElementById("canvasLeft");
           const sourceTop = document.getElementById("canvasTop");
-          const visibleMeshes = Array.from(this.solidMeshes.values()).filter(
-            (mesh) => mesh.visible,
-          );
 
           context.setTransform(1, 0, 0, 1, 0, 0);
           context.clearRect(
@@ -3269,113 +3486,71 @@
           context.fillRect(0, 0, displayWidth, displayHeight);
 
           /**
-           * 计算可见体块的整体包围盒，用于统一三视图的长宽高比例。
-           * @returns {{box:THREE.Box3|null,length:number,width:number,height:number}}
+           * 动态视口半径：基于缩放倍率计算。
+           * zoom=1.0 时 halfView=10（匹配源相机 frustumSize，显示完整坐标空间）；
+           * zoom 越大 halfView 越小（放大效果），zoom 越小 halfView 越大（缩小效果）。
+           * @type {number}
            */
-          const getProjectionBounds = () => {
-            if (visibleMeshes.length === 0) {
+          const zoom = state.projectionZoom || 1.0;
+          const halfView = 10 / zoom;
+
+          /**
+           * 将坐标原点投影到指定视图的源画布像素坐标。
+           * @param {THREE.Camera} camera 目标投影视图相机。
+           * @param {HTMLCanvasElement} source 目标源画布。
+           * @returns {{px:number,py:number}} 原点在源画布中的像素位置。
+           */
+          const projectOriginToPixel = (camera, source) => {
+            const origin = new THREE.Vector3(0, 0, 0).project(camera);
+            return {
+              px: ((origin.x + 1) / 2) * source.width,
+              py: ((1 - origin.y) / 2) * source.height,
+            };
+          };
+
+          /**
+           * 以坐标原点为中心，裁剪源画布中的固定大小正方形区域。
+           * 坐标轴始终位于裁剪区域中央，物体随实际位置自然偏移。
+           * @param {THREE.Camera} camera 目标投影视图相机。
+           * @param {HTMLCanvasElement|null} source 目标源画布。
+           * @param {number} half 半边长（像素）。
+           * @returns {{sx:number,sy:number,sw:number,sh:number,originPx:number,originPy:number}}
+           */
+          const getFixedOriginCrop = (camera, source, half) => {
+            if (!camera || !source) {
               return {
-                box: null,
-                length: 1,
-                width: 1,
-                height: 1,
+                sx: 0,
+                sy: 0,
+                sw: Math.max(1, source?.width || 1),
+                sh: Math.max(1, source?.height || 1),
+                originPx: 0,
+                originPy: 0,
               };
             }
 
-            const box = new THREE.Box3();
-            visibleMeshes.forEach((mesh) => {
-              const meshBox = new THREE.Box3().setFromObject(mesh);
-              if (box.isEmpty()) {
-                box.copy(meshBox);
-              } else {
-                box.union(meshBox);
-              }
-            });
-
-            const size = new THREE.Vector3();
-            box.getSize(size);
+            const { px, py } = projectOriginToPixel(camera, source);
+            const cropSize = half * 2;
+            const sx = Math.max(0, Math.floor(px - half));
+            const sy = Math.max(0, Math.floor(py - half));
+            const sw = Math.min(cropSize, source.width - sx);
+            const sh = Math.min(cropSize, source.height - sy);
             return {
-              box,
-              length: Math.max(size.x, 1),
-              width: Math.max(size.y, 1),
-              height: Math.max(size.z, 1),
+              sx: Math.max(0, sx),
+              sy: Math.max(0, sy),
+              sw: Math.max(1, Math.floor(sw)),
+              sh: Math.max(1, Math.floor(sh)),
+              originPx: px,
+              originPy: py,
             };
           };
 
           /**
-           * 将包围盒投影到指定视图中，生成源画布的裁剪区域。
-           * @param {THREE.Box3|null} box 当前体块包围盒。
-           * @param {THREE.Camera} camera 目标投影视图相机。
-           * @param {HTMLCanvasElement|null} source 目标源画布。
-           * @returns {{sx:number,sy:number,sw:number,sh:number}}
-           */
-          const getSourceCropRect = (box, camera, source) => {
-            const fallback = {
-              sx: 0,
-              sy: 0,
-              sw: Math.max(1, source?.width || 1),
-              sh: Math.max(1, source?.height || 1),
-            };
-
-            if (!box || !camera || !source) {
-              return fallback;
-            }
-
-            const { min, max } = box;
-            const corners = [
-              new THREE.Vector3(min.x, min.y, min.z),
-              new THREE.Vector3(min.x, min.y, max.z),
-              new THREE.Vector3(min.x, max.y, min.z),
-              new THREE.Vector3(min.x, max.y, max.z),
-              new THREE.Vector3(max.x, min.y, min.z),
-              new THREE.Vector3(max.x, min.y, max.z),
-              new THREE.Vector3(max.x, max.y, min.z),
-              new THREE.Vector3(max.x, max.y, max.z),
-            ];
-
-            let minPx = Infinity;
-            let maxPx = -Infinity;
-            let minPy = Infinity;
-            let maxPy = -Infinity;
-
-            corners.forEach((corner) => {
-              const projected = corner.clone().project(camera);
-              const px = ((projected.x + 1) / 2) * source.width;
-              const py = ((1 - projected.y) / 2) * source.height;
-              minPx = Math.min(minPx, px);
-              maxPx = Math.max(maxPx, px);
-              minPy = Math.min(minPy, py);
-              maxPy = Math.max(maxPy, py);
-            });
-
-            const padding = 6;
-            const sx = Math.max(0, Math.floor(minPx - padding));
-            const sy = Math.max(0, Math.floor(minPy - padding));
-            const sw = Math.max(
-              1,
-              Math.min(
-                source.width - sx,
-                Math.ceil(maxPx - minPx + padding * 2),
-              ),
-            );
-            const sh = Math.max(
-              1,
-              Math.min(
-                source.height - sy,
-                Math.ceil(maxPy - minPy + padding * 2),
-              ),
-            );
-
-            return { sx, sy, sw, sh };
-          };
-
-          /**
-           * 将单个投影视图按目标区域大小绘制到画布中。
+           * 将单个投影视图按固定原点对齐方式绘制到目标区域。
+           * 坐标原点对齐到目标区域中央，物体在视口中自然偏移。
            * @param {{x:number,y:number,width:number,height:number,source:HTMLCanvasElement|null,camera:THREE.Camera|null}} region 视图区域定义。
-           * @param {THREE.Box3|null} box 当前体块包围盒。
            * @returns {void}
            */
-          const drawProjectionRegion = (region, box) => {
+          const drawProjectionRegion = (region) => {
             context.strokeStyle = "#94a3b8";
             context.lineWidth = 1;
             context.strokeRect(
@@ -3389,18 +3564,36 @@
               return;
             }
 
-            const crop = getSourceCropRect(box, region.camera, region.source);
+            const crop = getFixedOriginCrop(
+              region.camera,
+              region.source,
+              halfView,
+            );
             const innerPadding = 4;
             const targetWidth = Math.max(1, region.width - innerPadding * 2);
             const targetHeight = Math.max(1, region.height - innerPadding * 2);
-            const scale = Math.min(
+
+            /**
+             * 缩放比例：使裁剪区域适配目标区域，
+             * 保持正方形裁剪区等比缩放（取较大值以填满）。
+             */
+            const scale = Math.max(
               targetWidth / crop.sw,
               targetHeight / crop.sh,
             );
             const drawWidth = crop.sw * scale;
             const drawHeight = crop.sh * scale;
-            const drawX = region.x + (region.width - drawWidth) / 2;
-            const drawY = region.y + (region.height - drawHeight) / 2;
+
+            /**
+             * 原点对齐：计算原点在裁剪图像中的相对位置，
+             * 然后将该位置对齐到目标区域中央。
+             */
+            const originOffsetX = crop.originPx - crop.sx;
+            const originOffsetY = crop.originPy - crop.sy;
+            const targetCenterX = region.x + region.width / 2;
+            const targetCenterY = region.y + region.height / 2;
+            const drawX = targetCenterX - originOffsetX * scale;
+            const drawY = targetCenterY - originOffsetY * scale;
 
             context.drawImage(
               region.source,
@@ -3413,68 +3606,139 @@
               drawWidth,
               drawHeight,
             );
+
+            /**
+             * 在目标区域中央绘制坐标轴十字线，作为画法几何三视图的象限分界线。
+             * 正立面(XZ): 红色X轴+蓝色Z轴；左侧立面(YZ): 绿色Y轴+蓝色Z轴；平面图(XY): 红色X轴+绿色Y轴。
+             */
+            const cx = targetCenterX;
+            const cy = targetCenterY;
+            const hw = targetWidth / 2;
+            const hh = targetHeight / 2;
+            context.save();
+            context.globalAlpha = 0.45;
+            context.lineWidth = 1.5;
+            context.setLineDash([4, 3]);
+
+            if (region.key === "front") {
+              /** 正立面 XZ 平面：红色水平（X）+ 蓝色垂直（Z） */
+              context.strokeStyle = "#ef4444";
+              context.beginPath();
+              context.moveTo(cx - hw, cy);
+              context.lineTo(cx + hw, cy);
+              context.stroke();
+              context.strokeStyle = "#3b82f6";
+              context.beginPath();
+              context.moveTo(cx, cy - hh);
+              context.lineTo(cx, cy + hh);
+              context.stroke();
+            } else if (region.key === "left") {
+              /** 左侧立面 YZ 平面：绿色水平（Y）+ 蓝色垂直（Z） */
+              context.strokeStyle = "#22c55e";
+              context.beginPath();
+              context.moveTo(cx - hw, cy);
+              context.lineTo(cx + hw, cy);
+              context.stroke();
+              context.strokeStyle = "#3b82f6";
+              context.beginPath();
+              context.moveTo(cx, cy - hh);
+              context.lineTo(cx, cy + hh);
+              context.stroke();
+            } else if (region.key === "top") {
+              /** 平面图 XY 平面：红色水平（X）+ 绿色垂直（Y） */
+              context.strokeStyle = "#ef4444";
+              context.beginPath();
+              context.moveTo(cx - hw, cy);
+              context.lineTo(cx + hw, cy);
+              context.stroke();
+              context.strokeStyle = "#22c55e";
+              context.beginPath();
+              context.moveTo(cx, cy - hh);
+              context.lineTo(cx, cy + hh);
+              context.stroke();
+            }
+
+            context.restore();
           };
 
-          const bounds = getProjectionBounds();
-          const outerPadding = 14;
-          const gap = 10;
-          const unitScale =
-            0.92 *
-            Math.min(
-              (displayWidth - outerPadding * 2 - gap) /
-                Math.max(bounds.length + bounds.width, 1),
-              (displayHeight - outerPadding * 2 - gap) /
-                Math.max(bounds.height + bounds.width, 1),
-            );
+          /**
+           * 根据当前投影模式（三视图/两视图）计算区域布局。
+           * @returns {Array<{x:number,y:number,width:number,height:number,source:HTMLCanvasElement,camera:THREE.Camera,key:string}>}
+           */
+          const buildRegions = () => {
+            const outerPadding = 14;
+            const gap = 10;
+            const projectionMode = state.projectionMode || "three";
 
-          const frontWidth = Math.max(72, bounds.length * unitScale);
-          const frontHeight = Math.max(72, bounds.height * unitScale);
-          const sideWidth = Math.max(56, bounds.width * unitScale);
-          const sideHeight = frontHeight;
-          const topWidth = frontWidth;
-          const topHeight = Math.max(56, bounds.width * unitScale);
+            if (projectionMode === "two") {
+              /** 两视图模式：正立面 + 平面图，上下排列，高对正、长平齐 */
+              const frontW = Math.max(72, displayWidth - outerPadding * 2);
+              const halfH = Math.max(
+                56,
+                (displayHeight - outerPadding * 2 - gap) / 2,
+              );
+              return [
+                {
+                  key: "front",
+                  x: outerPadding,
+                  y: outerPadding,
+                  width: frontW,
+                  height: halfH,
+                  source: sourceFront,
+                  camera: this.viewCameras.front,
+                },
+                {
+                  key: "top",
+                  x: outerPadding,
+                  y: outerPadding + halfH + gap,
+                  width: frontW,
+                  height: halfH,
+                  source: sourceTop,
+                  camera: this.viewCameras.top,
+                },
+              ];
+            }
 
-          const groupWidth = frontWidth + gap + sideWidth;
-          const groupHeight = frontHeight + gap + topHeight;
-          const originX = Math.max(
-            outerPadding,
-            (displayWidth - groupWidth) / 2,
-          );
-          const originY = Math.max(
-            outerPadding,
-            (displayHeight - groupHeight) / 2,
-          );
-
-          const regions = {
-            front: {
-              x: originX,
-              y: originY,
-              width: frontWidth,
-              height: frontHeight,
-              source: sourceFront,
-              camera: this.viewCameras.front,
-            },
-            left: {
-              x: originX + frontWidth + gap,
-              y: originY,
-              width: sideWidth,
-              height: sideHeight,
-              source: sourceLeft,
-              camera: this.viewCameras.left,
-            },
-            top: {
-              x: originX,
-              y: originY + frontHeight + gap,
-              width: topWidth,
-              height: topHeight,
-              source: sourceTop,
-              camera: this.viewCameras.top,
-            },
+            /** 三视图模式：正立面 + 左侧立面 + 平面图，L 形布局 */
+            const availW = displayWidth - outerPadding * 2;
+            const availH = displayHeight - outerPadding * 2;
+            const frontW = Math.max(72, (availW - gap) * 0.6);
+            const sideW = Math.max(56, availW - frontW - gap);
+            const frontH = Math.max(72, (availH - gap) * 0.55);
+            const topH = Math.max(56, availH - frontH - gap);
+            return [
+              {
+                key: "front",
+                x: outerPadding,
+                y: outerPadding,
+                width: frontW,
+                height: frontH,
+                source: sourceFront,
+                camera: this.viewCameras.front,
+              },
+              {
+                key: "left",
+                x: outerPadding + frontW + gap,
+                y: outerPadding,
+                width: sideW,
+                height: frontH,
+                source: sourceLeft,
+                camera: this.viewCameras.left,
+              },
+              {
+                key: "top",
+                x: outerPadding,
+                y: outerPadding + frontH + gap,
+                width: frontW,
+                height: topH,
+                source: sourceTop,
+                camera: this.viewCameras.top,
+              },
+            ];
           };
 
-          Object.values(regions).forEach((region) =>
-            drawProjectionRegion(region, bounds.box),
-          );
+          const regions = buildRegions();
+          regions.forEach((region) => drawProjectionRegion(region));
 
           context.setTransform(1, 0, 0, 1, 0, 0);
         }
@@ -3530,6 +3794,11 @@
 
           // 左键
           if (event.button === 0) {
+            // 连线创建模式下禁用体块拖拽和元素选择，由 click 事件处理选点
+            if (lineCreateState && lineCreateState.active) {
+              return;
+            }
+
             // 体块模式：选择并可拖拽移动体块
             if (state.selectionMode === "solid") {
               const solidMeshes = Array.from(this.solidMeshes.values());
@@ -3693,11 +3962,120 @@
           return mesh;
         }
 
-        // 查找体块ID
+        // 通过mesh查找体块ID
         findSolidIdByMesh(mesh) {
           for (let [solidId, m] of this.solidMeshes.entries()) {
             if (m === mesh) return solidId;
           }
+          return null;
+        }
+
+        /**
+         * 在画布点击位置拾取一个可用点（独立点或体块顶点）。
+         * @param {MouseEvent} event 鼠标点击事件。
+         * @returns {{type:'independent'|'vertex',id:string,position:{x:number,y:number,z:number},solidId?:string,vertexIndex?:number}|null} 拾取到的点数据。
+         */
+        pickPointAtClick(event) {
+          const rect = this.canvas.getBoundingClientRect();
+          this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          this.raycaster.setFromCamera(this.mouse, this.camera);
+
+          // 优先检测独立点
+          const pointMeshes = Array.from(this.pointMeshes.values());
+          const pointIntersects = this.raycaster.intersectObjects(
+            pointMeshes,
+            false,
+          );
+          if (pointIntersects.length > 0) {
+            const mesh = pointIntersects[0].object;
+            const pointId = this.findPointIdByMesh(mesh);
+            const point = store.getState().points.find((p) => p.id === pointId);
+            if (point) {
+              return {
+                type: "independent",
+                id: pointId,
+                position: { x: point.x, y: point.y, z: point.z },
+              };
+            }
+          }
+
+          // 检测体块顶点标记
+          const markerMeshes = Array.from(this.vertexMarkers.values());
+          const markerIntersects = this.raycaster.intersectObjects(
+            markerMeshes,
+            false,
+          );
+          if (markerIntersects.length > 0) {
+            const mesh = markerIntersects[0].object;
+            const vertexIndex = mesh.userData.vertexIndex;
+            const solidId = store.getState().selectedSolidId;
+            const solid = store.getState().solids.find((s) => s.id === solidId);
+            const solidMesh = this.solidMeshes.get(solidId);
+            if (solid && solidMesh) {
+              const local = new THREE.Vector3().fromBufferAttribute(
+                solidMesh.geometry.attributes.position,
+                vertexIndex,
+              );
+              return {
+                type: "vertex",
+                id: `${solidId}_v${vertexIndex}`,
+                solidId,
+                vertexIndex,
+                position: {
+                  x: local.x + solid.position.x,
+                  y: local.y + solid.position.y,
+                  z: local.z + solid.position.z,
+                },
+              };
+            }
+          }
+
+          // 未命中标记时，若点击体块网格则取最近顶点
+          const solidMeshes = Array.from(this.solidMeshes.values());
+          const solidIntersects = this.raycaster.intersectObjects(
+            solidMeshes,
+            false,
+          );
+          if (solidIntersects.length > 0) {
+            const mesh = solidIntersects[0].object;
+            const solidId = this.findSolidIdByMesh(mesh);
+            const solid = store.getState().solids.find((s) => s.id === solidId);
+            if (solid) {
+              const intersect = solidIntersects[0];
+              const positionAttribute = mesh.geometry.attributes.position;
+              const vertex = new THREE.Vector3();
+              let closestIndex = -1;
+              let closestDistance = Infinity;
+              for (let i = 0; i < positionAttribute.count; i++) {
+                vertex.fromBufferAttribute(positionAttribute, i);
+                vertex.applyMatrix4(mesh.matrixWorld);
+                const d = vertex.distanceTo(intersect.point);
+                if (d < closestDistance && d < 0.5) {
+                  closestDistance = d;
+                  closestIndex = i;
+                }
+              }
+              if (closestIndex !== -1) {
+                const local = new THREE.Vector3().fromBufferAttribute(
+                  mesh.geometry.attributes.position,
+                  closestIndex,
+                );
+                return {
+                  type: "vertex",
+                  id: `${solidId}_v${closestIndex}`,
+                  solidId,
+                  vertexIndex: closestIndex,
+                  position: {
+                    x: local.x + solid.position.x,
+                    y: local.y + solid.position.y,
+                    z: local.z + solid.position.z,
+                  },
+                };
+              }
+            }
+          }
+
           return null;
         }
 
@@ -4153,7 +4531,7 @@
                                 <span class="action-btn eye" onclick="event.stopPropagation(); toggleSolidVisibility('${solid.id}')">
                                     ${solid.visible ? "👁️" : "👁️‍🗨️"}
                                 </span>
-                                <span class="action-btn delete" onclick="event.stopPropagation(); deleteSolid('${solid.id}')">
+                                <span class="action-btn delete" data-action="delete" data-id="${solid.id}">
                                     🗑️
                                 </span>
                             </div>
@@ -4272,6 +4650,36 @@
           this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
           this.raycaster.setFromCamera(this.mouse, this.camera);
+
+          // 连线创建模式：依次选择两个点（支持独立点与体块顶点混合）
+          if (lineCreateState && lineCreateState.active) {
+            const picked = this.pickPointAtClick(event);
+            if (!picked) return;
+
+            if (!lineCreateState.firstPoint) {
+              lineCreateState.firstPoint = picked;
+              if (picked.type === "independent") {
+                geometryManager.selectPoint(picked.id);
+              } else if (picked.type === "vertex") {
+                geometryManager.selectVertexPoint(
+                  picked.solidId,
+                  picked.vertexIndex,
+                  picked.position,
+                );
+              }
+              updateCreateLineBtnText();
+            } else {
+              const second = picked;
+              if (second.id === lineCreateState.firstPoint.id) return;
+              store.pushUndoStack();
+              geometryManager.createLineBetweenPoints(
+                lineCreateState.firstPoint,
+                second,
+              );
+              exitLineCreateMode();
+            }
+            return;
+          }
 
           // 检查是否点击了现有点
           const pointMeshes = Array.from(this.pointMeshes.values());
@@ -4589,7 +4997,7 @@
               const material = new THREE.MeshPhongMaterial({
                 color: solid.color,
                 transparent: true,
-                opacity: 0.7,
+                opacity: solid.opacity ?? 0.7,
                 side: THREE.DoubleSide,
                 clippingPlanes: [], // 支持裁剪平面
               });
@@ -4615,6 +5023,7 @@
             );
             mesh.scale.set(solid.scale.x, solid.scale.y, solid.scale.z);
             mesh.visible = solid.visible;
+            mesh.material.opacity = solid.opacity ?? 0.7;
 
             // 更新选中高亮
             if (solid.id === state.selectedSolidId) {
@@ -5330,7 +5739,7 @@
         updateCutSteps(state) {
           // 步骤1：选择立体
           const step1 = document.getElementById("cutStep1");
-          if (state.solids.length > 0) {
+          if (state.selectedSolidId) {
             step1.classList.remove("active");
             step1.classList.add("completed");
           } else {
@@ -5343,16 +5752,16 @@
           if (state.cutPlaneType) {
             step2.classList.remove("active");
             step2.classList.add("completed");
-          } else if (state.solids.length > 0) {
+          } else if (state.selectedSolidId) {
             step2.classList.remove("completed");
             step2.classList.add("active");
           } else {
             step2.classList.remove("active", "completed");
           }
 
-          // 步骤3：调整切割位置
+          // 步骤3：确认生成剖面
           const step3 = document.getElementById("cutStep3");
-          if (state.cutPlaneType && state.cutPosition !== 0) {
+          if (state.sectionConfirmed) {
             step3.classList.remove("active");
             step3.classList.add("completed");
           } else if (state.cutPlaneType) {
@@ -5411,31 +5820,440 @@
       const geometryManager = new GeometryManager(store);
       const renderer3d = new Renderer3D("canvas3d", store, geometryManager);
 
+      // ============================================
+      // 关卡与任务系统
+      // ============================================
+      /** @type {Array<{id:string,title:string,goal:string,steps:string[],scoreCriteria:string}>} */
+      const GAME_LEVELS = [
+        {
+          id: "0-1",
+          title: "初识三维点",
+          goal: "在三维空间中创建第一个点",
+          steps: ["点击创建点按钮或在画布空白处点击"],
+          scoreCriteria: "成功创建 1 个点",
+        },
+        {
+          id: "0-2",
+          title: "读取点坐标",
+          goal: "选中一个点并读取其坐标",
+          steps: ["使用鼠标点击选中一个点", "查看右侧坐标显示"],
+          scoreCriteria: "成功选中 1 个点",
+        },
+        {
+          id: "0-3",
+          title: "两点成线",
+          goal: "创建一条连接两点的线段",
+          steps: ["进入创建连线模式", "依次选择两个点完成连线"],
+          scoreCriteria: "成功创建 1 条线",
+        },
+        {
+          id: "0-4",
+          title: "2D/3D 切换",
+          goal: "切换一次 2D 与 3D 坐标系",
+          steps: ["点击坐标系统切换按钮", "观察坐标系变化"],
+          scoreCriteria: "成功切换 1 次坐标系",
+        },
+        {
+          id: "0-5",
+          title: "占位关卡 0-5",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-6",
+          title: "占位关卡 0-6",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-7",
+          title: "占位关卡 0-7",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-8",
+          title: "占位关卡 0-8",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-9",
+          title: "占位关卡 0-9",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-10",
+          title: "占位关卡 0-10",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-11",
+          title: "占位关卡 0-11",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+        {
+          id: "0-12",
+          title: "占位关卡 0-12",
+          goal: "后续扩展",
+          steps: [],
+          scoreCriteria: "",
+        },
+      ];
+
+      /** 当前关卡 ID */
+      let currentLevelId = GAME_LEVELS[0].id;
+      /** 已完成关卡的 ID 集合 */
+      const completedLevelIds = new Set();
+      /** 坐标系切换次数（用于 0-4 判定） */
+      let coordSystemSwitchCount = 0;
+      /** 共享工具条读取的已完成任务计数 */
+      window.completedTaskCount = 0;
+
       /**
-       * 根据当前 Store 状态计算已完成任务数量，并同步到 window.completedTaskCount。
-       * 共 6 项任务：创建点、创建连线、创建体块、查看投影模块、选择剖切面、生成剖面图。
-       * @returns {number} 已完成任务数（0-6）
+       * 初始化顶部关卡选择器并绑定切换事件。
+       * @returns {void}
        */
-      function updateCompletedTaskCount() {
-        const s = store.getState();
-        let count = 0;
-        if (s.points.length > 0) count++;         // 任务1：创建点
-        if (s.lines.length > 0) count++;           // 任务2：创建连线
-        if (s.solids.length > 0) count++;           // 任务3：创建体块
-        if (s.showProjectionModule) count++;        // 任务4：查看投影模块
-        if (s.cutPlaneType !== null) count++;       // 任务5：选择剖切面
-        if (s.sectionConfirmed) count++;            // 任务6：生成剖面图
-        window.completedTaskCount = count;
-        return count;
+      function initLevelSelector() {
+        const levelSelect = document.getElementById("levelSelect");
+        if (!levelSelect) return;
+        GAME_LEVELS.forEach((level) => {
+          const option = document.createElement("option");
+          option.value = level.id;
+          option.textContent = `关卡 ${level.id}: ${level.title}`;
+          levelSelect.appendChild(option);
+        });
+        levelSelect.value = currentLevelId;
+        levelSelect.addEventListener("change", () => {
+          currentLevelId = levelSelect.value;
+          geometryManager.resetAll();
+          renderer3d.setAxonometricView("iso");
+          // 恢复坐标系为 3D
+          document
+            .querySelectorAll(".axis-btn")
+            .forEach((b) => b.classList.remove("active"));
+          document
+            .querySelector('.axis-btn[data-axis="3d"]')
+            .classList.add("active");
+          document.getElementById("coordZContainer").style.display = "block";
+          document.getElementById("editCoordZContainer").style.display =
+            "block";
+          store.setState({ coordSystem: "3d" });
+          coordSystemSwitchCount = 0;
+          updateCurrentTaskCard();
+          updateLevelDisplay();
+        });
       }
 
-      /** 订阅 Store 变化，每次状态更新后重新计算已完成任务数 */
-      store.subscribe(() => updateCompletedTaskCount());
+      /**
+       * 更新顶部当前关卡显示文本。
+       * @returns {void}
+       */
+      function updateLevelDisplay() {
+        const level = GAME_LEVELS.find((l) => l.id === currentLevelId);
+        const display = document.getElementById("currentLevelDisplay");
+        if (level && display) {
+          display.textContent = `关卡 ${level.id}: ${level.title}`;
+        }
+      }
 
-      /** 初始化时计算一次评分基准值 */
-      updateCompletedTaskCount();
+      /**
+       * 更新当前任务卡片的关卡信息与进度显示。
+       * @returns {void}
+       */
+      function updateCurrentTaskCard() {
+        const level = GAME_LEVELS.find((l) => l.id === currentLevelId);
+        if (!level) return;
+        document.getElementById("taskLevelTitle").textContent =
+          `关卡 ${level.id}: ${level.title}`;
+        document.getElementById("taskGoal").textContent = level.goal;
+        const stepsEl = document.getElementById("taskSteps");
+        if (level.steps && level.steps.length > 0) {
+          stepsEl.innerHTML = level.steps
+            .map((step) => `<li>${step}</li>`)
+            .join("");
+        } else {
+          stepsEl.innerHTML = "<li>后续补充</li>";
+        }
+        const completed = completedLevelIds.has(currentLevelId);
+        document.getElementById("taskProgress").textContent = completed
+          ? "1/1 已完成"
+          : "0/1";
+      }
 
+      /**
+       * 根据当前关卡状态判定任务是否完成，并同步 completedTaskCount。
+       * @param {Object} state 当前全局状态。
+       * @returns {void}
+       */
+      function checkLevelTasks(state) {
+        let completed = false;
+        switch (currentLevelId) {
+          case "0-1":
+            completed = state.points.length >= 1;
+            break;
+          case "0-2":
+            completed =
+              state.selectedPointIds.length >= 1 ||
+              state.selectedVertices.length >= 1;
+            break;
+          case "0-3":
+            completed = state.lines.length >= 1;
+            break;
+          case "0-4":
+            completed = coordSystemSwitchCount >= 1;
+            break;
+          default:
+            completed = false;
+        }
+
+        if (completed && !completedLevelIds.has(currentLevelId)) {
+          completedLevelIds.add(currentLevelId);
+          window.completedTaskCount = (window.completedTaskCount || 0) + 1;
+          updateCurrentTaskCard();
+        }
+      }
+
+      // ============================================
+      // 上下文感知工具栏
+      // ============================================
+      /**
+       * 根据当前选择状态更新左侧工具栏各分区的显示/隐藏与高亮。
+       * @param {Object} state 当前全局状态。
+       * @returns {void}
+       */
+      function updateSidebarContext(state) {
+        const hasSelection =
+          state.selectedSolidId !== null ||
+          state.selectedPointIds.length > 0 ||
+          state.selectedVertices.length > 0;
+        const generalContexts = new Set([
+          "coordinate-system",
+          "point-line",
+          "solid-create",
+          "display",
+        ]);
+
+        document
+          .querySelectorAll(".sidebar .tool-section[data-context]")
+          .forEach((section) => {
+            const ctx = section.dataset.context;
+            const hasSolids = state.solids.length > 0;
+            const visible =
+              generalContexts.has(ctx) ||
+              hasSelection ||
+              ctx === "section" ||
+              ((ctx === "solid-list" || ctx === "axo") && hasSolids);
+            section.style.display = visible ? "" : "none";
+
+            // 剖面模式高亮
+            if (ctx === "section") {
+              section.style.border = state.cutPlaneType
+                ? "2px solid var(--accent-warning)"
+                : "";
+            }
+          });
+      }
+
+      /**
+       * 根据当前选择状态更新右侧信息面板各卡片的显示/隐藏。
+       * @param {Object} state 当前全局状态。
+       * @returns {void}
+       */
+      function updateInfoPanelContext(state) {
+        const hasSolid = state.selectedSolidId !== null;
+        const hasPoint = state.selectedPointIds.length > 0;
+        const hasVertex = state.selectedVertices.length > 0;
+        const hasEdge = state.selectedEdge !== null;
+        const hasFace = state.selectedFace !== null;
+
+        document
+          .querySelectorAll(".info-panel .info-card[data-context]")
+          .forEach((card) => {
+            const ctx = card.dataset.context;
+            let visible = false;
+            switch (ctx) {
+              case "task":
+              case "selection-mode":
+              case "point-list":
+              case "stats":
+              case "shortcuts":
+                visible = true;
+                break;
+              case "point-edit":
+                visible = hasPoint;
+                break;
+              case "vertex-edit":
+                visible = hasVertex;
+                break;
+              case "edge-info":
+                visible = hasEdge;
+                break;
+              case "face-info":
+                visible = hasFace;
+                break;
+              case "solid-info":
+                visible = hasSolid;
+                break;
+            }
+            card.style.display = visible ? "" : "none";
+          });
+      }
+
+      /**
+       * 根据当前坐标系模式更新操作说明提示。
+       * @param {Object} state 当前全局状态。
+       * @returns {void}
+       */
+      function updateCoordModeHint(state) {
+        const hint = document.getElementById("coordModeHint");
+        if (!hint) return;
+        if (state.coordSystem === "2d") {
+          hint.textContent = "2D (XY)：创建点/移动点仅在 XY 平面，Z 固定为 0。";
+        } else {
+          hint.textContent =
+            "3D (XYZ)：创建点/移动点可在 XYZ 空间，支持 Z 坐标输入。";
+        }
+      }
+
+      // ============================================
+      // 连线创建模式
+      // ============================================
+      /** @type {{active:boolean,firstPoint:{type:string,id:string,position:Object,solidId?:string,vertexIndex?:number}|null}} */
+      const lineCreateState = { active: false, firstPoint: null };
+
+      /**
+       * 进入连线创建模式。
+       * @returns {void}
+       */
+      function enterLineCreateMode() {
+        lineCreateState.active = true;
+        lineCreateState.firstPoint = null;
+        geometryManager.clearAllPointSelection();
+        updateCreateLineBtnText();
+        const cancelBtn = document.getElementById("cancelLineBtn");
+        if (cancelBtn) cancelBtn.style.display = "";
+      }
+
+      /**
+       * 退出连线创建模式并清空当前选择。
+       * @returns {void}
+       */
+      function exitLineCreateMode() {
+        lineCreateState.active = false;
+        lineCreateState.firstPoint = null;
+        geometryManager.clearAllPointSelection();
+        updateCreateLineBtnText();
+        const cancelBtn = document.getElementById("cancelLineBtn");
+        if (cancelBtn) cancelBtn.style.display = "none";
+      }
+
+      /**
+       * 根据 lineCreate 状态更新创建连线按钮文本。
+       * @returns {void}
+       */
+      function updateCreateLineBtnText() {
+        const btn = document.getElementById("createLineBtn");
+        if (!btn) return;
+        if (lineCreateState.active) {
+          const selected = lineCreateState.firstPoint ? 1 : 0;
+          btn.textContent = `📏 已选 ${selected}/2`;
+          btn.classList.add("active");
+        } else {
+          btn.textContent = "📏 创建连线";
+          btn.classList.remove("active");
+        }
+      }
+
+      // ============================================
+      // 布尔切割
+      // ============================================
+      /**
+       * 对目标体块执行简化的布尔减操作（target - tool）。
+       * 若两体块无相交则报错；相交则使用包围盒剩余部分模拟切割结果。
+       * @param {string} targetSolidId 目标体块 ID。
+       * @param {string} toolSolidId 切割体块 ID。
+       * @returns {void}
+       */
+      function booleanSubtract(targetSolidId, toolSolidId) {
+        const state = store.getState();
+        const target = state.solids.find((s) => s.id === targetSolidId);
+        const tool = state.solids.find((s) => s.id === toolSolidId);
+        const targetMesh = renderer3d.solidMeshes.get(targetSolidId);
+        const toolMesh = renderer3d.solidMeshes.get(toolSolidId);
+
+        if (!target || !tool || !targetMesh || !toolMesh) {
+          alert("体块未找到，无法执行布尔切割");
+          return;
+        }
+
+        // 包围盒相交检测
+        const targetBox = new THREE.Box3().setFromObject(targetMesh);
+        const toolBox = new THREE.Box3().setFromObject(toolMesh);
+        if (!targetBox.intersectsBox(toolBox)) {
+          alert("两个体块没有相交，无法执行切割");
+          return;
+        }
+
+        store.pushUndoStack();
+
+        // 使用各轴上的较大剩余段模拟布尔减结果
+        const newScale = { ...target.scale };
+        const newPosition = { ...target.position };
+        ["x", "y", "z"].forEach((axis) => {
+          const tMin = target.position[axis] - target.scale[axis] / 2;
+          const tMax = target.position[axis] + target.scale[axis] / 2;
+          const uMin = tool.position[axis] - tool.scale[axis] / 2;
+          const uMax = tool.position[axis] + tool.scale[axis] / 2;
+          const overlapMin = Math.max(tMin, uMin);
+          const overlapMax = Math.min(tMax, uMax);
+          if (overlapMin < overlapMax) {
+            const leftLen = Math.max(0, overlapMin - tMin);
+            const rightLen = Math.max(0, tMax - overlapMax);
+            if (leftLen + rightLen <= 0.01) {
+              newScale[axis] = 0.01;
+            } else if (leftLen >= rightLen) {
+              newScale[axis] = leftLen;
+              newPosition[axis] = tMin + leftLen / 2;
+            } else {
+              newScale[axis] = rightLen;
+              newPosition[axis] = tMax - rightLen / 2;
+            }
+          }
+        });
+
+        const newSolids = state.solids.map((s) => {
+          if (s.id === targetSolidId) {
+            return {
+              ...s,
+              position: newPosition,
+              scale: newScale,
+              isCut: true,
+              name: s.name.includes("(切割后)") ? s.name : `${s.name}(切割后)`,
+            };
+          }
+          if (s.id === toolSolidId) {
+            return { ...s, opacity: 0.3, isBooleanTool: true };
+          }
+          return s;
+        });
+
+        store.setState({ solids: newSolids });
+      }
+
+      // ============================================
       // 全局函数供HTML调用
+      // ============================================
       function deletePoint(pointId) {
         store.pushUndoStack();
         geometryManager.deletePoint(pointId);
@@ -5454,10 +6272,8 @@
 
       // 删除体块
       function deleteSolid(solidId) {
-        if (confirm("确定要删除这个体块吗？")) {
-          store.pushUndoStack();
-          geometryManager.deleteSolid(solidId);
-        }
+        store.pushUndoStack();
+        geometryManager.deleteSolid(solidId);
       }
 
       // ============================================
@@ -5467,11 +6283,17 @@
       // 坐标系切换
       document.querySelectorAll(".axis-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
+          const previousSystem = store.getState().coordSystem;
           document
             .querySelectorAll(".axis-btn")
             .forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           const coordSystem = btn.dataset.axis === "2d" ? "2d" : "3d";
+
+          if (previousSystem !== coordSystem) {
+            coordSystemSwitchCount++;
+          }
+
           store.setState({ coordSystem: coordSystem });
 
           // 隐藏/显示Z坐标输入框（左侧）
@@ -5517,22 +6339,16 @@
           geometryManager.selectPoint(point.id);
         });
 
-      // 创建连线按钮
+      // 创建连线按钮：点击进入/退出 lineCreate 模式
       document.getElementById("createLineBtn").addEventListener("click", () => {
-        const allSelected = geometryManager.getAllSelectedPoints();
-        if (allSelected.length >= 2) {
-          store.pushUndoStack();
-          geometryManager.createLineBetweenPoints(
-            allSelected[0],
-            allSelected[1],
-          );
-          // 创建连线后清空选择
-          geometryManager.clearAllPointSelection();
-        } else {
-          alert(
-            "请先选中两个点（按住Shift多选，支持独立点和体块顶点混合选择）",
-          );
+        if (!lineCreateState.active) {
+          enterLineCreateMode();
         }
+      });
+
+      // 取消连线按钮：清空当前选择并退出 lineCreate 模式
+      document.getElementById("cancelLineBtn").addEventListener("click", () => {
+        exitLineCreateMode();
       });
 
       // 轴测图切换
@@ -6013,14 +6829,15 @@
       // 确认生成剖面图
       document.getElementById("confirmCutBtn").addEventListener("click", () => {
         const state = store.getState();
+        if (!state.selectedSolidId) {
+          alert("请先选择一个体块");
+          return;
+        }
         if (!state.cutPlaneType) {
           alert("请先选择剖切面类型");
           return;
         }
-        if (state.solids.length === 0) {
-          alert("请先创建立体图形");
-          return;
-        }
+        store.pushUndoStack();
         store.setState({ sectionConfirmed: true });
 
         const cutPlaneLabels = {
@@ -6029,13 +6846,15 @@
           profile: "铅垂面",
         };
         const area = renderer3d.calculateSectionArea(
-          state.solids[0],
+          state.solids.find((s) => s.id === state.selectedSolidId),
           state.cutPlaneType,
           state.cutPosition,
         );
-        alert(
-          `✓ 剖面图已生成！\n剖切面类型: ${cutPlaneLabels[state.cutPlaneType]}\n剖切位置: ${state.cutPosition.toFixed(1)}\n剖面面积: ${area.toFixed(2)} 平方单位`,
-        );
+        document.getElementById("sectionInfoPanel").style.display = "block";
+        document.getElementById("sectionPlaneType").textContent =
+          cutPlaneLabels[state.cutPlaneType] || "-";
+        document.getElementById("sectionArea").textContent =
+          area.toFixed(2) + " 平方单位";
       });
 
       // 显示网格切换
@@ -6074,6 +6893,43 @@
             showProjectionModule: !state.showProjectionModule,
           });
         });
+
+      /**
+       * 投影模式切换按钮（三视图/两视图）。
+       * 点击后更新 state.projectionMode，下一帧自动重绘合成画布。
+       */
+      document.querySelectorAll(".projection-mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const mode = btn.getAttribute("data-mode");
+          if (!mode) return;
+          store.setState({ projectionMode: mode });
+          document
+            .querySelectorAll(".projection-mode-btn")
+            .forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+
+      /**
+       * 投影缩放按钮（+/−）。
+       * 调整 state.projectionZoom（0.5~3.0，步长 0.25），同步更新倍率显示。
+       */
+      const updateZoomLabel = () => {
+        const zoom = store.getState().projectionZoom || 1.0;
+        const label = document.getElementById("projZoomValue");
+        if (label) label.textContent = zoom.toFixed(1) + "×";
+      };
+      document.getElementById("projZoomIn").addEventListener("click", () => {
+        const s = store.getState();
+        const next = Math.min(3.0, (s.projectionZoom || 1.0) + 0.25);
+        store.setState({ projectionZoom: next });
+        updateZoomLabel();
+      });
+      document.getElementById("projZoomOut").addEventListener("click", () => {
+        const s = store.getState();
+        const next = Math.max(0.5, (s.projectionZoom || 1.0) - 0.25);
+        store.setState({ projectionZoom: next });
+        updateZoomLabel();
+      });
 
       // 撤销
       document.getElementById("undoBtn").addEventListener("click", () => {
@@ -6245,6 +7101,63 @@
         }
       });
 
+      // 体块列表删除按钮使用事件委托，避免每次重绘都重新绑定
+      document.getElementById("solidList").addEventListener("click", (e) => {
+        const deleteBtn = e.target.closest('[data-action="delete"]');
+        if (deleteBtn) {
+          e.stopPropagation();
+          const solidId = deleteBtn.dataset.id;
+          store.pushUndoStack();
+          geometryManager.deleteSolid(solidId);
+        }
+      });
+
+      // 布尔切割按钮
+      document
+        .getElementById("booleanSubtractBtn")
+        .addEventListener("click", () => {
+          const state = store.getState();
+          if (!state.selectedSolidId) {
+            alert("请先选择目标体块");
+            return;
+          }
+          const others = state.solids.filter(
+            (s) => s.id !== state.selectedSolidId,
+          );
+          if (others.length === 0) {
+            alert("需要至少两个体块才能执行布尔切割");
+            return;
+          }
+
+          let toolSolidId;
+          if (others.length === 1) {
+            toolSolidId = others[0].id;
+          } else {
+            const list = others
+              .map((s, i) => `${i + 1}. ${s.name} (${s.id})`)
+              .join("\n");
+            const input = prompt(`选择切割体（输入序号）：\n${list}`);
+            const idx = parseInt(input, 10);
+            if (!idx || idx < 1 || idx > others.length) return;
+            toolSolidId = others[idx - 1].id;
+          }
+          booleanSubtract(state.selectedSolidId, toolSolidId);
+        });
+
+      // 订阅状态变化以更新上下文面板、任务进度与提示
+      store.subscribe((state) => {
+        updateSidebarContext(state);
+        updateInfoPanelContext(state);
+        updateCoordModeHint(state);
+        checkLevelTasks(state);
+      });
+
+      // 初始化关卡选择器与任务卡片
+      initLevelSelector();
+      updateLevelDisplay();
+      updateCurrentTaskCard();
+      updateCoordModeHint(store.getState());
+
       // 初始化同步
       store.notify();
 
@@ -6330,53 +7243,83 @@
         previousWidth = currentWidth;
       });
     </script>
-    <script src="../feishu-game-data-collector.js"></script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-  
 
-
-
-
-<!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
-<script>
-    /**
-     * 共享工具条接入配置
-     * 提供统一截图、导出、撤销、重置与评分判定能力
-     * 详见《游戏评分标准.md》
-     *
-     * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
-     * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
-     */
-    window.SHARED_GAME_TOOLKIT_CONFIG = {
-        gameId: '游戏0',
-        gameTitle: '画法几何与建筑制图基础',
-        captureTarget: '#mainCanvas, .canvas-area, .workspace, body',
-        scoring: { type: 'completion', threshold: 5, total: 6, description: '完成 5 个关键绘图与投影练习即达标' },
+    <!-- sgt-injected:start -->
+    <script src="../class-config.js"></script>
+    <script src="../shared-draggable.js" defer></script>
+    <script src="../shared-game-toolkit.js?v=20260622" defer></script>
+    <script>
+      /**
+       * 共享工具条接入配置
+       * 提供统一截图、导出、撤销、重置与评分判定能力
+       * 详见《游戏评分标准.md》
+       *
+       * hook 返回 true = 页面原生处理成功，共享工具条不再执行内置回退；
+       * hook 返回 false = 页面无此功能，共享工具条执行内置实现。
+       */
+      window.SHARED_GAME_TOOLKIT_CONFIG = {
+        gameId: "游戏0",
+        gameTitle: "画法几何与建筑制图基础",
+        captureTarget: "#canvas3d, .canvas-area, .workspace, body",
+        scoring: {
+          type: "completion",
+          threshold: 5,
+          total: 6,
+          description: "完成 5 个关键绘图与投影练习即达标",
+        },
         hideSelectors: [],
-        ranking: { enabled: true, semester: '2026春', course: '画法几何与建筑制图', game: '游戏0' },
+        ranking: {
+          enabled: true,
+          semester: "2026春",
+          course: "画法几何与建筑制图",
+          game: "游戏0",
+        },
         hooks: {
-            capture: () => false,
-            undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
-            reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
-            exportFile: () => (typeof exportDesign === 'function' ? (exportDesign(), true) : false),
-            readScore: () => Number(window.completedTaskCount || 0)
-        }
-    };
-    /**
-     * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
-     * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
-     */
-    window.FEISHU_SUBMISSION_CONFIG = Object.assign(
+          capture: () => {
+            try {
+              var c = document.querySelector("#canvas3d");
+              if (c && typeof c.toDataURL === "function") {
+                var d = c.toDataURL("image/png");
+                if (window.__sgtArtifacts) {
+                  window.__sgtArtifacts.screenshot = {
+                    name: "screenshot.png",
+                    type: "image/png",
+                    dataUrl: d,
+                    size: d.length,
+                  };
+                }
+                return true;
+              }
+            } catch (e) {}
+            return false;
+          },
+          undo: () => false,
+          reset: () => false,
+          exportFile: () =>
+            typeof exportDesign === "function" ? (exportDesign(), true) : false,
+          readScore: () => Number(window.completedTaskCount || 0),
+        },
+      };
+      /**
+       * 同步写入飞书提交配置，使 shared-feishu-submission.js 的排行榜
+       * 面板和提交流程能读取到本页的排行榜开关与课程元数据。
+       */
+      window.FEISHU_SUBMISSION_CONFIG = Object.assign(
         {},
         window.FEISHU_SUBMISSION_CONFIG || {},
         {
-            ranking: { enabled: true, semester: '2026春', courseName: '画法几何与建筑制图', game: '游戏0' }
-        }
-    );
-</script>
-<!-- sgt-injected:end -->
+          ranking: {
+            enabled: true,
+            semester: "2026春",
+            courseName: "画法几何与建筑制图",
+            game: "游戏0",
+          },
+        },
+      );
+    </script>
+    <!-- sgt-injected:end -->
 
-</body>
+    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+  </body>
 </html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2352,7 +2352,6 @@
             };
 
             gameState.plan.furniture.push(furniture);
-            window.placedItemCount = gameState.plan.furniture.length;
             gameState.selectedObject = furniture;
             showPropertyPanel(furniture);
             drawCanvas();
@@ -3218,14 +3217,11 @@
         init();
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -3247,7 +3243,7 @@
             undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
             reset: () => false,
             exportFile: () => (typeof window.exportMaterialList === 'function' ? (window.exportMaterialList(), true) : false),
-            readScore: () => Number(window.placedItemCount || 0)
+            readScore: () => Number((window.interiorProgress && window.interiorProgress.completed) || (window.placedItems && window.placedItems.length) || 0)
         }
     };
     /**
@@ -3263,6 +3259,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

@@ -1,11 +1,21 @@
 {
   "name": "architectural-design-game-development",
-  "version": "1.4.6",
+  "version": "1.4.0",
   "private": true,
   "description": "建筑课程游戏化教学系统的页面维护与风格统一元数据文件。",
   "scripts": {
     "lint:eslint": "npx --yes eslint \"游戏12方案汇报系统/app.js\" shared-game-adapters.js shared-feishu-submission.js shared-game-toolkit.js --no-config-lookup --global window --global document --global Blob --global URL --global alert --global confirm --global console --global localStorage --global sessionStorage --global fetch --global navigator --global FileReader --global MediaRecorder --global Audio --global event --global setTimeout --global clearTimeout --global setInterval --global clearInterval --global requestAnimationFrame --global Element --global HTMLCanvasElement --global HTMLImageElement --global Image --global getComputedStyle --global XMLSerializer --global atob --global Uint8Array --rule no-undef:error",
     "lint:prettier": "npx --yes prettier --check --ignore-unknown package.json .gitignore history.md index.html \"游戏主页索引/游戏化系统索引页.html\" \"统一视觉规范2.0.md\" \"页面组件清单.md\" \"游戏评分标准.md\" \"飞书集成方案_通用化扩展版.md\" \"妙搭与飞书多维表格接入说明.md\" \"妙搭前台提示词_公开入口与作业提交流程版.md\" \"飞书多维表格清单与字段说明_公开站点提交流程版.md\" shared-premium-theme.css shared-feishu-submission.css shared-game-adapters.js shared-feishu-submission.js shared-game-toolkit.js",
-    "lint:types": "npx --yes -p typescript tsc --noEmit --allowJs --target ES2020 --lib DOM,ES2020 \"游戏12方案汇报系统/app.js\" shared-game-adapters.js shared-feishu-submission.js shared-game-toolkit.js"
+    "lint:types": "npx --yes -p typescript tsc --noEmit --allowJs --target ES2020 --lib DOM,ES2020 \"游戏12方案汇报系统/app.js\" shared-game-adapters.js shared-feishu-submission.js shared-game-toolkit.js",
+    "lint:integrity": "node scripts/check-shared-integrity.js",
+    "lint:all": "npm run lint:integrity && npm run lint:eslint && npm run lint:prettier && npm run lint:types",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.js": "node scripts/check-shared-integrity.js"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
   }
 }

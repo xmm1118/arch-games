@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2960,8 +2960,6 @@
             const requiredTasks = level.tasks.map(t => t.id);
             const completedCount = requiredTasks.filter(id => state.completedTasks[id]).length;
             const totalTasks = requiredTasks.length;
-            // 暴露评分到 window 供共享工具条读取
-            window.completedTaskCount = completedCount;
             
             const score = Math.round((completedCount / totalTasks) * 100);
             
@@ -3205,14 +3203,11 @@
         init();
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -3231,7 +3226,7 @@
         ranking: { enabled: true, semester: '2026春', course: '建筑立面造型', game: '游戏4' },
         hooks: {
             capture: () => false,
-            undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
+            undo: () => (typeof undo === 'function' ? (undo(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => false,
             readScore: () => Number(window.completedTaskCount || 0)
@@ -3250,6 +3245,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

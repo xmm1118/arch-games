@@ -2076,7 +2076,8 @@
             // 渲染器
             renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
-                antialias: true
+                antialias: true,
+                preserveDrawingBuffer: true
             });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -2769,8 +2770,6 @@
             }
 
             experienceRecords.push({ title, description, time: new Date() });
-            // 暴露体验记录数量到 window 供共享工具条读取
-            window.completedExperience = experienceRecords.length;
         }
 
         // 切换关卡
@@ -2970,14 +2969,11 @@
         init();
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -2990,16 +2986,16 @@
     window.SHARED_GAME_TOOLKIT_CONFIG = {
         gameId: '游戏5',
         gameTitle: '空间体验系统',
-        captureTarget: '#spaceCanvas, .canvas-area, body',
+        captureTarget: '#canvas3d, .canvas-area, body',
         scoring: { type: 'completion', threshold: 3, total: 5, description: '完成 3 项空间漫游练习即达标' },
         hideSelectors: [],
         ranking: { enabled: true, semester: '2026春', course: '空间体验设计', game: '游戏5' },
         hooks: {
-            capture: () => false,
+            capture: () => { try { var c = document.querySelector('#canvas3d') || document.querySelector('canvas'); if (c && typeof c.toDataURL === 'function') { var d = c.toDataURL('image/png'); if (window.__sgtArtifacts) { window.__sgtArtifacts.screenshot = { name: 'screenshot.png', type: 'image/png', dataUrl: d, size: d.length }; } return true; } } catch (e) {} return false; },
             undo: () => false,
             reset: () => false,
             exportFile: () => false,
-            readScore: () => Number((window.experienceProgress && window.experienceProgress.done) || window.completedExperience || 0)
+            readScore: () => Number(window.completedExperience || 0)
         }
     };
     /**
@@ -3015,6 +3011,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

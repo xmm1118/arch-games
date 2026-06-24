@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -936,8 +936,6 @@
         function completeLevel() {
             if (GameState.completedLevels.includes(GameState.currentLevel)) return;
             GameState.completedLevels.push(GameState.currentLevel);
-            /** 将已通关数暴露到 window.roofProgress，供共享工具条 readScore hook 读取 */
-            window.roofProgress = { completed: GameState.completedLevels.length };
             const scoreGain = 100 + (GameState.currentLevel * 25);
             GameState.score += scoreGain;
             document.getElementById('scoreValue').textContent = GameState.score;
@@ -1346,14 +1344,11 @@
         });
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -1375,7 +1370,7 @@
             undo: () => (typeof undo === 'function' ? (undo(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => (typeof exportMaterialPackage === 'function' ? (exportMaterialPackage(), true) : false),
-            readScore: () => Number(window.roofProgress && window.roofProgress.completed || 0)
+            readScore: () => Number((window.roofProgress && window.roofProgress.completed) || (window.gameState && window.gameState.completedLayers) || 0)
         }
     };
     /**
@@ -1391,6 +1386,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 </html>

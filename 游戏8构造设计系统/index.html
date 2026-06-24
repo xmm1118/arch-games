@@ -3508,14 +3508,11 @@
       );
     </script>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-  
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -3534,7 +3531,7 @@
         ranking: { enabled: true, semester: '2026春', course: '建筑构造', game: '游戏8' },
         hooks: {
             capture: () => false,
-            undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
+            undo: () => (typeof undo === 'function' ? (undo(), true) : false),
             reset: () => (typeof clearCanvas === 'function' ? (clearCanvas(), true) : false),
             exportFile: () => false,
             readScore: () => Number(window.completedLayerCount || 0)
@@ -3553,6 +3550,9 @@
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+  
 
 </body>
 </html>

@@ -2163,7 +2163,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 // 创建渲染器
                 this.renderer = new THREE.WebGLRenderer({
                     canvas: this.canvas,
-                    antialias: true
+                    antialias: true,
+                    preserveDrawingBuffer: true
                 });
                 this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
                 this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -2251,7 +2252,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 // 创建渲染器
                 this.renderer = new THREE.WebGLRenderer({
                     canvas: this.canvas,
-                    antialias: true
+                    antialias: true,
+                    preserveDrawingBuffer: true
                 });
                 this.renderer.setSize(w, h);
                 this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -2344,17 +2346,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 const canvasTop = document.getElementById('canvasTop');
                 
                 if (canvasBack) {
-                    this.rendererBack = new THREE.WebGLRenderer({ canvas: canvasBack, antialias: true });
+                    this.rendererBack = new THREE.WebGLRenderer({ canvas: canvasBack, antialias: true, preserveDrawingBuffer: true });
                     this.rendererBack.setPixelRatio(window.devicePixelRatio);
                     this.rendererBack.setClearColor(0x1a1a2e);
                 }
                 if (canvasLeft) {
-                    this.rendererLeft = new THREE.WebGLRenderer({ canvas: canvasLeft, antialias: true });
+                    this.rendererLeft = new THREE.WebGLRenderer({ canvas: canvasLeft, antialias: true, preserveDrawingBuffer: true });
                     this.rendererLeft.setPixelRatio(window.devicePixelRatio);
                     this.rendererLeft.setClearColor(0x1a1a2e);
                 }
                 if (canvasFront) {
-                    this.rendererFront = new THREE.WebGLRenderer({ canvas: canvasFront, antialias: true });
+                    this.rendererFront = new THREE.WebGLRenderer({ canvas: canvasFront, antialias: true, preserveDrawingBuffer: true });
                     this.rendererFront.setPixelRatio(window.devicePixelRatio);
                     this.rendererFront.setClearColor(0x1a1a2e);
                 }
@@ -2364,7 +2366,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                     this.rendererRight.setClearColor(0x1a1a2e);
                 }
                 if (canvasTop) {
-                    this.rendererTop = new THREE.WebGLRenderer({ canvas: canvasTop, antialias: true });
+                    this.rendererTop = new THREE.WebGLRenderer({ canvas: canvasTop, antialias: true, preserveDrawingBuffer: true });
                     this.rendererTop.setPixelRatio(window.devicePixelRatio);
                     this.rendererTop.setClearColor(0x1a1a2e);
                 }
@@ -6091,8 +6093,6 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
                 buildScore: evaluation.buildabilityScore,
                 totalScore: evaluation.total
             };
-            // 暴露评分到 window 供共享工具条读取
-            window.designEvaluation = { totalScore: evaluation.total };
             const suggestions = generateLevel5Suggestions(scores, state);
             const grade = getGrade(evaluation.total);
             const metrics = calculateGame3DesignMetrics(state);
@@ -6395,14 +6395,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         </div>
     </div>
     <script src="../shared-game-adapters.js?v=20260619-feishu1"></script>
-    <script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
-
-
-
-
-
+    
 <!-- sgt-injected:start -->
-<script src="../shared-game-toolkit.js?v=20260620a" defer></script>
+<script src="../class-config.js"></script>
+<script src="../shared-draggable.js" defer></script>
+<script src="../shared-game-toolkit.js?v=20260622" defer></script>
 <script>
     /**
      * 共享工具条接入配置
@@ -6415,16 +6412,16 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     window.SHARED_GAME_TOOLKIT_CONFIG = {
         gameId: '游戏3',
         gameTitle: '体块设计系统',
-        captureTarget: '#three-canvas, .canvas-area, body',
+        captureTarget: '#canvas3d, .canvas-area, body',
         scoring: { type: 'evaluation', threshold: 70, total: 100, description: '体块综合评分 ≥ 70 即达标' },
         hideSelectors: ["#undoBtn","#resetBtn"],
         ranking: { enabled: true, semester: '2026春', course: '建筑体块设计', game: '游戏3' },
         hooks: {
-            capture: () => false,
-            undo: () => (typeof undoAction === 'function' ? (undoAction(), true) : false),
-            reset: () => (typeof resetDesign === 'function' ? (resetDesign(), true) : false),
+            capture: () => { try { var c = document.querySelector('#canvas3d') || document.querySelector('canvas'); if (c && typeof c.toDataURL === 'function') { var d = c.toDataURL('image/png'); if (window.__sgtArtifacts) { window.__sgtArtifacts.screenshot = { name: 'screenshot.png', type: 'image/png', dataUrl: d, size: d.length }; } return true; } } catch (e) {} return false; },
+            undo: () => false,
+            reset: () => false,
             exportFile: () => (typeof exportDesign === 'function' ? (exportDesign('json'), true) : false),
-            readScore: () => Number((window.designEvaluation && window.designEvaluation.totalScore) || window.totalScore || 0)
+            readScore: () => Number(window.designEvaluation && window.designEvaluation.totalScore || 0)
         }
     };
     /**
@@ -6440,6 +6437,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     );
 </script>
 <!-- sgt-injected:end -->
+
+<script src="../shared-feishu-submission.js?v=20260619-feishu1"></script>
+
 
 </body>
 
